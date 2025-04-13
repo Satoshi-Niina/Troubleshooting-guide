@@ -143,23 +143,35 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                     src={fixImagePath(result.pngFallbackUrl || result.url)} 
                     alt={result.title || "応急復旧サポート"} 
                     className="w-full h-full object-contain bg-white p-1"
+                    style={{ minHeight: '96px', minWidth: '96px' }} // 最小サイズを設定して白い画像問題を防止
                     loading="eager" // 急いで読み込んで点滅を防止
                     decoding="async" // 非同期デコードで表示を高速化
-                    // SPG対SVGの相互バックアップ
+                    // SVG対PNGの相互バックアップ
                     onError={(e) => {
                       const imgElement = e.currentTarget;
-                      // もし現在PNGを表示していて、SVGが利用可能ならSVGにフォールバック
-                      const fixedPngPath = fixImagePath(result.pngFallbackUrl);
-                      const fixedSvgPath = fixImagePath(result.url);
+                      const originalSrc = imgElement.src;
                       
-                      if (result.url && result.pngFallbackUrl && imgElement.src.includes(fixedPngPath)) {
-                        console.log('PNG読み込みエラー、SVG代替に切り替え:', fixedPngPath, '->', fixedSvgPath);
-                        imgElement.src = fixedSvgPath;
-                      } 
-                      // もし現在SVGを表示していて、PNGが利用可能ならPNGにフォールバック
-                      else if (result.pngFallbackUrl && result.url && imgElement.src.includes(fixedSvgPath)) {
-                        console.log('SVG読み込みエラー、PNG代替に切り替え:', fixedSvgPath, '->', fixedPngPath);
-                        imgElement.src = fixedPngPath;
+                      // 現在の画像が読み込めない場合、別のフォーマットを試す
+                      if (result.url && result.pngFallbackUrl) {
+                        // もし現在PNGを表示していて、SVGが利用可能ならSVGにフォールバック
+                        const fixedPngPath = fixImagePath(result.pngFallbackUrl);
+                        const fixedSvgPath = fixImagePath(result.url);
+                        
+                        if (originalSrc.includes('.png')) {
+                          console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc, '->', fixedSvgPath);
+                          imgElement.src = fixedSvgPath;
+                        } 
+                        // もし現在SVGを表示していて、PNGが利用可能ならPNGにフォールバック
+                        else if (originalSrc.includes('.svg')) {
+                          console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc, '->', fixedPngPath);
+                          imgElement.src = fixedPngPath;
+                        }
+                        // それでもだめなら古いパスを試す
+                        else if (fixedPngPath.includes('/knowledge-base/')) {
+                          const oldStylePath = fixedPngPath.replace('/knowledge-base/', '/uploads/');
+                          console.log('最終フォールバック、古いパスを試行:', originalSrc, '->', oldStylePath);
+                          imgElement.src = oldStylePath;
+                        }
                       }
                     }}
                   />
