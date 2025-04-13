@@ -1,0 +1,56 @@
+import { useState, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+
+export function useInitChat() {
+  const [chatId, setChatId] = useState<number | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const { toast } = useToast();
+
+  const initializeChat = useCallback(async () => {
+    try {
+      setIsInitializing(true);
+      
+      // 既存のチャットを取得する
+      const chatsResponse = await apiRequest('GET', '/api/chats');
+      
+      if (!chatsResponse.ok) {
+        // 認証エラーなどの場合は処理を中断
+        throw new Error('チャットの取得に失敗しました');
+      }
+      
+      const chats = await chatsResponse.json();
+      
+      // チャットが存在する場合は最初のチャットを使用
+      if (chats && chats.length > 0) {
+        setChatId(chats[0].id);
+        return chats[0].id;
+      }
+      
+      // チャットが存在しない場合は新しいチャットを作成
+      const createResponse = await apiRequest('POST', '/api/chats', {
+        title: '保守用車ナレッジチャット'
+      });
+      
+      const newChat = await createResponse.json();
+      setChatId(newChat.id);
+      return newChat.id;
+    } catch (error) {
+      console.error('Failed to initialize chat:', error);
+      toast({
+        title: 'チャット初期化エラー',
+        description: 'チャットの初期化に失敗しました。',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [toast]);
+
+  return {
+    chatId,
+    isInitializing,
+    initializeChat
+  };
+}

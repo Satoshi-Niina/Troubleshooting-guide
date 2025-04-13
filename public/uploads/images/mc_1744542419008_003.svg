@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+          <rect width="800" height="600" fill="#f0f0f0" />
+          <rect x="50" y="50" width="700" height="500" fill="#ffffff" stroke="#0066cc" stroke-width="2" />
+          <text x="400" y="100" font-family="Arial" font-size="32" text-anchor="middle" fill="#0066cc">運転キャビンの緊急措置</text>
+          <text x="400" y="200" font-family="Arial" font-size="24" text-anchor="middle" fill="#333333">スライド 3</text>
+          <rect x="150" y="250" width="500" height="200" fill="#e6f0ff" stroke="#0066cc" stroke-width="1" />
+          <text x="400" y="350" font-family="Arial" font-size="20" text-anchor="middle" fill="#333333">運転キャビンの問題発生時の対応フロー</text>
+          <text x="400" y="500" font-family="Arial" font-size="16" text-anchor="middle" fill="#666666">
+            MC応急処置サンプル_1744542406060.pptx - 2025/4/13
+          </text>
+        </svg>

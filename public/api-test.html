@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Connection Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    .button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .button.secondary {
+      background-color: #2196F3;
+    }
+    .result {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 20px;
+      background-color: #fff;
+      min-height: 100px;
+    }
+    .success {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Emergency Recovery Chat - API Test</h1>
+  
+  <div class="card">
+    <h2>API Health Check</h2>
+    <p>Test the basic API health endpoint to check server connectivity.</p>
+    <button id="health-test" class="button">Test Health API</button>
+    <div id="health-result" class="result">
+      <p>Click the button to test the Health API.</p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>OpenAI API Test</h2>
+    <p>Test the OpenAI integration with a simple query.</p>
+    <button id="openai-test" class="button secondary">Test OpenAI API</button>
+    <div id="openai-result" class="result">
+      <p>Click the button to test the OpenAI API.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>WebSocket Test</h2>
+    <p>Test the WebSocket connection for real-time updates.</p>
+    <button id="ws-connect" class="button">Connect WebSocket</button>
+    <button id="ws-send" class="button secondary" disabled>Send Test Message</button>
+    <div id="ws-result" class="result">
+      <p>Click the Connect button to establish WebSocket connection.</p>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const healthButton = document.getElementById('health-test');
+      const healthResult = document.getElementById('health-result');
+      const openaiButton = document.getElementById('openai-test');
+      const openaiResult = document.getElementById('openai-result');
+      const wsConnectButton = document.getElementById('ws-connect');
+      const wsSendButton = document.getElementById('ws-send');
+      const wsResult = document.getElementById('ws-result');
+      
+      let socket = null;
+      
+      // Test Health API
+      healthButton.addEventListener('click', async function() {
+        healthButton.disabled = true;
+        healthResult.innerHTML = '<p class="loading">Testing API connection...</p>';
+        
+        try {
+          const response = await fetch('/api/health');
+          const data = await response.json();
+          
+          healthResult.innerHTML = `
+            <p class="success">Success! Server is responding.</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } catch (error) {
+          healthResult.innerHTML = `
+            <p class="error">Error connecting to API:</p>
+            <pre>${error.message}</pre>
+          `;
+        } finally {
+          healthButton.disabled = false;
+        }
+      });
+      
+      // Test OpenAI API
+      openaiButton.addEventListener('click', async function() {
+        openaiButton.disabled = true;
+        openaiResult.innerHTML = '<p class="loading">Testing OpenAI integration...</p>';
+        
+        try {
+          const response = await fetch('/api/chatgpt-test', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              text: 'Hello, this is a test of the OpenAI API connection. Please respond with a simple confirmation.'
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          openaiResult.innerHTML = `
+            <p class="success">Success! OpenAI API is working.</p>
+            <p><strong>Response:</strong></p>
+            <pre>${data.response}</pre>
+          `;
+        } catch (error) {
+          openaiResult.innerHTML = `
+            <p class="error">Error with OpenAI API:</p>
+            <pre>${error.message}</pre>
+          `;
+        } finally {
+          openaiButton.disabled = false;
+        }
+      });
+      
+      // WebSocket Test
+      wsConnectButton.addEventListener('click', function() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          // Close existing connection
+          socket.close();
+          wsConnectButton.textContent = 'Connect WebSocket';
+          wsSendButton.disabled = true;
+          wsResult.innerHTML = '<p>WebSocket disconnected.</p>';
+          socket = null;
+          return;
+        }
+        
+        // Use the correct WebSocket path
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        wsResult.innerHTML = `<p class="loading">Connecting to ${wsUrl}...</p>`;
+        
+        try {
+          socket = new WebSocket(wsUrl);
+          
+          socket.onopen = function() {
+            wsConnectButton.textContent = 'Disconnect WebSocket';
+            wsSendButton.disabled = false;
+            wsResult.innerHTML = '<p class="success">WebSocket connection established!</p>';
+          };
+          
+          socket.onmessage = function(event) {
+            let messageContent;
+            try {
+              const parsed = JSON.parse(event.data);
+              messageContent = `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+            } catch (e) {
+              messageContent = `<pre>${event.data}</pre>`;
+            }
+            
+            wsResult.innerHTML += `
+              <p><strong>Received message:</strong></p>
+              ${messageContent}
+            `;
+          };
+          
+          socket.onclose = function(event) {
+            wsConnectButton.textContent = 'Connect WebSocket';
+            wsSendButton.disabled = true;
+            wsResult.innerHTML += `
+              <p class="${event.wasClean ? '' : 'error'}">
+                WebSocket connection closed ${event.wasClean ? 'cleanly' : 'unexpectedly'}. 
+                Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}
+              </p>
+            `;
+          };
+          
+          socket.onerror = function(error) {
+            wsResult.innerHTML += `
+              <p class="error">WebSocket error occurred.</p>
+            `;
+            console.error('WebSocket error:', error);
+          };
+        } catch (error) {
+          wsResult.innerHTML = `
+            <p class="error">Error creating WebSocket connection:</p>
+            <pre>${error.message}</pre>
+          `;
+          wsConnectButton.textContent = 'Connect WebSocket';
+        }
+      });
+      
+      wsSendButton.addEventListener('click', function() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          wsResult.innerHTML += '<p class="error">WebSocket is not connected.</p>';
+          return;
+        }
+        
+        const testMessage = {
+          type: 'test',
+          content: 'This is a test message',
+          timestamp: new Date().toISOString()
+        };
+        
+        try {
+          socket.send(JSON.stringify(testMessage));
+          wsResult.innerHTML += `
+            <p><strong>Sent message:</strong></p>
+            <pre>${JSON.stringify(testMessage, null, 2)}</pre>
+          `;
+        } catch (error) {
+          wsResult.innerHTML += `
+            <p class="error">Error sending message:</p>
+            <pre>${error.message}</pre>
+          `;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
