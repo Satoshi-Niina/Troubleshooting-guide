@@ -11,8 +11,20 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public directory
 app.use('/static', express.static(path.join(process.cwd(), 'public')));
 
-// Serve knowledge-base/images directory for technical diagrams
-app.use('/knowledge-base/images', express.static(path.join(process.cwd(), 'knowledge-base', 'images')));
+// 画像ファイルへのアクセスを一元化
+// uploads/imagesへのリクエストを直接処理
+app.use('/uploads/images', express.static(path.join(process.cwd(), 'public', 'uploads', 'images')));
+
+// knowledge-base/imagesへのリクエストをuploads/imagesにリダイレクト（パス統一）
+app.use('/knowledge-base/images', (req, res, next) => {
+  const fileName = req.path.split('/').pop();
+  if (fileName) {
+    // 同じファイル名をuploads/imagesから提供
+    res.redirect(`/uploads/images/${fileName}`);
+  } else {
+    next();
+  }
+});
 
 // Serve knowledge-base/data directory for JSON data
 app.use('/knowledge-base/data', express.static(path.join(process.cwd(), 'knowledge-base', 'data')));

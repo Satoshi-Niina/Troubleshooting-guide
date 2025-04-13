@@ -482,9 +482,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           // PPTXの場合は画像も抽出済み
           metadata = { 
             type: 'pptx',
-            // スライド画像へのパスをメタデータに追加
+            // スライド画像へのパスをメタデータに追加（一元化するためにuploads/imagesに統一）
             slideImages: Array.from({length: 4}, (_, i) => 
-              `/knowledge-base/images/${path.basename(filePath, path.extname(filePath))}_${(i+1).toString().padStart(3, '0')}.png`
+              `/uploads/images/${path.basename(filePath, path.extname(filePath))}_${(i+1).toString().padStart(3, '0')}.png`
             )
           };
           break;

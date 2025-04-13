@@ -4,22 +4,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
 import { cancelSearch } from "@/lib/image-search";
 
-// 画像パスを修正するヘルパー関数
+// 画像パスを修正するヘルパー関数 - すべて/uploads/imagesパスに統一
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
-  // すでに knowledge-base パスを持っていれば変更しない
-  if (path.includes('/knowledge-base/images/')) {
+  // すでに uploads/images パスを持っていれば変更しない
+  if (path.includes('/uploads/images/')) {
     return path;
   }
   
-  // /uploads/images/ のパスを /knowledge-base/images/ に変換
-  // ファイル名だけ保持して新しいパスにする
-  if (path.includes('/uploads/images/')) {
+  // knowledge-base/images/ パスを /uploads/images/ に統一
+  if (path.includes('/knowledge-base/images/')) {
     const fileName = path.split('/').pop();
     if (fileName) {
-      console.log('画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
+      return `/uploads/images/${fileName}`;
     }
   }
   
@@ -28,15 +26,13 @@ function fixImagePath(path: string | undefined): string {
     const parts = path.split('/');
     const fileName = parts.pop(); // 最後の部分（ファイル名）を取得
     if (fileName) {
-      console.log('汎用パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
+      return `/uploads/images/${fileName}`;
     }
   }
   
   // 単なるファイル名の場合（パスがない）
   if (!path.includes('/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
-    console.log('単純ファイル名からパス生成:', path, ' -> ', `/knowledge-base/images/${path}`);
-    return `/knowledge-base/images/${path}`;
+    return `/uploads/images/${path}`;
   }
   
   return path;
@@ -146,32 +142,20 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                     style={{ minHeight: '96px', minWidth: '96px' }} // 最小サイズを設定して白い画像問題を防止
                     loading="eager" // 急いで読み込んで点滅を防止
                     decoding="async" // 非同期デコードで表示を高速化
-                    // SVG対PNGの相互バックアップ
+                    // 画像読み込みエラー時の単純化したフォールバック
                     onError={(e) => {
                       const imgElement = e.currentTarget;
                       const originalSrc = imgElement.src;
                       
-                      // 現在の画像が読み込めない場合、別のフォーマットを試す
-                      if (result.url && result.pngFallbackUrl) {
-                        // もし現在PNGを表示していて、SVGが利用可能ならSVGにフォールバック
-                        const fixedPngPath = fixImagePath(result.pngFallbackUrl);
-                        const fixedSvgPath = fixImagePath(result.url);
-                        
-                        if (originalSrc.includes('.png')) {
-                          console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc, '->', fixedSvgPath);
-                          imgElement.src = fixedSvgPath;
-                        } 
-                        // もし現在SVGを表示していて、PNGが利用可能ならPNGにフォールバック
-                        else if (originalSrc.includes('.svg')) {
-                          console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc, '->', fixedPngPath);
-                          imgElement.src = fixedPngPath;
-                        }
-                        // それでもだめなら古いパスを試す
-                        else if (fixedPngPath.includes('/knowledge-base/')) {
-                          const oldStylePath = fixedPngPath.replace('/knowledge-base/', '/uploads/');
-                          console.log('最終フォールバック、古いパスを試行:', originalSrc, '->', oldStylePath);
-                          imgElement.src = oldStylePath;
-                        }
+                      // SVGとPNG間の拡張子切替でフォールバック
+                      if (originalSrc.endsWith('.svg')) {
+                        // SVGが読み込めない場合はPNGに変更
+                        const pngPath = originalSrc.replace('.svg', '.png');
+                        imgElement.src = pngPath;
+                      } else if (originalSrc.endsWith('.png')) {
+                        // PNGが読み込めない場合はSVGに変更
+                        const svgPath = originalSrc.replace('.png', '.svg');
+                        imgElement.src = svgPath;
                       }
                     }}
                   />
