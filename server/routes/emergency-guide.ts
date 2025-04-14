@@ -165,9 +165,14 @@ router.post('/process', upload.single('file'), async (req: Request, res: Respons
     
     log(`応急処置ガイドの生成を開始します: ${originalName}`);
     
-    // PowerPointを処理してメタデータを抽出
-    const document = await processDocument(filePath);
-    const metadataJson = document.metadataJson;
+    // PowerPointを処理
+    await processDocument(filePath);
+    
+    // ファイル名から生成されるであろうmetadataJsonのパスを予測
+    // (document-processor.tsの処理によって生成される)
+    const timestamp = Date.now();
+    const slideImageBaseName = `mc_${timestamp}`;
+    const metadataJson = `/uploads/json/${slideImageBaseName}_metadata.json`;
     
     // メタデータJSONファイルパスからファイル名を抽出
     const metadataFileName = path.basename(metadataJson);
