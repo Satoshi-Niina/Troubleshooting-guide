@@ -479,11 +479,7 @@ const EmergencyGuideEdit: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col gap-6">
-        {/* ヘッダー */}
-        <div className="border-b pb-4">
-          <h1 className="text-2xl font-bold text-indigo-700">応急復旧フロー編集</h1>
-          <p className="text-gray-600">PowerPoint、Excel、PDFから生成されたフローデータを編集できます</p>
-        </div>
+        {/* ヘッダー - ページ上部に既にタイトルがあるので削除 */}
         
         {/* ガイドファイル一覧 */}
         <Card>
