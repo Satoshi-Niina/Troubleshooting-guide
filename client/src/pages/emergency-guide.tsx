@@ -30,7 +30,7 @@ const EmergencyGuidePage: React.FC = () => {
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger value="edit">ガイド編集</TabsTrigger>
+          <TabsTrigger value="edit">フロー編集</TabsTrigger>
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
         </TabsList>
         
