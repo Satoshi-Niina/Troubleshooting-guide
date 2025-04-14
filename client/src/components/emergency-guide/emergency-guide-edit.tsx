@@ -22,6 +22,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -156,6 +165,9 @@ const EmergencyGuideEdit: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  // 詳細表示ダイアログの状態
+  const [showGuideDetailDialog, setShowGuideDetailDialog] = useState(false);
   
   // 保存確認ダイアログの状態
   const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
@@ -533,7 +545,12 @@ const EmergencyGuideEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
+                                // 選択したファイルIDを設定
                                 setSelectedGuideId(file.id);
+                                // ファイルの詳細データを取得
+                                fetchGuideData(file.id);
+                                // モーダルダイアログで表示するように状態変更
+                                setShowGuideDetailDialog(true);
                               }}
                             >
                               詳細
@@ -842,6 +859,142 @@ const EmergencyGuideEdit: React.FC = () => {
             </CardContent>
           </Card>
         )}
+        
+        {/* ガイド詳細表示シート */}
+        <Sheet open={showGuideDetailDialog} onOpenChange={setShowGuideDetailDialog}>
+          <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+            <SheetHeader className="mb-5">
+              <SheetTitle>応急復旧データ詳細</SheetTitle>
+              <SheetDescription>
+                {guideData ? `${guideData.data.metadata.タイトル} (${formatDate(guideData.data.metadata.作成日)})` : '読み込み中...'}
+              </SheetDescription>
+            </SheetHeader>
+            
+            {guideData && (
+              <Tabs defaultValue="metadata" className="w-full">
+                <TabsList className="grid grid-cols-3 mb-4">
+                  <TabsTrigger value="metadata">メタデータ</TabsTrigger>
+                  <TabsTrigger value="slides">スライド内容</TabsTrigger>
+                  <TabsTrigger value="connections">接続番号</TabsTrigger>
+                </TabsList>
+                
+                {/* メタデータタブ */}
+                <TabsContent value="metadata">
+                  <div className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="title">タイトル</Label>
+                        <div className="p-2 border rounded-md bg-gray-50">{guideData.data.metadata.タイトル}</div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="author">作成者</Label>
+                        <div className="p-2 border rounded-md bg-gray-50">{guideData.data.metadata.作成者}</div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="description">説明</Label>
+                        <div className="p-2 border rounded-md bg-gray-50 min-h-[100px] whitespace-pre-wrap">
+                          {guideData.data.metadata.説明}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* スライド内容タブ */}
+                <TabsContent value="slides">
+                  <div className="space-y-8">
+                    {guideData.data.slides.map((slide: any, slideIndex: number) => (
+                      <Card key={slideIndex} className="border-indigo-200">
+                        <CardHeader className="bg-indigo-50 rounded-t-lg">
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg">
+                              スライド {slide.スライド番号}: {slide.タイトル}
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-4 space-y-4">
+                          <div className="grid gap-2">
+                            <Label>本文</Label>
+                            {slide.本文.map((text: string, textIndex: number) => (
+                              <div 
+                                key={textIndex}
+                                className="p-2 border rounded-md bg-gray-50 mb-2 whitespace-pre-wrap"
+                              >
+                                {text}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="grid gap-2">
+                            <Label>ノート</Label>
+                            <div className="p-2 border rounded-md bg-gray-50 whitespace-pre-wrap">
+                              {slide.ノート}
+                            </div>
+                          </div>
+                          
+                          {slide.画像テキスト && slide.画像テキスト.length > 0 && (
+                            <div className="grid gap-2">
+                              <Label>画像</Label>
+                              <div className="grid grid-cols-2 gap-4">
+                                {slide.画像テキスト.map((imgText: any, imgIndex: number) => (
+                                  <div key={imgIndex} className="border rounded-lg p-2">
+                                    <img 
+                                      src={imgText.画像パス} 
+                                      alt={`スライド${slide.スライド番号}の画像${imgIndex + 1}`}
+                                      className="w-full h-auto mb-2 rounded"
+                                    />
+                                    <p className="text-sm text-gray-600">{imgText.テキスト}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+                
+                {/* 接続番号タブ */}
+                <TabsContent value="connections">
+                  <div className="space-y-4">                    
+                    {connectionNumbers.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                        <p>接続番号が見つかりませんでした</p>
+                        <p className="text-sm mt-2">テキスト内の「接続番号: 数字」パターンを検索します</p>
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>場所</TableHead>
+                            <TableHead>接続番号</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {connectionNumbers.map((conn) => (
+                            <TableRow key={conn.id}>
+                              <TableCell>{conn.label}</TableCell>
+                              <TableCell>
+                                <Badge>{conn.value}</Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
+            
+            <SheetFooter className="mt-6">
+              <Button variant="outline" onClick={() => setShowGuideDetailDialog(false)}>
+                閉じる
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
         {/* 保存確認ダイアログ */}
         <Dialog open={showSaveConfirmDialog} onOpenChange={setShowSaveConfirmDialog}>
