@@ -77,7 +77,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     if (!selectedFile) {
       toast({
         title: "ファイルが選択されていません",
-        description: "アップロードするPowerPointファイルを選択してください",
+        description: "アップロードするファイルを選択してください",
         variant: "destructive",
       });
       return;
@@ -120,7 +120,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
         
         toast({
           title: "アップロード成功",
-          description: "PowerPointファイルが正常に処理されました",
+          description: "ファイルが正常に処理されました",
         });
         
         if (onUploadSuccess) {
@@ -160,7 +160,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".pptx,.ppt"
+          accept=".pptx,.ppt,.xlsx,.xls,.pdf"
           className="hidden"
         />
         
