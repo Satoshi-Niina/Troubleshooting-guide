@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-  <rect width="200" height="200" fill="#f0f0f0" />
-  <circle cx="100" cy="100" r="80" fill="#4a86e8" />
-  <rect x="60" y="60" width="80" height="80" fill="#e69138" />
-  <text x="100" y="150" font-family="Arial" font-size="14" text-anchor="middle" fill="white">接続部分の図</text>
-</svg>
