@@ -30,10 +30,13 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       // 拡張子チェック
-      if (!file.name.toLowerCase().endsWith('.pptx') && !file.name.toLowerCase().endsWith('.ppt')) {
+      const extension = file.name.toLowerCase().split('.').pop() || '';
+      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf'];
+      
+      if (!allowedExtensions.includes(extension)) {
         toast({
           title: "未対応のファイル形式",
-          description: "PowerPointファイル(.pptx, .ppt)のみアップロード可能です",
+          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、またはPDF(.pdf)ファイルのみアップロード可能です",
           variant: "destructive",
         });
         return;
@@ -54,10 +57,13 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       // 拡張子チェック
-      if (!file.name.toLowerCase().endsWith('.pptx') && !file.name.toLowerCase().endsWith('.ppt')) {
+      const extension = file.name.toLowerCase().split('.').pop() || '';
+      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf'];
+      
+      if (!allowedExtensions.includes(extension)) {
         toast({
           title: "未対応のファイル形式",
-          description: "PowerPointファイル(.pptx, .ppt)のみアップロード可能です",
+          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、またはPDF(.pdf)ファイルのみアップロード可能です",
           variant: "destructive",
         });
         return;
@@ -145,8 +151,8 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>応急処置ガイド作成</CardTitle>
-        <CardDescription>PowerPointファイルから応急処置ガイドを生成します</CardDescription>
+        <CardTitle>応急復旧フロー編集</CardTitle>
+        <CardDescription>PowerPoint、Excel、またはPDFファイルから応急復旧フローを生成します</CardDescription>
       </CardHeader>
       <CardContent>
         {/* ファイル入力 (非表示) */}
@@ -181,7 +187,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
             <div className="flex flex-col items-center">
               <UploadCloud className="h-10 w-10 text-gray-400 mb-2" />
               <p className="text-gray-700">
-                PowerPointファイルをドラッグ＆ドロップ
+                ファイルをドラッグ＆ドロップ
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 または<span className="text-indigo-600">クリックして選択</span>

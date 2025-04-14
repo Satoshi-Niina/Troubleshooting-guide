@@ -18,13 +18,13 @@ const EmergencyGuidePage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <Helmet>
-        <title>応急処置ガイド管理 | 保守用車支援システム</title>
+        <title>応急復旧フロー編集 | 保守用車支援システム</title>
       </Helmet>
       
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-blue-800 mb-2">応急処置ガイド管理</h1>
+        <h1 className="text-2xl font-bold text-blue-800 mb-2">応急復旧フロー編集</h1>
         <p className="text-gray-600">
-          PowerPointからの応急処置ガイドの作成と編集を行います
+          各種ファイルからの応急復旧フローの作成と編集を行います
         </p>
       </div>
 
