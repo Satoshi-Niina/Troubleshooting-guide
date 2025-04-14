@@ -546,7 +546,7 @@ const EmergencyGuideEdit: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* ガイド編集エリア */}
+        {/* ガイド編集エリア - 選択されている場合のみ表示 */}
         {selectedGuideId && guideData && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
