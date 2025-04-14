@@ -95,6 +95,7 @@ const EmergencyGuideEdit: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedGuideData, setEditedGuideData] = useState<any>(null);
+  const [showEditCard, setShowEditCard] = useState(false); // 編集カードを表示するかどうかのフラグ
   
   // 接続番号の状態
   const [connectionNumbers, setConnectionNumbers] = useState<ConnectionNumber[]>([]);
@@ -529,11 +530,13 @@ const EmergencyGuideEdit: React.FC = () => {
                               フロー編集
                             </Button>
                             <Button
-                              variant={selectedGuideId === file.id ? "default" : "outline"}
+                              variant="outline"
                               size="sm"
-                              onClick={() => setSelectedGuideId(file.id)}
+                              onClick={() => {
+                                setSelectedGuideId(file.id);
+                              }}
                             >
-                              {selectedGuideId === file.id ? "選択中" : "選択"}
+                              詳細
                             </Button>
                           </div>
                         </TableCell>
@@ -546,8 +549,8 @@ const EmergencyGuideEdit: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* ガイド編集エリア - 選択されている場合のみ表示 */}
-        {selectedGuideId && guideData && (
+        {/* ガイド編集エリア - 新しいウィンドウで開くため、このエリアは非表示にする */}
+        {false && selectedGuideId && guideData && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
