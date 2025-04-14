@@ -526,7 +526,7 @@ const EmergencyGuideEdit: React.FC = () => {
                               onClick={() => window.location.href = `/troubleshooting?guideId=${file.id}`}
                             >
                               <LifeBuoy className="h-4 w-4 mr-1" />
-                              トラブル診断
+                              フロー編集
                             </Button>
                             <Button
                               variant={selectedGuideId === file.id ? "default" : "outline"}

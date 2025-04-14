@@ -574,9 +574,9 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
-            <CardTitle className="text-xl">トラブルシューティング編集</CardTitle>
+            <CardTitle className="text-xl">フロー編集</CardTitle>
             <CardDescription>
-              {id ? 'トラブルシューティングデータを編集' : '新規トラブルシューティングを作成'}
+              {id ? 'トラブルシューティングフローを編集' : '新規トラブルシューティングフローを作成'}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -619,8 +619,16 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
             {/* 基本情報タブ */}
             <TabsContent value="basic" className="space-y-4">
               <div className="grid gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-medium mb-2 text-blue-700">基本情報とは</h3>
+                  <p className="text-sm text-blue-700 mb-2">
+                    トラブルシューティングフローの基本的な情報を設定します。IDは一意の識別子として使用されます。
+                  </p>
+                </div>
+                
                 <div className="grid gap-2">
                   <Label htmlFor="id">ID (一意のキー)</Label>
+                  <p className="text-sm text-gray-500">他のフローと重複しない一意の識別子です。英数字とアンダースコアを使用してください。</p>
                   <Input
                     id="id"
                     value={editedData.id}
@@ -632,6 +640,7 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
                 
                 <div className="grid gap-2">
                   <Label htmlFor="title">タイトル</Label>
+                  <p className="text-sm text-gray-500">ユーザーに表示されるフローの名前です。わかりやすい名前をつけてください。</p>
                   <Input
                     id="title"
                     value={editedData.title}
@@ -642,6 +651,7 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
                 
                 <div className="grid gap-2">
                   <Label htmlFor="description">説明</Label>
+                  <p className="text-sm text-gray-500">フローの目的や使い方を説明します。内部参照用なのでユーザーには表示されません。</p>
                   <Textarea
                     id="description"
                     value={editedData.description}
@@ -656,9 +666,16 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
             {/* トリガー設定タブ */}
             <TabsContent value="triggers" className="space-y-4">
               <div className="mb-4">
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-medium mb-2 text-blue-700">トリガー設定とは</h3>
+                  <p className="text-sm text-blue-700 mb-2">
+                    トリガーとは、このフローを自動的に起動させるためのキーワードです。ユーザーがチャットでこれらのキーワードを含む質問をすると、このフローが候補として表示されます。
+                  </p>
+                </div>
+                
                 <Label htmlFor="triggers">トリガーキーワード</Label>
                 <p className="text-sm text-gray-500 mb-2">
-                  このトラブルシューティングを起動するキーワードを設定します。
+                  このトラブルシューティングを起動するキーワードを設定します。複数のキーワードを追加できます。
                 </p>
                 
                 <div className="flex items-center gap-2 mb-2">
@@ -713,6 +730,19 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
             
             {/* ステップ管理タブ */}
             <TabsContent value="steps" className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 className="font-medium mb-2 text-blue-700">ステップ管理とは</h3>
+                <p className="text-sm text-blue-700 mb-2">
+                  ステップはフロー内の各画面を表します。ユーザーはステップごとにメッセージを読み、選択肢を選んで次のステップに進みます。
+                </p>
+                <p className="text-sm text-blue-700">
+                  <strong>ステップID：</strong> 各ステップの一意の識別子<br/>
+                  <strong>メッセージ内容：</strong> ユーザーに表示されるテキスト<br/>
+                  <strong>次のステップID：</strong> 選択肢がない場合の遷移先<br/>
+                  <strong>選択肢オプション：</strong> ユーザーが選べる選択肢とその遷移先<br/>
+                  <strong>チェックリスト：</strong> ユーザーに表示される確認項目
+                </p>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 {/* 左サイドバー - ステップ一覧 */}
                 <div className="border rounded-lg p-4">
