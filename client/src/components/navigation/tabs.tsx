@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Database, Settings } from "lucide-react";
+import { MessageSquare, Database, Settings, FileText } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 interface TabsProps {
@@ -33,6 +33,12 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
       title: "データ処理",
       path: "/processing",
       icon: <Database className="mr-2 h-4 w-4" />,
+      adminOnly: true,
+    },
+    {
+      title: "応急処置ガイド",
+      path: "/emergency-guide",
+      icon: <FileText className="mr-2 h-4 w-4" />,
       adminOnly: true,
     },
     {
