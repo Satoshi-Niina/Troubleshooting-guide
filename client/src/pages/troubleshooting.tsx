@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, FileText, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Search, Plus, FileText, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import TroubleshootingEditor from '@/components/troubleshooting/troubleshooting-editor';
 import TroubleshootingFlow from '@/components/troubleshooting/troubleshooting-flow';
 import {
@@ -32,6 +32,10 @@ const TroubleshootingPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [troubleshootingList, setTroubleshootingList] = useState<TroubleshootingData[]>([]);
   const [filteredList, setFilteredList] = useState<TroubleshootingData[]>([]);
+  
+  // ガイドID (URL パラメータから取得)
+  const [guideId, setGuideId] = useState<string | null>(null);
+  const [isFromEmergencyGuide, setIsFromEmergencyGuide] = useState(false);
   
   // 編集モード関連
   const [editMode, setEditMode] = useState(false);
@@ -65,8 +69,21 @@ const TroubleshootingPage: React.FC = () => {
     }
   };
 
-  // 初期ロード
+  // URLクエリパラメータの処理
   useEffect(() => {
+    // URLからguideIdを取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const guideIdParam = urlParams.get('guideId');
+    
+    if (guideIdParam) {
+      setGuideId(guideIdParam);
+      setIsFromEmergencyGuide(true);
+      
+      // ガイドIDがある場合は新規トラブルシューティング作成モードを開始
+      setCurrentId(null);
+      setEditMode(true);
+    }
+    
     fetchData();
   }, []);
 
@@ -102,16 +119,33 @@ const TroubleshootingPage: React.FC = () => {
 
   // 編集/作成のキャンセル
   const handleCancelEdit = () => {
-    setEditMode(false);
-    setCurrentId(null);
+    // 応急復旧フローから来た場合は元のページに戻る
+    if (isFromEmergencyGuide && guideId) {
+      window.location.href = '/emergency-guide';
+    } else {
+      setEditMode(false);
+      setCurrentId(null);
+    }
   };
 
   // 編集/作成の保存完了
   const handleSaved = () => {
-    setEditMode(false);
-    setCurrentId(null);
-    // データを再取得
-    fetchData();
+    // 応急復旧フローから来た場合は元のページに戻る
+    if (isFromEmergencyGuide && guideId) {
+      toast({
+        title: '保存完了',
+        description: 'トラブルシューティングデータを保存しました。応急復旧データ作成ページに戻ります。',
+      });
+      // 少し遅延させて通知を見せてから遷移
+      setTimeout(() => {
+        window.location.href = '/emergency-guide';
+      }, 1500);
+    } else {
+      setEditMode(false);
+      setCurrentId(null);
+      // データを再取得
+      fetchData();
+    }
   };
 
   // プレビューモードの開始
@@ -169,10 +203,29 @@ const TroubleshootingPage: React.FC = () => {
   if (editMode) {
     return (
       <div className="container mx-auto p-6">
+        {isFromEmergencyGuide && guideId && (
+          <Card className="mb-4">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>応急復旧データに関連付けられたトラブルシューティング</CardTitle>
+                  <CardDescription>
+                    ガイドID: {guideId}
+                  </CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => window.location.href = '/emergency-guide'}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  応急復旧データ作成に戻る
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
         <TroubleshootingEditor 
           id={currentId || undefined} 
           onCancel={handleCancelEdit} 
-          onSaved={handleSaved} 
+          onSaved={handleSaved}
+          guideId={guideId || undefined}
         />
       </div>
     );
