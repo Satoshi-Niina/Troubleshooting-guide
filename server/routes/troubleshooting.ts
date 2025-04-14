@@ -28,6 +28,19 @@ function loadTroubleshootingFile(filename: string) {
   }
 }
 
+// トラブルシューティングファイルの保存
+function saveTroubleshootingFile(filename: string, data: any) {
+  try {
+    const filePath = path.join(TROUBLESHOOTING_DIR, filename);
+    const fileContent = JSON.stringify(data, null, 2);
+    fs.writeFileSync(filePath, fileContent, 'utf-8');
+    return true;
+  } catch (error) {
+    console.error(`トラブルシューティングファイルの保存に失敗しました: ${filename}`, error);
+    return false;
+  }
+}
+
 // トラブルシューティングルートの登録
 export function registerTroubleshootingRoutes(app: Express) {
   // ディレクトリの存在を確認
@@ -45,7 +58,8 @@ export function registerTroubleshootingRoutes(app: Express) {
           
           return {
             id: data.id || path.basename(file, '.json'),
-            description: data.description || data.title || '応急処置ガイド',
+            title: data.title || '未設定タイトル',
+            description: data.description || '',
             trigger: data.trigger || []
           };
         })
@@ -73,6 +87,102 @@ export function registerTroubleshootingRoutes(app: Express) {
     } catch (error) {
       console.error('トラブルシューティングデータの取得に失敗しました:', error);
       res.status(500).json({ error: 'トラブルシューティングデータの取得に失敗しました' });
+    }
+  });
+  
+  // トラブルシューティングデータの作成
+  app.post('/api/troubleshooting/create', (req: Request, res: Response) => {
+    try {
+      const data = req.body;
+      
+      if (!data || !data.id) {
+        return res.status(400).json({ error: 'データが無効です。IDは必須です。' });
+      }
+      
+      // ファイル名として使用するIDを正規化（空白を除去し、安全な文字のみに）
+      const safeId = data.id.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      const filename = `${safeId}.json`;
+      
+      // 既存ファイルのチェック
+      const existingFilePath = path.join(TROUBLESHOOTING_DIR, filename);
+      if (fs.existsSync(existingFilePath)) {
+        return res.status(409).json({ error: '同じIDのデータが既に存在します' });
+      }
+      
+      // データの保存
+      const success = saveTroubleshootingFile(filename, data);
+      
+      if (success) {
+        res.status(201).json({ 
+          message: 'トラブルシューティングデータを作成しました',
+          id: safeId
+        });
+      } else {
+        res.status(500).json({ error: 'データの保存に失敗しました' });
+      }
+    } catch (error) {
+      console.error('トラブルシューティングデータの作成に失敗しました:', error);
+      res.status(500).json({ error: 'データの作成に失敗しました' });
+    }
+  });
+  
+  // トラブルシューティングデータの更新
+  app.post('/api/troubleshooting/update/:id', (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      
+      if (!data) {
+        return res.status(400).json({ error: 'データが無効です' });
+      }
+      
+      // 既存データの確認
+      const filename = `${id}.json`;
+      const existingData = loadTroubleshootingFile(filename);
+      
+      if (!existingData) {
+        return res.status(404).json({ error: '更新対象のデータが見つかりません' });
+      }
+      
+      // 更新データの保存
+      const success = saveTroubleshootingFile(filename, data);
+      
+      if (success) {
+        res.json({ 
+          message: 'トラブルシューティングデータを更新しました',
+          id
+        });
+      } else {
+        res.status(500).json({ error: 'データの更新に失敗しました' });
+      }
+    } catch (error) {
+      console.error('トラブルシューティングデータの更新に失敗しました:', error);
+      res.status(500).json({ error: 'データの更新に失敗しました' });
+    }
+  });
+  
+  // トラブルシューティングデータの削除
+  app.delete('/api/troubleshooting/:id', (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const filename = `${id}.json`;
+      const filePath = path.join(TROUBLESHOOTING_DIR, filename);
+      
+      // ファイルの存在確認
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: '削除対象のデータが見つかりません' });
+      }
+      
+      // ファイルの削除
+      fs.unlinkSync(filePath);
+      
+      res.json({ 
+        message: 'トラブルシューティングデータを削除しました',
+        id
+      });
+    } catch (error) {
+      console.error('トラブルシューティングデータの削除に失敗しました:', error);
+      res.status(500).json({ error: 'データの削除に失敗しました' });
     }
   });
   
@@ -131,7 +241,8 @@ export function registerTroubleshootingRoutes(app: Express) {
           if (score > 0) {
             return {
               id: data.id || path.basename(file, '.json'),
-              description: data.description || data.title || '応急処置ガイド',
+              title: data.title || '',
+              description: data.description || '',
               trigger: data.trigger || [],
               score
             };
