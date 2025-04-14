@@ -153,6 +153,75 @@ const EmergencyGuideEdit: React.FC = () => {
     }
   };
   
+  // 保存確認ダイアログの状態
+  const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
+  const [saveChanges, setSaveChanges] = useState<{
+    added: number;
+    modified: number;
+    deleted: number;
+  }>({ added: 0, modified: 0, deleted: 0 });
+  
+  // 変更内容を分析する関数
+  const analyzeChanges = () => {
+    if (!guideData || !editedGuideData) return { added: 0, modified: 0, deleted: 0 };
+    
+    let added = 0;
+    let modified = 0;
+    let deleted = 0;
+    
+    // メタデータの変更をチェック
+    const metadataKeys = ['タイトル', '作成者', '説明'];
+    metadataKeys.forEach(key => {
+      if (guideData.data.metadata[key] !== editedGuideData.metadata[key]) {
+        modified++;
+      }
+    });
+    
+    // スライド数の変更をチェック
+    if (guideData.data.slides.length > editedGuideData.slides.length) {
+      deleted += guideData.data.slides.length - editedGuideData.slides.length;
+    } else if (guideData.data.slides.length < editedGuideData.slides.length) {
+      added += editedGuideData.slides.length - guideData.data.slides.length;
+    }
+    
+    // 共通するスライドの変更をチェック
+    const minSlideCount = Math.min(guideData.data.slides.length, editedGuideData.slides.length);
+    for (let i = 0; i < minSlideCount; i++) {
+      const origSlide = guideData.data.slides[i];
+      const editedSlide = editedGuideData.slides[i];
+      
+      // スライドの各部分を比較
+      if (origSlide.タイトル !== editedSlide.タイトル || 
+          origSlide.ノート !== editedSlide.ノート ||
+          JSON.stringify(origSlide.本文) !== JSON.stringify(editedSlide.本文)) {
+        modified++;
+      }
+    }
+    
+    return { added, modified, deleted };
+  };
+
+  // 保存ボタンがクリックされたときの処理
+  const handleSaveClick = () => {
+    if (!selectedGuideId || !editedGuideData) return;
+    
+    // 変更内容を分析
+    const changes = analyzeChanges();
+    setSaveChanges(changes);
+    
+    // 変更がある場合、確認ダイアログを表示
+    if (changes.added > 0 || changes.modified > 0 || changes.deleted > 0) {
+      setShowSaveConfirmDialog(true);
+    } else {
+      // 変更がない場合は編集モードを終了
+      setIsEditing(false);
+      toast({
+        title: "変更なし",
+        description: "変更点はありませんでした",
+      });
+    }
+  };
+
   // ガイドデータの更新
   const updateGuideData = async () => {
     if (!selectedGuideId || !editedGuideData) return;
@@ -164,27 +233,32 @@ const EmergencyGuideEdit: React.FC = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ data: editedGuideData })
+        body: JSON.stringify({ 
+          data: editedGuideData,
+          connectionNumbers: connectionNumbers
+        })
       });
       
       if (!response.ok) {
-        throw new Error('ガイドデータの更新に失敗しました');
+        throw new Error('応急復旧フローデータの更新に失敗しました');
       }
       
       // 更新成功
       toast({
         title: '更新完了',
-        description: 'ガイドデータを更新しました',
+        description: '応急復旧フローデータを更新しました',
       });
       
       // 最新データを再取得
       fetchGuideData(selectedGuideId);
       setIsEditing(false);
+      // 確認ダイアログを閉じる
+      setShowSaveConfirmDialog(false);
     } catch (error) {
       console.error('ガイド更新エラー:', error);
       toast({
         title: 'エラー',
-        description: 'ガイドデータの更新に失敗しました',
+        description: '応急復旧フローデータの更新に失敗しました',
         variant: 'destructive',
       });
     } finally {
@@ -491,7 +565,7 @@ const EmergencyGuideEdit: React.FC = () => {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={updateGuideData}
+                      onClick={handleSaveClick}
                       disabled={isSaving}
                     >
                       {isSaving ? (
@@ -756,6 +830,61 @@ const EmergencyGuideEdit: React.FC = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* 保存確認ダイアログ */}
+        <Dialog open={showSaveConfirmDialog} onOpenChange={setShowSaveConfirmDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>変更内容の確認</DialogTitle>
+              <DialogDescription>
+                以下の変更を保存しますか？
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="space-y-2">
+                {saveChanges.added > 0 && (
+                  <div className="flex items-center text-green-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span>新規追加項目: {saveChanges.added}件</span>
+                  </div>
+                )}
+                {saveChanges.modified > 0 && (
+                  <div className="flex items-center text-blue-600">
+                    <Pencil className="h-4 w-4 mr-2" />
+                    <span>更新項目: {saveChanges.modified}件</span>
+                  </div>
+                )}
+                {saveChanges.deleted > 0 && (
+                  <div className="flex items-center text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    <span>削除項目: {saveChanges.deleted}件</span>
+                  </div>
+                )}
+              </div>
+              <p className="mt-4 text-sm text-gray-600">
+                保存すると既存のデータは上書きされます。削除した項目は完全に削除され、新規追加した項目がこのフローに追加されます。
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSaveConfirmDialog(false)}>
+                キャンセル
+              </Button>
+              <Button onClick={updateGuideData} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" />
+                    変更を保存
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

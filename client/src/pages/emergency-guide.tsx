@@ -30,16 +30,16 @@ const EmergencyGuidePage: React.FC = () => {
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger value="edit">フロー編集</TabsTrigger>
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
+          <TabsTrigger value="edit">フロー編集</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="edit" className="space-y-4">
-          <EmergencyGuideEdit />
-        </TabsContent>
         
         <TabsContent value="upload" className="space-y-4">
           <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
+        </TabsContent>
+        
+        <TabsContent value="edit" className="space-y-4">
+          <EmergencyGuideEdit />
         </TabsContent>
       </Tabs>
     </div>
