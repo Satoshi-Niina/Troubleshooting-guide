@@ -37,7 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Pencil, Save, X, Plus, Trash2, FileText } from 'lucide-react';
+import { Loader2, Pencil, Save, X, Plus, Trash2, FileText, LifeBuoy } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // APIからのガイドファイル型定義
@@ -519,13 +519,23 @@ const EmergencyGuideEdit: React.FC = () => {
                         <TableCell>{formatDate(file.createdAt)}</TableCell>
                         <TableCell>{file.slideCount}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant={selectedGuideId === file.id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedGuideId(file.id)}
-                          >
-                            {selectedGuideId === file.id ? "選択中" : "選択"}
-                          </Button>
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.location.href = `/troubleshooting?guideId=${file.id}`}
+                            >
+                              <LifeBuoy className="h-4 w-4 mr-1" />
+                              トラブル診断
+                            </Button>
+                            <Button
+                              variant={selectedGuideId === file.id ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedGuideId(file.id)}
+                            >
+                              {selectedGuideId === file.id ? "選択中" : "選択"}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -541,7 +551,7 @@ const EmergencyGuideEdit: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
-                <CardTitle>応急復旧フロー編集</CardTitle>
+                <CardTitle>応急復旧データ編集</CardTitle>
                 <CardDescription>
                   {guideData.data.metadata.タイトル} ({formatDate(guideData.data.metadata.作成日)})
                 </CardDescription>
