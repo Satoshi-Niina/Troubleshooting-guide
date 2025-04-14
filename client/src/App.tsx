@@ -10,6 +10,7 @@ import Settings from "@/pages/settings";
 import Users from "@/pages/users";
 import Documents from "@/pages/documents";
 import EmergencyGuide from "@/pages/emergency-guide";
+import Troubleshooting from "@/pages/troubleshooting";
 import { useAuth, AuthProvider } from "./context/auth-context";
 import { ChatProvider } from "./context/chat-context";
 import Header from "./components/navigation/header";
@@ -106,6 +107,14 @@ function Router() {
             <ProtectedRoute>
               <AdminRoute>
                 <EmergencyGuide />
+              </AdminRoute>
+            </ProtectedRoute>
+          </Route>
+          
+          <Route path="/troubleshooting">
+            <ProtectedRoute>
+              <AdminRoute>
+                <Troubleshooting />
               </AdminRoute>
             </ProtectedRoute>
           </Route>

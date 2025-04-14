@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Database, Settings, FileText } from "lucide-react";
+import { MessageSquare, Database, Settings, FileText, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 interface TabsProps {
@@ -39,6 +39,12 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
       title: "応急復旧フロー編集",
       path: "/emergency-guide",
       icon: <FileText className="mr-2 h-4 w-4" />,
+      adminOnly: true,
+    },
+    {
+      title: "トラブルシューティング",
+      path: "/troubleshooting",
+      icon: <LifeBuoy className="mr-2 h-4 w-4" />,
       adminOnly: true,
     },
     {

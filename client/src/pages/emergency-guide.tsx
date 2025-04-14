@@ -24,7 +24,7 @@ const EmergencyGuidePage: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-blue-800 mb-2">応急復旧フロー編集</h1>
         <p className="text-gray-600">
-          各種ファイルからの応急復旧フローの作成と編集を行います
+          PowerPoint、Excel、PDFから生成されたフローデータからファイルをアップロード、編集できます。
         </p>
       </div>
 
