@@ -60,12 +60,14 @@ interface TroubleshootingData {
 
 interface TroubleshootingEditorProps {
   id?: string; // 既存のトラブルシューティングID（編集時）
+  guideId?: string; // 関連する応急復旧ガイドID
   onCancel: () => void;
   onSaved: () => void;
 }
 
 const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({ 
   id, 
+  guideId,
   onCancel,
   onSaved
 }) => {
@@ -95,7 +97,9 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
       // 新規作成時
       setLoading(false);
       setOriginalData(null);
-      setEditedData({
+      
+      // 初期データを生成
+      const newData = {
         id: '',
         title: '',
         description: '',
@@ -105,7 +109,17 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
           message: '',
           next: ''
         }]
-      });
+      };
+      
+      // ガイドIDが指定されている場合は関連情報を追加
+      if (guideId) {
+        newData.id = `guide_ts_${guideId}`;
+        newData.title = `応急復旧ガイド関連トラブルシューティング`;
+        newData.description = `応急復旧ガイドID: ${guideId} に関連するトラブルシューティングフロー`;
+        newData.trigger = [`ガイド_${guideId}`];
+      }
+      
+      setEditedData(newData);
       return;
     }
     
@@ -135,7 +149,7 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [id, toast]);
+  }, [id, guideId, toast]);
   
   // 初期ロード
   useEffect(() => {
