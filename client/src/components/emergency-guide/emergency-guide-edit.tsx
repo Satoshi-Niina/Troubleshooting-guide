@@ -659,7 +659,7 @@ const EmergencyGuideEdit: React.FC = () => {
                         <Textarea
                           id="description"
                           rows={5}
-                          value={isEditing ? editedGuideData.metadata.説明 : guideData.data.metadata.説明}
+                          value={isEditing ? editedGuideData.metadata.説明 : guideData?.data.metadata.説明 || ""}
                           onChange={(e) => handleMetadataChange('説明', e.target.value)}
                           disabled={!isEditing}
                         />
@@ -671,7 +671,7 @@ const EmergencyGuideEdit: React.FC = () => {
                 {/* スライド内容タブ */}
                 <TabsContent value="slides">
                   <div className="space-y-8">
-                    {(isEditing ? editedGuideData.slides : guideData.data.slides).map((slide: any, slideIndex: number) => (
+                    {(isEditing ? editedGuideData.slides : guideData?.data.slides || []).map((slide: any, slideIndex: number) => (
                       <Card key={slideIndex} className="border-indigo-200">
                         <CardHeader className="bg-indigo-50 rounded-t-lg">
                           <div className="flex justify-between items-center">
