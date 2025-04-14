@@ -404,15 +404,15 @@ const EmergencyGuideEdit: React.FC = () => {
       <div className="flex flex-col gap-6">
         {/* ヘッダー */}
         <div className="border-b pb-4">
-          <h1 className="text-2xl font-bold text-indigo-700">応急処置ガイド編集</h1>
-          <p className="text-gray-600">PowerPointから生成されたガイドデータを編集できます</p>
+          <h1 className="text-2xl font-bold text-indigo-700">応急復旧フロー編集</h1>
+          <p className="text-gray-600">PowerPoint、Excel、PDFから生成されたフローデータを編集できます</p>
         </div>
         
         {/* ガイドファイル一覧 */}
         <Card>
           <CardHeader>
-            <CardTitle>応急処置ガイドファイル一覧</CardTitle>
-            <CardDescription>編集するガイドファイルを選択してください</CardDescription>
+            <CardTitle>応急復旧フローファイル一覧</CardTitle>
+            <CardDescription>編集するフローファイルを選択してください</CardDescription>
           </CardHeader>
           <CardContent>
             {loading && !guideFiles.length ? (
@@ -422,8 +422,8 @@ const EmergencyGuideEdit: React.FC = () => {
             ) : guideFiles.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                <p>ガイドファイルがありません</p>
-                <p className="text-sm mt-2">PowerPointファイルをアップロードして処理してください</p>
+                <p>フローファイルがありません</p>
+                <p className="text-sm mt-2">PowerPoint, Excel, またはPDFファイルをアップロードして処理してください</p>
               </div>
             ) : (
               <ScrollArea className="h-[300px]">
@@ -468,7 +468,7 @@ const EmergencyGuideEdit: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
-                <CardTitle>ガイド編集</CardTitle>
+                <CardTitle>応急復旧フロー編集</CardTitle>
                 <CardDescription>
                   {guideData.data.metadata.タイトル} ({formatDate(guideData.data.metadata.作成日)})
                 </CardDescription>

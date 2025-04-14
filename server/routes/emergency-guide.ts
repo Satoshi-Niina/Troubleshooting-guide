@@ -513,7 +513,7 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        content: `応急処置ガイド「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`,
+        content: `応急復旧フロー「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`,
         isUserMessage: false
       })
     });
@@ -526,12 +526,12 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
     
     res.json({
       success: true,
-      message: 'ガイドがチャットに送信されました',
+      message: '応急復旧フローがチャットに送信されました',
       messageId: result.id
     });
   } catch (error) {
-    console.error('ガイド送信エラー:', error);
-    res.status(500).json({ error: '応急処置ガイドのチャットへの送信に失敗しました' });
+    console.error('フロー送信エラー:', error);
+    res.status(500).json({ error: '応急復旧フローのチャットへの送信に失敗しました' });
   }
 });
 
