@@ -50,6 +50,9 @@ interface GuideFile {
   slideCount: number;
 }
 
+// メタデータフィールドの型
+type MetadataField = 'タイトル' | '作成者' | '作成日' | '修正日' | '説明';
+
 // ガイド詳細データ型定義
 interface GuideData {
   id: string;
@@ -170,7 +173,7 @@ const EmergencyGuideEdit: React.FC = () => {
     let deleted = 0;
     
     // メタデータの変更をチェック
-    const metadataKeys = ['タイトル', '作成者', '説明'];
+    const metadataKeys = ['タイトル', '作成者', '説明'] as const;
     metadataKeys.forEach(key => {
       if (guideData.data.metadata[key] !== editedGuideData.metadata[key]) {
         modified++;
@@ -398,7 +401,7 @@ const EmergencyGuideEdit: React.FC = () => {
   };
   
   // メタデータの編集ハンドラ
-  const handleMetadataChange = (field: string, value: string) => {
+  const handleMetadataChange = (field: MetadataField, value: string) => {
     if (!editedGuideData) return;
     
     setEditedGuideData({
