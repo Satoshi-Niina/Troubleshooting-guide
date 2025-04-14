@@ -38,11 +38,27 @@ async function loadImageSearchData() {
     }
     
     // 選択したJSONファイルを読み込む
-    const response = await fetch(`/uploads/json/${metadataFile}?t=${timestamp}`);
-    if (!response.ok) {
-      throw new Error(`メタデータJSONの読み込みに失敗: ${metadataFile}`);
+    let metadata;
+    try {
+      const response = await fetch(`/uploads/json/${metadataFile}?t=${timestamp}`);
+      if (!response.ok) {
+        throw new Error(`メタデータJSONの読み込みに失敗: ${metadataFile}`);
+      }
+      metadata = await response.json();
+    } catch (error) {
+      console.warn(`uploads/jsonからの読み込みに失敗: ${error}、knowledge-baseから読み込みを試行します`);
+      // knowledge-baseディレクトリから読み込みを試行
+      try {
+        const kbResponse = await fetch(`/knowledge-base/json/${metadataFile}?t=${timestamp}`);
+        if (!kbResponse.ok) {
+          throw new Error(`knowledge-baseからのメタデータJSONの読み込みに失敗: ${metadataFile}`);
+        }
+        metadata = await kbResponse.json();
+      } catch (kbError) {
+        console.error("両方のパスからの読み込みに失敗しました:", kbError);
+        throw kbError; // 上位のcatchで処理するためにエラーを再スロー
+      }
     }
-    const metadata = await response.json();
     
     // 既存データをクリア
     imageSearchData = [];
@@ -54,6 +70,11 @@ async function loadImageSearchData() {
       const slidesData = metadata.slides.map((slide: any) => {
         // 画像パスを取得
         let imagePath = slide['画像テキスト'] && slide['画像テキスト'][0] ? slide['画像テキスト'][0]['画像パス'] : "";
+        
+        // アップロードの参照をknowledge-baseに置き換え
+        if (imagePath && imagePath.includes('/uploads/images/')) {
+          imagePath = imagePath.replace('/uploads/images/', '/knowledge-base/images/');
+        }
         
         // JPEG画像の場合はPNGに置き換える
         if (imagePath.toLowerCase().endsWith('.jpeg') || imagePath.toLowerCase().endsWith('.jpg')) {
@@ -88,6 +109,11 @@ async function loadImageSearchData() {
           .filter((img: any) => img['抽出パス'] && typeof img['抽出パス'] === 'string')
           .map((img: any, index: number) => {
             let imagePath = img['抽出パス'];
+            
+            // アップロードの参照をknowledge-baseに置き換え
+            if (imagePath && imagePath.includes('/uploads/images/')) {
+              imagePath = imagePath.replace('/uploads/images/', '/knowledge-base/images/');
+            }
             
             // JPEG画像の場合はできればPNGに置き換え
             if (imagePath.toLowerCase().endsWith('.jpeg') || imagePath.toLowerCase().endsWith('.jpg')) {
@@ -135,13 +161,30 @@ async function loadImageSearchData() {
         console.log("画像検索データを初期化しました:", initData);
         
         // 再度データを読み込み
-        const reloadResponse = await fetch(`/uploads/data/image_search_data.json?t=${Date.now()}`);
-        if (reloadResponse.ok) {
-          const reloadedData = await reloadResponse.json();
-          if (Array.isArray(reloadedData)) {
-            console.log(`再読み込みした画像検索データ: ${reloadedData.length}件`);
-            imageSearchData = reloadedData;
-            return;
+        try {
+          const reloadResponse = await fetch(`/uploads/data/image_search_data.json?t=${Date.now()}`);
+          if (reloadResponse.ok) {
+            const reloadedData = await reloadResponse.json();
+            if (Array.isArray(reloadedData)) {
+              console.log(`再読み込みした画像検索データ: ${reloadedData.length}件`);
+              imageSearchData = reloadedData;
+              return;
+            }
+          }
+        } catch (error) {
+          console.warn(`uploads/dataからの読み込みに失敗、knowledge-baseから読み込みを試行します:`, error);
+          try {
+            const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
+            if (kbReloadResponse.ok) {
+              const reloadedData = await kbReloadResponse.json();
+              if (Array.isArray(reloadedData)) {
+                console.log(`knowledge-baseから再読み込みした画像検索データ: ${reloadedData.length}件`);
+                imageSearchData = reloadedData;
+                return;
+              }
+            }
+          } catch (kbError) {
+            console.error(`両方のパスからの再読み込みに失敗しました:`, kbError);
           }
         }
       }
