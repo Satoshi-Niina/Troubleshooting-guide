@@ -18,8 +18,10 @@ import {
   ChevronUp,
   FilePlus2,
   FileEdit,
-  FileX
+  FileX,
+  Eye
 } from 'lucide-react';
+import TroubleshootingPreview from './troubleshooting-preview';
 import {
   Accordion,
   AccordionContent,
@@ -99,7 +101,7 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
       setOriginalData(null);
       
       // 初期データを生成
-      const newData = {
+      const newData: TroubleshootingData = {
         id: '',
         title: '',
         description: '',
@@ -610,10 +612,11 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
         
         <CardContent>
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="basic">基本情報</TabsTrigger>
               <TabsTrigger value="triggers">トリガー設定</TabsTrigger>
               <TabsTrigger value="steps">ステップ管理</TabsTrigger>
+              <TabsTrigger value="preview">プレビュー</TabsTrigger>
             </TabsList>
             
             {/* 基本情報タブ */}
@@ -973,6 +976,28 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
                   )}
                 </div>
               </div>
+            </TabsContent>
+            
+            {/* プレビュータブ */}
+            <TabsContent value="preview" className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 className="font-medium mb-2 text-blue-700">プレビューとは</h3>
+                <p className="text-sm text-blue-700 mb-2">
+                  このフローがユーザーにどのように表示されるかをプレビューできます。実際の表示とは若干異なる場合があります。
+                </p>
+              </div>
+              
+              {editedData.steps.length > 0 ? (
+                <TroubleshootingPreview 
+                  steps={editedData.steps} 
+                  initialStepId="start"
+                />
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Eye className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                  <p>ステップを作成してプレビューを表示します</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
