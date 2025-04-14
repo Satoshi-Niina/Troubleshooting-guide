@@ -573,7 +573,7 @@ const EmergencyGuideEdit: React.FC = () => {
               <div>
                 <CardTitle>応急復旧データ編集</CardTitle>
                 <CardDescription>
-                  {guideData.data.metadata.タイトル} ({formatDate(guideData.data.metadata.作成日)})
+                  {guideData?.data.metadata.タイトル} ({formatDate(guideData?.data.metadata.作成日 || "")})
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -584,7 +584,9 @@ const EmergencyGuideEdit: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         setIsEditing(false);
-                        setEditedGuideData(JSON.parse(JSON.stringify(guideData.data)));
+                        if (guideData) {
+                          setEditedGuideData(JSON.parse(JSON.stringify(guideData.data)));
+                        }
                       }}
                       disabled={isSaving}
                     >
@@ -638,7 +640,7 @@ const EmergencyGuideEdit: React.FC = () => {
                         <Label htmlFor="title">タイトル</Label>
                         <Input
                           id="title"
-                          value={isEditing ? editedGuideData.metadata.タイトル : guideData.data.metadata.タイトル}
+                          value={isEditing ? editedGuideData.metadata.タイトル : guideData?.data.metadata.タイトル || ""}
                           onChange={(e) => handleMetadataChange('タイトル', e.target.value)}
                           disabled={!isEditing}
                         />
@@ -647,7 +649,7 @@ const EmergencyGuideEdit: React.FC = () => {
                         <Label htmlFor="author">作成者</Label>
                         <Input
                           id="author"
-                          value={isEditing ? editedGuideData.metadata.作成者 : guideData.data.metadata.作成者}
+                          value={isEditing ? editedGuideData.metadata.作成者 : guideData?.data.metadata.作成者 || ""}
                           onChange={(e) => handleMetadataChange('作成者', e.target.value)}
                           disabled={!isEditing}
                         />
@@ -884,16 +886,16 @@ const EmergencyGuideEdit: React.FC = () => {
                     <div className="grid gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="title">タイトル</Label>
-                        <div className="p-2 border rounded-md bg-gray-50">{guideData.data.metadata.タイトル}</div>
+                        <div className="p-2 border rounded-md bg-gray-50">{guideData?.data.metadata.タイトル}</div>
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="author">作成者</Label>
-                        <div className="p-2 border rounded-md bg-gray-50">{guideData.data.metadata.作成者}</div>
+                        <div className="p-2 border rounded-md bg-gray-50">{guideData?.data.metadata.作成者}</div>
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="description">説明</Label>
                         <div className="p-2 border rounded-md bg-gray-50 min-h-[100px] whitespace-pre-wrap">
-                          {guideData.data.metadata.説明}
+                          {guideData?.data.metadata.説明}
                         </div>
                       </div>
                     </div>
@@ -903,7 +905,7 @@ const EmergencyGuideEdit: React.FC = () => {
                 {/* スライド内容タブ */}
                 <TabsContent value="slides">
                   <div className="space-y-8">
-                    {guideData.data.slides.map((slide: any, slideIndex: number) => (
+                    {guideData?.data.slides.map((slide: any, slideIndex: number) => (
                       <Card key={slideIndex} className="border-indigo-200">
                         <CardHeader className="bg-indigo-50 rounded-t-lg">
                           <div className="flex justify-between items-center">
