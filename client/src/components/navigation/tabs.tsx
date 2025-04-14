@@ -42,12 +42,6 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
       adminOnly: true,
     },
     {
-      title: "トラブルシューティング",
-      path: "/troubleshooting",
-      icon: <LifeBuoy className="mr-2 h-4 w-4" />,
-      adminOnly: true,
-    },
-    {
       title: "設定",
       path: "/settings",
       icon: <Settings className="mr-2 h-4 w-4" />,
