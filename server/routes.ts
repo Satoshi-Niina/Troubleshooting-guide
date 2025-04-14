@@ -41,6 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register data processor routes
   registerDataProcessorRoutes(app);
   
+  // Register emergency guide routes
+  app.use('/api/emergency-guide', emergencyGuideRouter);
+  
   // Add a health check endpoint for testing
   app.get('/api/health', (req, res) => {
     res.json({ 

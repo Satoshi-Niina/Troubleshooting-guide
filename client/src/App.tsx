@@ -9,6 +9,7 @@ import Processing from "@/pages/processing";
 import Settings from "@/pages/settings";
 import Users from "@/pages/users";
 import Documents from "@/pages/documents";
+import EmergencyGuide from "@/pages/emergency-guide";
 import { useAuth, AuthProvider } from "./context/auth-context";
 import { ChatProvider } from "./context/chat-context";
 import Header from "./components/navigation/header";
@@ -97,6 +98,14 @@ function Router() {
             <ProtectedRoute>
               <AdminRoute>
                 <Documents />
+              </AdminRoute>
+            </ProtectedRoute>
+          </Route>
+          
+          <Route path="/emergency-guide">
+            <ProtectedRoute>
+              <AdminRoute>
+                <EmergencyGuide />
               </AdminRoute>
             </ProtectedRoute>
           </Route>
