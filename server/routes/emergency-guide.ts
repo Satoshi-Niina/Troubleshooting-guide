@@ -9,6 +9,33 @@ import { log } from '../vite';
 // PowerPointファイルからテキスト抽出ライブラリ
 import * as mammoth from 'mammoth';
 
+// 一時ファイルクリーンアップユーティリティ
+function cleanupTempDirectory(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) return;
+  
+  try {
+    const files = fs.readdirSync(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stat = fs.statSync(filePath);
+      
+      if (stat.isDirectory()) {
+        // 再帰的にディレクトリを削除
+        cleanupTempDirectory(filePath);
+        fs.rmdirSync(filePath);
+      } else {
+        // ファイルを削除
+        fs.unlinkSync(filePath);
+      }
+    }
+    
+    console.log(`一時ディレクトリをクリーンアップしました: ${dirPath}`);
+  } catch (error) {
+    console.error(`一時ディレクトリのクリーンアップに失敗しました: ${dirPath}`, error);
+  }
+}
+
 const router = Router();
 
 // アップロードディレクトリの設定
