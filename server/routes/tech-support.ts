@@ -13,15 +13,25 @@ function ensureDirectoryExists(directory: string) {
   }
 }
 
-// アップロード先ディレクトリを設定（public/uploads に統一）
-const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads');
-const publicImagesDir = path.join(publicUploadsDir, 'images');
-const publicDataDir = path.join(publicUploadsDir, 'data');
+// ディレクトリ構造の整理：知識ベース用、画像検索用、一時アップロード用に分離
+const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
+const knowledgeBaseDataDir = path.join(knowledgeBaseDir, 'data');
+const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
+
+// public/imagesディレクトリを画像検索用に使用
+const publicImagesDir = path.join(process.cwd(), 'public', 'images');
+
+// uploadsディレクトリは一時ファイル保存用に使用
+const uploadsDir = path.join(process.cwd(), 'uploads');
+const uploadsTempDir = path.join(uploadsDir, 'temp');
 
 // ディレクトリが存在することを確認
-ensureDirectoryExists(publicUploadsDir);
+ensureDirectoryExists(knowledgeBaseDir);
+ensureDirectoryExists(knowledgeBaseDataDir);
+ensureDirectoryExists(knowledgeBaseImagesDir);
 ensureDirectoryExists(publicImagesDir);
-ensureDirectoryExists(publicDataDir);
+ensureDirectoryExists(uploadsDir);
+ensureDirectoryExists(uploadsTempDir);
 
 // Multerストレージ設定
 const storage = multer.diskStorage({
@@ -34,8 +44,8 @@ const storage = multer.diskStorage({
       // 画像検索用の画像ファイルは公開imagesディレクトリに直接保存
       cb(null, publicImagesDir);
     } else {
-      // 文書ファイルも公開uploads直下に保存
-      cb(null, publicUploadsDir);
+      // 文書ファイルは一時保存用uploadsディレクトリに保存
+      cb(null, uploadsTempDir);
     }
   },
   filename: function (req, file, cb) {
@@ -340,8 +350,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         // メインの保存先はknowledge-base/data/ディレクトリ
         const imageSearchDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
         
-        // 下位互換性のためpublicディレクトリにも保存
-        const publicImageSearchDataPath = path.join(publicDataDir, 'image_search_data.json');
+        // 下位互換性のためuploadsディレクトリにも保存
+        const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
+        ensureDirectoryExists(uploadsDataDir);
+        const publicImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
         let imageSearchData = [];
         
         if (fs.existsSync(imageSearchDataPath)) {

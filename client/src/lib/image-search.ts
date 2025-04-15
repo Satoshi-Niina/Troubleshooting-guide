@@ -71,9 +71,11 @@ async function loadImageSearchData() {
         // 画像パスを取得
         let imagePath = slide['画像テキスト'] && slide['画像テキスト'][0] ? slide['画像テキスト'][0]['画像パス'] : "";
         
-        // アップロードの参照をknowledge-baseに置き換え
+        // 画像パスの参照を新しい構造に合わせて修正
         if (imagePath && imagePath.includes('/uploads/images/')) {
-          imagePath = imagePath.replace('/uploads/images/', '/knowledge-base/images/');
+          imagePath = imagePath.replace('/uploads/images/', '/images/');
+        } else if (imagePath && imagePath.includes('/knowledge-base/images/')) {
+          imagePath = imagePath.replace('/knowledge-base/images/', '/images/');
         }
         
         // JPEG画像の場合はPNGに置き換える
@@ -110,9 +112,11 @@ async function loadImageSearchData() {
           .map((img: any, index: number) => {
             let imagePath = img['抽出パス'];
             
-            // アップロードの参照をknowledge-baseに置き換え
+            // 画像パスの参照を新しい構造に合わせて修正
             if (imagePath && imagePath.includes('/uploads/images/')) {
-              imagePath = imagePath.replace('/uploads/images/', '/knowledge-base/images/');
+              imagePath = imagePath.replace('/uploads/images/', '/images/');
+            } else if (imagePath && imagePath.includes('/knowledge-base/images/')) {
+              imagePath = imagePath.replace('/knowledge-base/images/', '/images/');
             }
             
             // JPEG画像の場合はできればPNGに置き換え
@@ -296,8 +300,8 @@ async function loadImageSearchData() {
     imageSearchData = [
       {
         id: "engine_001",
-        file: "/knowledge-base/images/engine_001.svg",
-        pngFallback: "/knowledge-base/images/engine_001.png",
+        file: "/images/engine_001.svg",
+        pngFallback: "/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -305,8 +309,8 @@ async function loadImageSearchData() {
       },
       {
         id: "cooling_001",
-        file: "/knowledge-base/images/cooling_001.svg",
-        pngFallback: "/knowledge-base/images/cooling_001.png",
+        file: "/images/cooling_001.svg",
+        pngFallback: "/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -314,8 +318,8 @@ async function loadImageSearchData() {
       },
       {
         id: "frame_001",
-        file: "/knowledge-base/images/frame_001.svg",
-        pngFallback: "/knowledge-base/images/frame_001.png",
+        file: "/images/frame_001.svg",
+        pngFallback: "/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -323,8 +327,8 @@ async function loadImageSearchData() {
       },
       {
         id: "cabin_001",
-        file: "/knowledge-base/images/cabin_001.svg",
-        pngFallback: "/knowledge-base/images/cabin_001.png",
+        file: "/images/cabin_001.svg",
+        pngFallback: "/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],
