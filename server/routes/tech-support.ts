@@ -13,6 +13,34 @@ function ensureDirectoryExists(directory: string) {
   }
 }
 
+// 一時ファイルクリーンアップユーティリティ
+function cleanupTempDirectory(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) return;
+  
+  try {
+    const files = fs.readdirSync(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stat = fs.statSync(filePath);
+      
+      if (stat.isDirectory()) {
+        // 再帰的にディレクトリを削除
+        cleanupTempDirectory(filePath);
+        fs.rmdirSync(filePath);
+      } else {
+        // ファイルを削除
+        fs.unlinkSync(filePath);
+      }
+    }
+    
+    console.log(`一時ディレクトリをクリーンアップしました: ${dirPath}`);
+  } catch (error) {
+    console.error(`一時ディレクトリのクリーンアップに失敗しました: ${dirPath}`, error);
+    // クリーンアップに失敗しても処理は続行
+  }
+}
+
 // ディレクトリ構造の整理：知識ベース用、画像検索用、一時アップロード用に分離
 const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
 const knowledgeBaseDataDir = path.join(knowledgeBaseDir, 'data');
@@ -309,6 +337,16 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     // 元ファイルを保存するかどうかのフラグを取得（デフォルトではfalse）
     const keepOriginalFile = req.body.keepOriginalFile === 'true';
     console.log(`元ファイル保存: ${keepOriginalFile ? '有効' : '無効（デフォルト）'}`);
+    
+    // アップロード開始時に一時ディレクトリのクリーンアップを実行
+    try {
+      // uploads/tempディレクトリをクリーンアップ
+      cleanupTempDirectory(uploadsTempDir);
+      console.log('一時ディレクトリをクリーンアップしました');
+    } catch (cleanupError) {
+      console.error('一時ディレクトリのクリーンアップに失敗しました:', cleanupError);
+      // クリーンアップの失敗は無視して処理を続行
+    }
     
     // 一時的にバッファを保存（元ファイル保存オプションがオフの場合、後で削除）
     const filePath = file.path;

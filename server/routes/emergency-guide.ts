@@ -402,6 +402,23 @@ router.post('/process', upload.single('file'), async (req, res) => {
     
     const result = await processFile(filePath);
     
+    // 元のアップロードファイルを削除（データ抽出とJSON生成が完了したため）
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`元のアップロードファイルを削除しました: ${filePath}`);
+      }
+    } catch (cleanupError) {
+      console.error(`ファイル削除エラー: ${cleanupError}`);
+      // ファイル削除に失敗しても処理は続行
+    }
+    
+    // 一時ディレクトリをクリーンアップ
+    const tempDir = path.join(uploadsDir, 'temp');
+    if (fs.existsSync(tempDir)) {
+      cleanupTempDirectory(tempDir);
+    }
+    
     return res.json({
       success: true,
       message: 'ファイルが正常に処理されました',
