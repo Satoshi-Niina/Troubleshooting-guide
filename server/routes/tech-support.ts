@@ -87,26 +87,38 @@ const router = express.Router();
  */
 router.get('/list-json-files', (req, res) => {
   try {
-    const jsonDir = path.join(process.cwd(), 'public', 'uploads', 'json');
+    // 新しいファイル構造と互換性を保つため、複数の場所からJSONファイルを探す
+    const jsonDirs = [
+      path.join(process.cwd(), 'knowledge-base', 'json'),  // 新しい場所（優先）
+      path.join(process.cwd(), 'public', 'uploads', 'json') // 古い場所（後方互換性）
+    ];
     
-    // ディレクトリが存在しない場合は作成
-    if (!fs.existsSync(jsonDir)) {
-      fs.mkdirSync(jsonDir, { recursive: true });
-      return res.json([]);
+    let allJsonFiles: string[] = [];
+    
+    // 各ディレクトリからメタデータJSONファイルを収集
+    for (const jsonDir of jsonDirs) {
+      if (fs.existsSync(jsonDir)) {
+        const files = fs.readdirSync(jsonDir)
+          .filter(file => file.endsWith('_metadata.json'));
+        allJsonFiles = [...allJsonFiles, ...files];
+      } else {
+        // ディレクトリが存在しない場合は作成
+        fs.mkdirSync(jsonDir, { recursive: true });
+      }
     }
     
-    // メタデータJSONファイルのみをフィルタリング
-    const jsonFiles = fs.readdirSync(jsonDir)
-      .filter(file => file.endsWith('_metadata.json'))
-      .sort((a, b) => {
-        // タイムスタンプでソート（新しい順）
-        // ファイル名からタイムスタンプを抽出: mc_1744105287121_metadata.json -> 1744105287121
-        const timestampA = a.split('_')[1] || '0';
-        const timestampB = b.split('_')[1] || '0';
-        return parseInt(timestampB) - parseInt(timestampA);
-      });
+    // 重複を排除して一意のファイル名リストにする
+    const uniqueJsonFiles = Array.from(new Set(allJsonFiles));
     
-    return res.json(jsonFiles);
+    // タイムスタンプでソート（新しい順）
+    const sortedFiles = uniqueJsonFiles.sort((a, b) => {
+      // ファイル名からタイムスタンプを抽出: mc_1744105287121_metadata.json -> 1744105287121
+      const timestampA = a.split('_')[1] || '0';
+      const timestampB = b.split('_')[1] || '0';
+      return parseInt(timestampB) - parseInt(timestampA);
+    });
+    
+    return res.json(sortedFiles);
   } catch (error) {
     console.error('JSONファイル一覧取得エラー:', error);
     return res.status(500).json({
@@ -146,8 +158,8 @@ router.post('/init-image-search-data', async (req, res) => {
     const initialData = [
       {
         id: "engine_001",
-        file: "/knowledge-base/images/engine_001.svg",
-        pngFallback: "/knowledge-base/images/engine_001.png",
+        file: "/images/engine_001.svg",
+        pngFallback: "/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -155,8 +167,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cooling_001",
-        file: "/knowledge-base/images/cooling_001.svg",
-        pngFallback: "/knowledge-base/images/cooling_001.png",
+        file: "/images/cooling_001.svg",
+        pngFallback: "/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -164,8 +176,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "frame_001",
-        file: "/knowledge-base/images/frame_001.svg",
-        pngFallback: "/knowledge-base/images/frame_001.png",
+        file: "/images/frame_001.svg",
+        pngFallback: "/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -173,8 +185,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cabin_001",
-        file: "/knowledge-base/images/cabin_001.svg",
-        pngFallback: "/knowledge-base/images/cabin_001.png",
+        file: "/images/cabin_001.svg",
+        pngFallback: "/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],
