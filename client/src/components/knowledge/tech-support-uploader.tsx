@@ -40,7 +40,7 @@ const TechSupportUploader: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<TechDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [keepOriginalFile, setKeepOriginalFile] = useState(true);
+  const [keepOriginalFile, setKeepOriginalFile] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {

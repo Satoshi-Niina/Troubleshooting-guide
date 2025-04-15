@@ -306,9 +306,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     console.log(`ファイルアップロード処理開始: ${file.originalname}`);
     
-    // 元ファイルを保存するかどうかのフラグを取得
+    // 元ファイルを保存するかどうかのフラグを取得（デフォルトではfalse）
     const keepOriginalFile = req.body.keepOriginalFile === 'true';
-    console.log(`元ファイル保存: ${keepOriginalFile ? '有効' : '無効'}`);
+    console.log(`元ファイル保存: ${keepOriginalFile ? '有効' : '無効（デフォルト）'}`);
     
     // 一時的にバッファを保存（元ファイル保存オプションがオフの場合、後で削除）
     const filePath = file.path;
