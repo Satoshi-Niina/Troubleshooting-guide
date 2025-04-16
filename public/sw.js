@@ -49,7 +49,7 @@ async function syncChatData() {
     // エラーを投げて再試行を促す
     throw error;
   }
-});
+}
 
 // プッシュ通知の受信
 self.addEventListener('push', (event) => {

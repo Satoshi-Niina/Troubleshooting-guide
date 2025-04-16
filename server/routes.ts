@@ -20,6 +20,7 @@ import techSupportRouter from './routes/tech-support';
 import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
 import emergencyGuideRouter from './routes/emergency-guide';
+import { registerSyncRoutes } from './routes/sync-routes';
 
 // Extend the express-session types
 declare module 'express-session' {
@@ -43,6 +44,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register emergency guide routes
   app.use('/api/emergency-guide', emergencyGuideRouter);
+  
+  // Register sync routes for offline capabilities
+  registerSyncRoutes(app);
   
   // Add a health check endpoint for testing
   app.get('/api/health', (req, res) => {

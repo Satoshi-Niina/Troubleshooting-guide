@@ -6,7 +6,7 @@ let wb: Workbox | null = null;
 let syncChannel: BroadcastChannel | null = null;
 
 // Service Worker の登録
-export async function registerServiceWorker(): Promise<void> {
+export async function registerServiceWorker(): Promise<boolean> {
   if ('serviceWorker' in navigator) {
     wb = new Workbox('/sw.js');
     
