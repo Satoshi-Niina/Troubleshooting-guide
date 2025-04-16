@@ -37,9 +37,9 @@ const UnifiedDataProcessor: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // 処理オプション（デフォルトですべて有効）
+  // 処理オプション（元ファイル保存はデフォルト無効、他は有効）
   const [options, setOptions] = useState<ProcessingOptions>({
-    keepOriginalFile: true,
+    keepOriginalFile: false,
     extractKnowledgeBase: true,
     extractImageSearch: true,
     createQA: true
