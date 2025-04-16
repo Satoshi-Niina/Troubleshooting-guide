@@ -8,8 +8,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MessageInput() {
   const [message, setMessage] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const { sendMessage, isLoading, recordedText, selectedText, searchBySelectedText } = useChat();
+  const { 
+    sendMessage, 
+    isLoading, 
+    recordedText, 
+    selectedText, 
+    searchBySelectedText,
+    startRecording,
+    stopRecording,
+    isRecording
+  } = useChat();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -25,6 +33,13 @@ export default function MessageInput() {
       }
     }
   }, [selectedText, isMobile]);
+  
+  // 録音テキストが変更されたら入力欄に反映（録音中のみ）
+  useEffect(() => {
+    if (isRecording && recordedText) {
+      setMessage(recordedText);
+    }
+  }, [recordedText, isRecording]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -85,16 +100,20 @@ export default function MessageInput() {
   };
 
   const handleMicClick = () => {
-    // マイク録音機能の切り替え
-    setIsRecording(!isRecording);
+    // マイク録音機能の切り替え - ChatContextの関数を使用
     if (!isRecording) {
       // 録音開始
       console.log('録音開始');
-      // TODO: 音声認識APIの実装
+      startRecording();
     } else {
       // 録音停止
       console.log('録音停止');
-      // TODO: 音声認識結果の処理
+      stopRecording();
+      
+      // 録音されたテキストがあれば入力欄に設定
+      if (recordedText.trim()) {
+        setMessage(recordedText.trim());
+      }
     }
   };
 
