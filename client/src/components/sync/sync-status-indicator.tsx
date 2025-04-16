@@ -162,7 +162,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
         window.dispatchEvent(new CustomEvent('sync-status-update', {
           detail: { 
             type: 'sync-error',
-            error: result.error?.message || '同期に失敗しました'
+            error: result.error ? (result.error as Error).message : '同期に失敗しました'
           }
         }));
       }
@@ -253,7 +253,7 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({
               variant="outline"
               size="sm"
               onClick={handleManualSync}
-              disabled={!isOnline || status === 'syncing'}
+              disabled={!isOnline}
             >
               再同期
             </Button>

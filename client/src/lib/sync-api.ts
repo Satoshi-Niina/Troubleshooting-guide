@@ -1,217 +1,165 @@
+import { apiRequest } from '@/lib/queryClient';
 import { 
   getUnsyncedMessages, 
-  getUnsyncedMedia, 
-  markAsSynced,
-  getMessageBatches,
-  dataURLtoBlob
+  markMessageAsSynced,
+  markMediaAsSynced, 
+  getChatSyncStats, 
+  optimizeImageDataUrl 
 } from './offline-storage';
-import { requestBackgroundSync } from './service-worker';
 
-// APIリクエストを送信する関数
-async function apiRequest(method: string, url: string, data?: any) {
-  const options: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  };
-
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
-
-  const response = await fetch(url, options);
+/**
+ * データURLをBlobに変換
+ */
+function dataURLtoBlob(dataUrl: string): Blob {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
   
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
   }
   
-  return response;
+  return new Blob([u8arr], { type: mime });
 }
 
-// メディアファイルをアップロードする関数
-async function uploadMedia(mediaData: any) {
-  // データURLからBlobに変換
-  const blob = dataURLtoBlob(mediaData.url);
-  
-  // FormDataを作成
-  const formData = new FormData();
-  formData.append('file', blob, `media_${Date.now()}.jpg`);
-  formData.append('type', mediaData.type || 'image');
-  
-  // アップロード
-  const response = await fetch('/api/media/upload', {
-    method: 'POST',
-    body: formData,
-    credentials: 'include',
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Media upload failed: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-  
-  const data = await response.json();
-  return data.url; // サーバーが返す実際のURL
+/**
+ * Base64のデータURLからFileオブジェクトを作成
+ */
+function dataURLtoFile(dataUrl: string, filename: string): File {
+  const blob = dataURLtoBlob(dataUrl);
+  return new File([blob], filename, { type: blob.type });
 }
 
-// メッセージバッチを同期する関数
-async function syncMessageBatch(chatId: number, messageBatch: any[]) {
-  const messages = [];
-  const syncedKeys = [];
-  
-  // 各メッセージを処理
-  for (const { key, message } of messageBatch) {
-    try {
-      // メッセージに関連するメディアを取得
-      const mediaItems = await getUnsyncedMedia(chatId, message.id);
-      const processedMedia = [];
-      
-      // 各メディアをアップロード
-      for (const { key: mediaKey, media } of mediaItems) {
-        try {
-          const serverUrl = await uploadMedia(media);
-          processedMedia.push({
-            type: media.type || 'image',
-            url: serverUrl,
-            thumbnail: media.thumbnail
-          });
-          
-          // 同期されたメディアをマーク
-          syncedKeys.push(mediaKey);
-        } catch (error) {
-          console.error(`メディアの同期中にエラーが発生しました: ${mediaKey}`, error);
-          // このメディアはスキップするが、他は続行
-        }
-      }
-      
-      // メッセージを同期用に準備
-      const syncedMessage = {
-        ...message,
-        media: processedMedia
-      };
-      
-      messages.push(syncedMessage);
-      syncedKeys.push(key);
-    } catch (error) {
-      console.error(`メッセージの同期中にエラーが発生しました: ${key}`, error);
-      // このメッセージはスキップするが、他は続行
-    }
-  }
-  
-  if (messages.length === 0) {
-    return { success: false, syncedCount: 0 };
-  }
-  
+/**
+ * 指定されたチャットの未同期メッセージを同期
+ */
+export async function syncChat(chatId: number) {
   try {
-    // メッセージバッチをサーバーに送信
-    await apiRequest('POST', `/api/chats/${chatId}/sync-messages`, { messages });
+    // 未同期メッセージを取得
+    const messages = await getUnsyncedMessages(chatId);
     
-    // 同期されたメッセージとメディアをマーク
-    await markAsSynced(syncedKeys);
-    
-    return { success: true, syncedCount: messages.length };
-  } catch (error) {
-    console.error('メッセージバッチの同期中にエラーが発生しました:', error);
-    return { success: false, syncedCount: 0, error };
-  }
-}
-
-// チャットの同期を実行する関数
-export async function syncChat(chatId: number, batchSize = 5): Promise<{
-  success: boolean;
-  totalSynced: number;
-  error?: any;
-}> {
-  try {
-    // 未同期のメッセージを取得
-    const unsyncedMessages = await getUnsyncedMessages(chatId);
-    
-    if (unsyncedMessages.length === 0) {
-      console.log(`チャット ${chatId} には同期が必要なメッセージがありません`);
+    if (messages.length === 0) {
+      console.log('同期するメッセージがありません');
       return { success: true, totalSynced: 0 };
     }
     
-    console.log(`チャット ${chatId} の ${unsyncedMessages.length} 件のメッセージを同期します`);
+    console.log(`${messages.length}件のメッセージを同期します`);
     
-    // メッセージをバッチに分割
-    const batches = getMessageBatches(unsyncedMessages, batchSize);
-    let totalSynced = 0;
+    // メッセージを1件ずつ同期
+    let syncedCount = 0;
     
-    // 各バッチを同期
-    for (const batch of batches) {
-      const result = await syncMessageBatch(chatId, batch);
+    for (const message of messages) {
+      // 既に同期済みの場合はスキップ
+      if (message.synced) {
+        continue;
+      }
       
-      if (result.success) {
-        totalSynced += result.syncedCount;
-      }
-    }
-    
-    // 同期が必要なメッセージが残っているか確認
-    const remainingMessages = await getUnsyncedMessages(chatId);
-    
-    if (remainingMessages.length > 0) {
-      // バックグラウンド同期を登録して残りを後で処理
-      await requestBackgroundSync();
-    }
-    
-    return { success: true, totalSynced };
-  } catch (error) {
-    console.error(`チャット ${chatId} の同期中にエラーが発生しました:`, error);
-    return { success: false, totalSynced: 0, error };
-  }
-}
-
-// すべてのチャットの同期を実行する関数
-export async function syncAllChats(): Promise<{
-  success: boolean;
-  results: { chatId: number; synced: number; error?: any }[];
-}> {
-  try {
-    // IndexedDBから未同期のメッセージキーを全て取得し、チャットIDを抽出
-    const allMessages = await getUnsyncedMessages(0); // 0はダミー、実際は全メッセージを取得
-    
-    // チャットIDのセットを作成
-    const chatIds = new Set<number>();
-    allMessages.forEach(({ key }) => {
-      const match = key.match(/chat_(\d+)_msg_/);
-      if (match && match[1]) {
-        chatIds.add(parseInt(match[1]));
-      }
-    });
-    
-    // 各チャットを同期
-    const results = [];
-    // Setを配列に変換してから処理
-    const chatIdArray = Array.from(chatIds);
-    for (const chatId of chatIdArray) {
       try {
-        const result = await syncChat(chatId);
-        results.push({
-          chatId,
-          synced: result.totalSynced,
-          error: result.error
+        // メッセージを送信
+        const response = await apiRequest('POST', `/api/chats/${chatId}/messages`, {
+          content: message.content,
+          senderId: message.senderId,
+          isAiResponse: message.isAiResponse
         });
+        
+        if (!response.ok) {
+          console.error('メッセージの同期に失敗しました:', await response.text());
+          continue;
+        }
+        
+        const data = await response.json();
+        
+        // メッセージを同期済みとしてマーク
+        await markMessageAsSynced(message.localId, data.id);
+        
+        // メディアがある場合は同期
+        if (message.media && message.media.length > 0) {
+          for (const media of message.media) {
+            if (media.synced) continue;
+            
+            // 画像の場合は最適化
+            let mediaUrl = media.url;
+            if (media.type === 'image' && mediaUrl.startsWith('data:')) {
+              try {
+                mediaUrl = await optimizeImageDataUrl(mediaUrl, 0.8);
+              } catch (err) {
+                console.warn('画像の最適化に失敗しました:', err);
+              }
+            }
+            
+            // メディアデータを送信
+            const formData = new FormData();
+            
+            if (mediaUrl.startsWith('data:')) {
+              // データURLの場合はファイルに変換
+              const file = dataURLtoFile(
+                mediaUrl, 
+                `media_${Date.now()}.${media.type === 'image' ? 'jpg' : 'mp4'}`
+              );
+              formData.append('file', file);
+            } else {
+              // 既存のURLはそのまま送信
+              formData.append('url', mediaUrl);
+            }
+            
+            formData.append('type', media.type);
+            formData.append('messageId', data.id.toString());
+            
+            if (media.thumbnail) {
+              formData.append('thumbnail', media.thumbnail);
+            }
+            
+            const mediaResponse = await fetch(`/api/messages/${data.id}/media`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include'
+            });
+            
+            if (!mediaResponse.ok) {
+              console.error('メディアの同期に失敗しました:', await mediaResponse.text());
+              continue;
+            }
+            
+            const mediaData = await mediaResponse.json();
+            
+            // メディアを同期済みとしてマーク
+            await markMediaAsSynced(media.localId, mediaData.id);
+          }
+        }
+        
+        syncedCount++;
+        
+        // 進捗状況を通知
+        window.dispatchEvent(new CustomEvent('sync-status-update', {
+          detail: { 
+            type: 'sync-progress',
+            progress: Math.round((syncedCount / messages.length) * 100),
+            syncedCount,
+            totalCount: messages.length
+          }
+        }));
+        
       } catch (error) {
-        results.push({
-          chatId,
-          synced: 0,
-          error
-        });
+        console.error('メッセージの同期処理中にエラーが発生しました:', error);
       }
     }
     
-    return {
-      success: results.some(r => !r.error),
-      results
+    // 同期結果を返す
+    const stats = await getChatSyncStats(chatId);
+    
+    return { 
+      success: true, 
+      totalSynced: syncedCount,
+      stats
     };
   } catch (error) {
-    console.error('すべてのチャットの同期中にエラーが発生しました:', error);
-    return {
-      success: false,
-      results: []
+    console.error('同期処理中にエラーが発生しました:', error);
+    return { 
+      success: false, 
+      totalSynced: 0,
+      error
     };
   }
 }

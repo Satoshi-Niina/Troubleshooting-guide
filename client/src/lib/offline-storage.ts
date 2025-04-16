@@ -1,114 +1,259 @@
-import localforage from 'localforage';
+import { openDB, IDBPDatabase } from 'idb';
 
-// データベースのストア名定義
-const STORES = {
-  UNSYNCED_MESSAGES: 'unsynced-messages',
-  UNSYNCED_MEDIA: 'unsynced-media',
-  SYNC_STATUS: 'sync-status'
-};
-
-// チャットデータ用のストレージ
-const messageStore = localforage.createInstance({
-  name: 'chat-app',
-  storeName: STORES.UNSYNCED_MESSAGES
-});
-
-// メディア（画像）用のストレージ
-const mediaStore = localforage.createInstance({
-  name: 'chat-app',
-  storeName: STORES.UNSYNCED_MEDIA
-});
-
-// 同期ステータス用のストレージ
-const syncStatusStore = localforage.createInstance({
-  name: 'chat-app',
-  storeName: STORES.SYNC_STATUS
-});
-
-// 未同期メッセージを保存
-export async function storeUnsyncedMessage(chatId: number, message: any): Promise<void> {
-  const key = `chat_${chatId}_msg_${message.id || Date.now()}`;
-  await messageStore.setItem(key, message);
-  await updateSyncStatus(chatId, false);
+/**
+ * IndexedDBのデータベース定義
+ */
+interface SyncDB {
+  unsyncedMessages: {
+    key: number;
+    value: {
+      id?: number;
+      localId: number;
+      content: string;
+      senderId: number | null;
+      isAiResponse: boolean;
+      timestamp: Date;
+      chatId: number;
+      synced: boolean;
+    };
+    indexes: { 'by-chat': number };
+  };
+  unsyncedMedia: {
+    key: number;
+    value: {
+      id?: number;
+      localId: number;
+      messageId?: number;
+      localMessageId: number;
+      type: string;
+      url: string;
+      thumbnail?: string;
+      synced: boolean;
+    };
+    indexes: { 'by-message': number };
+  };
 }
 
-// 未同期メディアを保存
-export async function storeUnsyncedMedia(chatId: number, messageId: number, media: any): Promise<void> {
-  const key = `chat_${chatId}_msg_${messageId}_media_${media.id || Date.now()}`;
-  await mediaStore.setItem(key, media);
-  await updateSyncStatus(chatId, false);
-}
+// データベース名とバージョン
+const DB_NAME = 'chat-sync-db';
+const DB_VERSION = 1;
 
-// 同期ステータスを更新
-async function updateSyncStatus(chatId: number, synced: boolean): Promise<void> {
-  await syncStatusStore.setItem(`chat_${chatId}_synced`, synced);
-}
-
-// 特定チャットの未同期メッセージを取得
-export async function getUnsyncedMessages(chatId: number): Promise<any[]> {
-  const keys = await messageStore.keys();
-  const chatMessages: any[] = [];
-  
-  for (const key of keys) {
-    if (key.startsWith(`chat_${chatId}_msg_`)) {
-      const message = await messageStore.getItem(key);
-      if (message) {
-        chatMessages.push({ key, message });
-      }
+/**
+ * IndexedDBを開く
+ */
+async function openDatabase(): Promise<IDBPDatabase<SyncDB>> {
+  return await openDB<SyncDB>(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      // 未同期メッセージ用のオブジェクトストア
+      const messageStore = db.createObjectStore('unsyncedMessages', { 
+        keyPath: 'localId',
+        autoIncrement: true 
+      });
+      messageStore.createIndex('by-chat', 'chatId');
+      
+      // 未同期メディア用のオブジェクトストア
+      const mediaStore = db.createObjectStore('unsyncedMedia', { 
+        keyPath: 'localId',
+        autoIncrement: true 
+      });
+      mediaStore.createIndex('by-message', 'localMessageId');
     }
-  }
-  
-  return chatMessages;
+  });
 }
 
-// 特定チャットの未同期メディアを取得
-export async function getUnsyncedMedia(chatId: number, messageId?: number): Promise<any[]> {
-  const keys = await mediaStore.keys();
-  const chatMedia: any[] = [];
-  
-  const prefix = messageId 
-    ? `chat_${chatId}_msg_${messageId}_media_`
-    : `chat_${chatId}_msg_`;
-  
-  for (const key of keys) {
-    if (key.startsWith(prefix)) {
-      const media = await mediaStore.getItem(key);
-      if (media) {
-        chatMedia.push({ key, media });
-      }
-    }
-  }
-  
-  return chatMedia;
-}
-
-// メッセージとメディアを同期済みとしてマーク（ローカルストレージから削除）
-export async function markAsSynced(keys: string[]): Promise<void> {
-  for (const key of keys) {
-    if (key.includes('_media_')) {
-      await mediaStore.removeItem(key);
-    } else if (key.includes('_msg_')) {
-      await messageStore.removeItem(key);
-    }
+/**
+ * 未同期メッセージをローカルストレージに保存
+ */
+export async function storeUnsyncedMessage(message: {
+  content: string;
+  senderId: number | null;
+  isAiResponse: boolean;
+  chatId: number;
+}) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMessages', 'readwrite');
+    
+    const localId = await tx.store.add({
+      ...message,
+      timestamp: new Date(),
+      synced: false,
+      localId: Date.now() // 一時的なローカルID
+    });
+    
+    await tx.done;
+    console.log('未同期メッセージをローカルに保存しました:', localId);
+    return localId;
+  } catch (error) {
+    console.error('メッセージのローカル保存に失敗しました:', error);
+    throw error;
   }
 }
 
-// チャットの同期ステータスを取得
+/**
+ * 未同期メディアをローカルストレージに保存
+ */
+export async function storeUnsyncedMedia(media: {
+  localMessageId: number;
+  type: string;
+  url: string;
+  thumbnail?: string;
+}) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMedia', 'readwrite');
+    
+    const localId = await tx.store.add({
+      ...media,
+      synced: false,
+      localId: Date.now() // 一時的なローカルID
+    });
+    
+    await tx.done;
+    console.log('未同期メディアをローカルに保存しました:', localId);
+    return localId;
+  } catch (error) {
+    console.error('メディアのローカル保存に失敗しました:', error);
+    throw error;
+  }
+}
+
+/**
+ * 特定のチャットの未同期メッセージを取得
+ */
+export async function getUnsyncedMessages(chatId: number) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMessages', 'readonly');
+    const index = tx.store.index('by-chat');
+    
+    const messages = await index.getAll(chatId);
+    
+    // メッセージに紐づくメディアも取得
+    const messagesWithMedia = await Promise.all(
+      messages.map(async (message) => {
+        const mediaTx = db.transaction('unsyncedMedia', 'readonly');
+        const mediaIndex = mediaTx.store.index('by-message');
+        const media = await mediaIndex.getAll(message.localId);
+        
+        return {
+          ...message,
+          media: media.length > 0 ? media : undefined
+        };
+      })
+    );
+    
+    await tx.done;
+    return messagesWithMedia;
+  } catch (error) {
+    console.error('未同期メッセージの取得に失敗しました:', error);
+    return [];
+  }
+}
+
+/**
+ * メッセージを同期済みにマーク
+ */
+export async function markMessageAsSynced(localId: number, serverId: number) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMessages', 'readwrite');
+    
+    const message = await tx.store.get(localId);
+    if (message) {
+      message.synced = true;
+      message.id = serverId;
+      await tx.store.put(message);
+    }
+    
+    await tx.done;
+  } catch (error) {
+    console.error('メッセージの同期状態の更新に失敗しました:', error);
+    throw error;
+  }
+}
+
+/**
+ * メディアを同期済みにマーク
+ */
+export async function markMediaAsSynced(localId: number, serverId: number) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMedia', 'readwrite');
+    
+    const media = await tx.store.get(localId);
+    if (media) {
+      media.synced = true;
+      media.id = serverId;
+      await tx.store.put(media);
+    }
+    
+    await tx.done;
+  } catch (error) {
+    console.error('メディアの同期状態の更新に失敗しました:', error);
+    throw error;
+  }
+}
+
+/**
+ * チャットが完全に同期されているか確認
+ */
 export async function isChatSynced(chatId: number): Promise<boolean> {
-  const status = await syncStatusStore.getItem(`chat_${chatId}_synced`);
-  return status === true;
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMessages', 'readonly');
+    const index = tx.store.index('by-chat');
+    
+    const messages = await index.getAll(chatId);
+    const hasUnsyncedMessages = messages.some(msg => !msg.synced);
+    
+    await tx.done;
+    return !hasUnsyncedMessages;
+  } catch (error) {
+    console.error('同期状態の確認に失敗しました:', error);
+    return false;
+  }
 }
 
-// サイズを最適化してデータURLを作成（画像圧縮）
-export async function optimizeImageDataUrl(dataUrl: string, maxWidth = 1024): Promise<string> {
-  return new Promise((resolve, reject) => {
+/**
+ * チャットの同期統計を取得
+ */
+export async function getChatSyncStats(chatId: number) {
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction('unsyncedMessages', 'readonly');
+    const index = tx.store.index('by-chat');
+    
+    const messages = await index.getAll(chatId);
+    const total = messages.length;
+    const synced = messages.filter(msg => msg.synced).length;
+    
+    await tx.done;
+    return {
+      total,
+      synced,
+      pending: total - synced,
+      isFullySynced: total === synced
+    };
+  } catch (error) {
+    console.error('同期統計の取得に失敗しました:', error);
+    return { total: 0, synced: 0, pending: 0, isFullySynced: true };
+  }
+}
+
+/**
+ * 画像DataURLを最適化（サイズ削減）
+ */
+export async function optimizeImageDataUrl(dataUrl: string, quality = 0.8, maxWidth = 1200) {
+  return new Promise<string>((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
+      
+      // 最大幅に合わせてサイズを調整
       let width = img.width;
       let height = img.height;
       
-      // サイズが大きすぎる場合はリサイズ
       if (width > maxWidth) {
         const ratio = maxWidth / width;
         width = maxWidth;
@@ -117,47 +262,61 @@ export async function optimizeImageDataUrl(dataUrl: string, maxWidth = 1024): Pr
       
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
       
+      const ctx = canvas.getContext('2d');
       if (!ctx) {
-        reject(new Error('Canvas context could not be created'));
+        reject(new Error('キャンバスコンテキストの取得に失敗しました'));
         return;
       }
       
       ctx.drawImage(img, 0, 0, width, height);
       
-      // JPEGとして圧縮して出力（品質75%）
-      resolve(canvas.toDataURL('image/jpeg', 0.75));
+      // 最適化した画像を取得
+      const optimizedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(optimizedDataUrl);
     };
     
     img.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error('画像の読み込みに失敗しました'));
     };
     
     img.src = dataUrl;
   });
 }
 
-// データURLからBlobを作成
-export function dataURLtoBlob(dataURL: string): Blob {
-  const arr = dataURL.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
+/**
+ * 同期済みのメッセージとメディアをクリーンアップ
+ */
+export async function cleanupSyncedData() {
+  try {
+    const db = await openDatabase();
+    
+    // 同期済みメッセージを削除
+    const messageTx = db.transaction('unsyncedMessages', 'readwrite');
+    const messages = await messageTx.store.getAll();
+    
+    for (const message of messages) {
+      if (message.synced) {
+        await messageTx.store.delete(message.localId);
+      }
+    }
+    
+    await messageTx.done;
+    
+    // 同期済みメディアを削除
+    const mediaTx = db.transaction('unsyncedMedia', 'readwrite');
+    const mediaItems = await mediaTx.store.getAll();
+    
+    for (const media of mediaItems) {
+      if (media.synced) {
+        await mediaTx.store.delete(media.localId);
+      }
+    }
+    
+    await mediaTx.done;
+    
+    console.log('同期済みデータのクリーンアップが完了しました');
+  } catch (error) {
+    console.error('同期済みデータのクリーンアップに失敗しました:', error);
   }
-  
-  return new Blob([u8arr], { type: mime });
-}
-
-// メッセージのバッチ取得（指定数ごとに分割）
-export function getMessageBatches(messages: any[], batchSize = 10): any[][] {
-  const batches = [];
-  for (let i = 0; i < messages.length; i += batchSize) {
-    batches.push(messages.slice(i, i + batchSize));
-  }
-  return batches;
 }

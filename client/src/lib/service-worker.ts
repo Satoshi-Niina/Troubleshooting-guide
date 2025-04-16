@@ -1,137 +1,90 @@
-import { Workbox, messageSW } from 'workbox-window';
-
-// Service Worker インスタンス
-let wb: Workbox | null = null;
-// 同期チャネル
-let syncChannel: BroadcastChannel | null = null;
-
-// Service Worker の登録
-export async function registerServiceWorker(): Promise<boolean> {
-  if ('serviceWorker' in navigator) {
-    wb = new Workbox('/sw.js');
-    
-    // Service Worker のイベントハンドラ
-    wb.addEventListener('installed', (event: any) => {
-      console.log('Service Worker がインストールされました:', event);
-    });
-    
-    wb.addEventListener('activated', (event: any) => {
-      console.log('Service Worker がアクティブになりました:', event);
-    });
-    
-    // Service Worker からのメッセージハンドラ
-    wb.addEventListener('message', (event: any) => {
-      console.log('Service Worker からメッセージを受信:', event.data);
-      
-      if (event.data.type === 'perform-chat-sync') {
-        // バックグラウンド同期の実行を通知
-        const syncEvent = new CustomEvent('perform-chat-sync');
-        window.dispatchEvent(syncEvent);
-      }
-    });
-    
-    // Service Worker の登録
-    try {
-      await wb.register();
-      console.log('Service Worker が正常に登録されました');
-      
-      // 同期チャネルの初期化
-      initSyncChannel();
-      
-      return true;
-    } catch (error) {
-      console.error('Service Worker の登録中にエラーが発生しました:', error);
-      return false;
-    }
-  } else {
-    console.warn('このブラウザは Service Worker をサポートしていません');
-    return false;
+/**
+ * Service Workerを登録する
+ */
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Workerはこのブラウザではサポートされていません');
+    return null;
   }
-}
-
-// 同期チャネルの初期化
-function initSyncChannel() {
+  
   try {
-    syncChannel = new BroadcastChannel('chat-sync-channel');
-    
-    syncChannel.addEventListener('message', (event) => {
-      console.log('同期チャネルからメッセージを受信:', event.data);
-      
-      // 同期ステータスの更新イベントを送信
-      const syncStatusEvent = new CustomEvent('sync-status-update', {
-        detail: event.data
-      });
-      window.dispatchEvent(syncStatusEvent);
-    });
-    
-    console.log('同期チャネルを初期化しました');
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    console.log('Service Workerが登録されました:', registration.scope);
+    return registration;
   } catch (error) {
-    console.error('同期チャネルの初期化中にエラーが発生しました:', error);
+    console.error('Service Workerの登録に失敗しました:', error);
+    return null;
   }
 }
 
-// バックグラウンド同期のリクエスト
+/**
+ * バックグラウンド同期をリクエスト
+ */
 export async function requestBackgroundSync(): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
-    console.warn('このブラウザはバックグラウンド同期をサポートしていません');
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Workerはこのブラウザではサポートされていません');
     return false;
   }
   
   try {
-    const registration = await navigator.serviceWorker.ready;
+    // Service Workerが準備できるまで待機
+    const registration = await getServiceWorkerRegistration();
+    if (!registration) {
+      console.warn('Service Workerの登録が見つかりません');
+      return false;
+    }
+    
+    // 'sync'がサポートされているか確認
+    if (!('sync' in registration)) {
+      console.warn('バックグラウンド同期APIはこのブラウザではサポートされていません');
+      return false;
+    }
+    
+    // 同期タグを登録
     if (registration.sync) {
       await registration.sync.register('chat-sync');
-      console.log('バックグラウンド同期が登録されました');
-      return true;
-    } else {
-      console.warn('このブラウザではsync APIがサポートされていません');
-      return false;
     }
+    console.log('バックグラウンド同期が登録されました');
+    return true;
   } catch (error) {
-    console.error('バックグラウンド同期の登録中にエラーが発生しました:', error);
+    console.error('バックグラウンド同期の登録に失敗しました:', error);
     return false;
   }
 }
 
-// Service Worker へのメッセージ送信
-export async function sendMessageToSW(message: any): Promise<void> {
-  if (!wb) {
-    console.warn('Service Worker が登録されていません');
-    return;
-  }
-  
-  try {
-    await messageSW(wb.controller, message);
-  } catch (error) {
-    console.error('Service Worker へのメッセージ送信中にエラーが発生しました:', error);
-  }
-}
-
-// Service Worker の状態確認
-export async function checkServiceWorkerStatus(): Promise<{
-  registered: boolean;
-  syncing: boolean;
-}> {
+/**
+ * 現在のService Worker登録を取得
+ */
+export async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
-    return { registered: false, syncing: false };
+    return null;
   }
   
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const syncing = await isSyncRegistered(registration);
+    // 登録済みのService Workerを取得
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    if (registrations.length === 0) {
+      // 登録されていない場合は新規登録
+      return await registerServiceWorker();
+    }
     
-    return {
-      registered: !!registration.active,
-      syncing
-    };
+    // 最初の登録を返す
+    return registrations[0];
   } catch (error) {
-    console.error('Service Worker の状態確認中にエラーが発生しました:', error);
-    return { registered: false, syncing: false };
+    console.error('Service Worker登録の取得に失敗しました:', error);
+    return null;
   }
 }
 
-// 同期が登録されているか確認
-async function isSyncRegistered(registration: ServiceWorkerRegistration): Promise<boolean> {
+/**
+ * 同期タグが登録されているか確認
+ */
+export async function hasSyncRegistered(): Promise<boolean> {
+  const registration = await getServiceWorkerRegistration();
+  if (!registration) {
+    return false;
+  }
+  
   if (!('sync' in registration)) {
     return false;
   }
@@ -146,4 +99,54 @@ async function isSyncRegistered(registration: ServiceWorkerRegistration): Promis
     console.error('同期タグの確認中にエラーが発生しました:', error);
     return false;
   }
+}
+
+/**
+ * Service Workerのステータス通知を設定
+ */
+export function setupServiceWorkerMessages() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+  
+  // Service Workerからのメッセージリスナー
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const { type, data } = event.data;
+    
+    if (type === 'sync-status') {
+      // 同期状態の更新イベントを発火
+      window.dispatchEvent(new CustomEvent('sync-status-update', {
+        detail: data
+      }));
+    }
+  });
+}
+
+/**
+ * モバイルデバイスかどうかを判定
+ */
+export function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
+ * iPadかどうかを判定
+ */
+export function isIPadDevice(): boolean {
+  return /iPad/i.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * ネットワークの状態を取得
+ */
+export function getNetworkInfo(): { online: boolean, effectiveType?: string } {
+  const online = navigator.onLine;
+  // @ts-ignore - TS2339: effectiveTypeプロパティがConnection型に存在しない
+  const effectiveType = navigator.connection?.effectiveType;
+  
+  return {
+    online,
+    effectiveType
+  };
 }
