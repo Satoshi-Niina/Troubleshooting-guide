@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2, UploadCloud, FileText, CheckCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface EmergencyGuideUploaderProps {
   onUploadSuccess?: (guideId: string) => void;
@@ -16,6 +18,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [saveOriginalFile, setSaveOriginalFile] = useState(false);
 
   // ドラッグ&ドロップエリアのイベントハンドラー
   const handleDragOver = (e: React.DragEvent) => {
@@ -89,6 +92,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("saveOriginalFile", saveOriginalFile.toString());
       
       // 模擬的な進捗表示用のインターバル
       const progressInterval = setInterval(() => {
@@ -210,6 +214,18 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
             <Progress value={uploadProgress} className="h-2" />
           </div>
         )}
+        
+        {/* データ保存オプション */}
+        <div className="flex items-center space-x-2 mb-4">
+          <Checkbox 
+            id="saveOriginalFile" 
+            checked={saveOriginalFile} 
+            onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
+          />
+          <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
+            元のファイルも保存する
+          </Label>
+        </div>
         
         {/* アップロードボタン */}
         <Button

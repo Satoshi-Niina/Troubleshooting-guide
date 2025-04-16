@@ -497,8 +497,8 @@ const EmergencyGuideEdit: React.FC = () => {
         {/* ガイドファイル一覧 */}
         <Card>
           <CardHeader>
-            <CardTitle>応急復旧フローファイル一覧</CardTitle>
-            <CardDescription>編集するフローファイルを選択してください</CardDescription>
+            <CardTitle>ファイル一覧</CardTitle>
+            <CardDescription>編集するファイルを選択してください</CardDescription>
           </CardHeader>
           <CardContent>
             {loading && !guideFiles.length ? (
@@ -508,7 +508,7 @@ const EmergencyGuideEdit: React.FC = () => {
             ) : guideFiles.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                <p>フローファイルがありません</p>
+                <p>ファイルがありません</p>
                 <p className="text-sm mt-2">PowerPoint, Excel, またはPDFファイルをアップロードして処理してください</p>
               </div>
             ) : (
