@@ -18,13 +18,13 @@ const EmergencyGuidePage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <Helmet>
-        <title>応急復旧データ作成 | 保守用車支援システム</title>
+        <title>応急復旧データ管理 | 保守用車支援システム</title>
       </Helmet>
       
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-blue-800 mb-2">応急復旧データ作成</h1>
+        <h1 className="text-2xl font-bold text-blue-800 mb-2">応急復旧データ管理</h1>
         <p className="text-gray-600">
-          PowerPoint、Excel、PDFから生成されたフローデータからファイルをアップロード、編集できます。
+          PowerPoint、Excel、PDFから生成されたデータファイルをアップロード、編集できます。
         </p>
       </div>
 
