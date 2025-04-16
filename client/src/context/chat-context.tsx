@@ -11,6 +11,16 @@ import {
 import * as ImageSearch from '@/lib/image-search';
 import { searchByText, cancelSearch } from '@/lib/image-search';
 
+// オフライン同期機能のインポート
+import { 
+  storeUnsyncedMessage, 
+  storeUnsyncedMedia, 
+  getUnsyncedMessages,
+  optimizeImageDataUrl 
+} from '@/lib/offline-storage';
+import { syncChat } from '@/lib/sync-api';
+import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
+
 interface Media {
   id: number;
   messageId: number;
