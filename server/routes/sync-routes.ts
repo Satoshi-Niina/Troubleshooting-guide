@@ -116,7 +116,7 @@ export function registerSyncRoutes(app: Express): void {
           const savedMessage = await storage.createMessage({
             chatId,
             content: message.content,
-            role: message.role || 'user',
+            isAiResponse: message.role === 'assistant',
             timestamp: new Date(message.timestamp || Date.now())
           });
           

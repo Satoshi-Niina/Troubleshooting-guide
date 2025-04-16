@@ -184,7 +184,9 @@ export async function syncAllChats(): Promise<{
     
     // 各チャットを同期
     const results = [];
-    for (const chatId of chatIds) {
+    // Setを配列に変換してから処理
+    const chatIdArray = Array.from(chatIds);
+    for (const chatId of chatIdArray) {
       try {
         const result = await syncChat(chatId);
         results.push({

@@ -11,16 +11,16 @@ export async function registerServiceWorker(): Promise<boolean> {
     wb = new Workbox('/sw.js');
     
     // Service Worker のイベントハンドラ
-    wb.addEventListener('installed', (event) => {
+    wb.addEventListener('installed', (event: any) => {
       console.log('Service Worker がインストールされました:', event);
     });
     
-    wb.addEventListener('activated', (event) => {
+    wb.addEventListener('activated', (event: any) => {
       console.log('Service Worker がアクティブになりました:', event);
     });
     
     // Service Worker からのメッセージハンドラ
-    wb.addEventListener('message', (event) => {
+    wb.addEventListener('message', (event: any) => {
       console.log('Service Worker からメッセージを受信:', event.data);
       
       if (event.data.type === 'perform-chat-sync') {
@@ -79,9 +79,14 @@ export async function requestBackgroundSync(): Promise<boolean> {
   
   try {
     const registration = await navigator.serviceWorker.ready;
-    await registration.sync.register('chat-sync');
-    console.log('バックグラウンド同期が登録されました');
-    return true;
+    if (registration.sync) {
+      await registration.sync.register('chat-sync');
+      console.log('バックグラウンド同期が登録されました');
+      return true;
+    } else {
+      console.warn('このブラウザではsync APIがサポートされていません');
+      return false;
+    }
   } catch (error) {
     console.error('バックグラウンド同期の登録中にエラーが発生しました:', error);
     return false;
@@ -132,8 +137,11 @@ async function isSyncRegistered(registration: ServiceWorkerRegistration): Promis
   }
   
   try {
-    const tags = await registration.sync.getTags();
-    return tags.includes('chat-sync');
+    if (registration.sync) {
+      const tags = await registration.sync.getTags();
+      return tags.includes('chat-sync');
+    }
+    return false;
   } catch (error) {
     console.error('同期タグの確認中にエラーが発生しました:', error);
     return false;
