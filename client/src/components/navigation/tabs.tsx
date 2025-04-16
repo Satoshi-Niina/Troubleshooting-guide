@@ -36,7 +36,7 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
       adminOnly: true,
     },
     {
-      title: "応急復旧データ作成",
+      title: "応急復旧フロー管理",
       path: "/emergency-guide",
       icon: <FileText className="mr-2 h-4 w-4" />,
       adminOnly: true,
