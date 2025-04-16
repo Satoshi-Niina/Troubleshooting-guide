@@ -12,8 +12,10 @@ interface TroubleshootingStep {
   id?: string;
   message: string;
   image?: string;
+  imageUrl?: string; // imageUrlも追加
   options?: {
-    label: string;
+    text?: string;
+    label?: string;
     next: string;
   }[];
   next?: string;
@@ -218,8 +220,8 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     }
     
     // 画像がある場合は画像へのリンクも追加
-    if (currentStep.image) {
-      guideContent += `\n**関連画像**: ${currentStep.image}\n`;
+    if (currentStep.image || currentStep.imageUrl) {
+      guideContent += `\n**関連画像**: ${currentStep.image || currentStep.imageUrl}\n`;
     }
     
     // チャットへガイドを送信
@@ -299,13 +301,13 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
         </div>
         
         {/* 画像（ある場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
-        {currentStep.image && (
+        {(currentStep.image || currentStep.imageUrl) && (
           <div className="mb-4 flex justify-center">
             {imageLoading && (
               <div className="animate-pulse h-48 w-48 bg-gray-200 rounded-md"></div>
             )}
             <img
-              src={currentStep.image}
+              src={currentStep.image || currentStep.imageUrl}
               alt="トラブルシューティング図"
               className={`max-h-80 object-contain rounded-md ${imageLoading ? 'hidden' : 'block'} cursor-pointer`}
               onLoad={() => {
@@ -314,7 +316,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 const imageTitle = flowData?.id || "応急処置ガイド";
                 window.dispatchEvent(new CustomEvent('preview-image', { 
                   detail: { 
-                    url: currentStep.image,
+                    url: currentStep.image || currentStep.imageUrl,
                     title: imageTitle,
                     content: currentStep.message || "トラブルシューティング画像"
                   } 
@@ -326,7 +328,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 const imageTitle = flowData?.id || "応急処置ガイド";
                 window.dispatchEvent(new CustomEvent('preview-image', { 
                   detail: { 
-                    url: currentStep.image,
+                    url: currentStep.image || currentStep.imageUrl,
                     title: imageTitle,
                     content: currentStep.message || "トラブルシューティング画像"
                   } 
