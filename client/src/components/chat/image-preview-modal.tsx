@@ -13,12 +13,26 @@ function fixImagePath(path: string | undefined): string {
     return path;
   }
   
+  // プロトコルを含むURLの場合はそのまま返す (外部リンク)
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
   // /uploads/images/ のパスを /knowledge-base/images/ に変換
   // ファイル名だけ保持して新しいパスにする
   if (path.includes('/uploads/images/')) {
     const fileName = path.split('/').pop();
     if (fileName) {
       console.log('プレビューモーダル: 画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
+      return `/knowledge-base/images/${fileName}`;
+    }
+  }
+  
+  // public/uploads/images/ のパスを /knowledge-base/images/ に変換
+  if (path.includes('/public/uploads/images/')) {
+    const fileName = path.split('/').pop();
+    if (fileName) {
+      console.log('プレビューモーダル: public画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
       return `/knowledge-base/images/${fileName}`;
     }
   }
@@ -33,10 +47,37 @@ function fixImagePath(path: string | undefined): string {
     }
   }
   
+  // アップロードパス (uploads/images/) から始まる相対パスを変換
+  if (path.startsWith('uploads/images/')) {
+    const fileName = path.split('/').pop();
+    if (fileName) {
+      console.log('プレビューモーダル: 相対パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
+      return `/knowledge-base/images/${fileName}`;
+    }
+  }
+  
+  // public/images/ から始まるパスを変換
+  if (path.includes('public/images/')) {
+    const fileName = path.split('/').pop();
+    if (fileName) {
+      console.log('プレビューモーダル: public画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
+      return `/knowledge-base/images/${fileName}`;
+    }
+  }
+  
   // 単なるファイル名の場合（パスがない）
   if (!path.includes('/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
     console.log('プレビューモーダル: 単純ファイル名からパス生成:', path, ' -> ', `/knowledge-base/images/${path}`);
     return `/knowledge-base/images/${path}`;
+  }
+  
+  // Knowledge-baseパスが含まれないパスで、イメージファイル拡張子を持つ場合を対応
+  if (!path.includes('/knowledge-base/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
+    const fileName = path.split('/').pop();
+    if (fileName) {
+      console.log('プレビューモーダル: その他画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
+      return `/knowledge-base/images/${fileName}`;
+    }
   }
   
   return path;
@@ -207,7 +248,15 @@ export default function ImagePreviewModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-5xl bg-black bg-opacity-90 border border-blue-400 flex flex-col items-center justify-center p-0 rounded-xl">
+      <DialogContent 
+        className="max-w-5xl bg-black bg-opacity-90 border border-blue-400 flex flex-col items-center justify-center p-0 rounded-xl"
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-description"
+      >
+        <div className="sr-only">
+          <h2 id="dialog-title">{metadataJson?.metadata?.タイトル || title}</h2>
+          <p id="dialog-description">拡大画像ビューワー</p>
+        </div>
         <div className="w-full flex justify-between items-center p-2 bg-blue-700 text-white">
           <h3 className="text-sm font-medium ml-2">
             {metadataJson?.metadata?.タイトル || title} 
