@@ -349,7 +349,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 className="w-full text-left justify-start h-auto py-2 mb-2"
                 onClick={() => handleOptionSelect(option.next)}
               >
-                {option.label}
+                {option.label || option.text}
               </Button>
             ))}
           </div>
