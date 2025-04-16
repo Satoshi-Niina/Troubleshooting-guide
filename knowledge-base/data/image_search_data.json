@@ -15,8 +15,8 @@
   },
   {
     "id": "cooling_001",
-    "file": "/knowledge-base/images/cooling_001.svg",
-    "pngFallback": "/knowledge-base/images/cooling_001.png",
+    "file": "/images/cooling_001.svg",
+    "pngFallback": "/images/cooling_001.png",
     "title": "冷却システム概略図",
     "category": "冷却系統",
     "keywords": [
@@ -29,8 +29,8 @@
   },
   {
     "id": "frame_001",
-    "file": "/knowledge-base/images/frame_001.svg",
-    "pngFallback": "/knowledge-base/images/frame_001.png",
+    "file": "/images/frame_001.svg",
+    "pngFallback": "/images/frame_001.png",
     "title": "車体フレーム構造",
     "category": "車体",
     "keywords": [
@@ -44,8 +44,8 @@
   },
   {
     "id": "cabin_001",
-    "file": "/knowledge-base/images/cabin_001.svg",
-    "pngFallback": "/knowledge-base/images/cabin_001.png",
+    "file": "/images/cabin_001.svg",
+    "pngFallback": "/images/cabin_001.png",
     "title": "運転キャビン配置図",
     "category": "運転室",
     "keywords": [
@@ -57,627 +57,46 @@
     "description": "保守用車の運転キャビン内部配置図。操作機器と計器類の位置を表示。"
   },
   {
-    "id": "_1744605380766_001",
-    "file": "/knowledge-base/images/_1744605380766_001.svg",
-    "pngFallback": "/knowledge-base/images/_1744605380766_001.png",
-    "title": " 1744605380766 001",
-    "category": "アップロード済みSVG",
+    "id": "mc_1744105287766_001",
+    "file": "/knowledge-base/images/mc_1744105287766_001.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_001.png",
+    "title": "エンジン冷却系統",
+    "category": "冷却系統",
     "keywords": [
-      "_1744605380766_001",
-      "SVG",
-      "図面"
+      "冷却",
+      "ラジエーター",
+      "水漏れ",
+      "オーバーヒート"
     ],
-    "description": "ファイル _1744605380766_001.svg"
+    "description": "エンジン冷却システムの構成と水流の流れ。オーバーヒートの検知ポイントを表示。"
   },
   {
-    "id": "_1744605380766_002",
-    "file": "/knowledge-base/images/_1744605380766_002.svg",
-    "pngFallback": "/knowledge-base/images/_1744605380766_002.png",
-    "title": " 1744605380766 002",
-    "category": "アップロード済みSVG",
+    "id": "mc_1744105287766_002",
+    "file": "/knowledge-base/images/mc_1744105287766_002.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_002.png",
+    "title": "車体フレーム構造",
+    "category": "車体",
     "keywords": [
-      "_1744605380766_002",
-      "SVG",
-      "図面"
+      "フレーム",
+      "シャーシ",
+      "車体",
+      "構造",
+      "強度部材"
     ],
-    "description": "ファイル _1744605380766_002.svg"
+    "description": "保守用車の車体フレーム構造図。サイドメンバーとクロスメンバーの配置を表示。"
   },
   {
-    "id": "_1744605380766_003",
-    "file": "/knowledge-base/images/_1744605380766_003.svg",
-    "pngFallback": "/knowledge-base/images/_1744605380766_003.png",
-    "title": " 1744605380766 003",
-    "category": "アップロード済みSVG",
+    "id": "mc_1744105287766_003",
+    "file": "/knowledge-base/images/mc_1744105287766_003.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_003.png",
+    "title": "運転キャビン配置図",
+    "category": "運転室",
     "keywords": [
-      "_1744605380766_003",
-      "SVG",
-      "図面"
+      "キャビン",
+      "運転室",
+      "操作パネル",
+      "計器盤"
     ],
-    "description": "ファイル _1744605380766_003.svg"
-  },
-  {
-    "id": "_1744605380766_004",
-    "file": "/knowledge-base/images/_1744605380766_004.svg",
-    "pngFallback": "/knowledge-base/images/_1744605380766_004.png",
-    "title": " 1744605380766 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "_1744605380766_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル _1744605380766_004.svg"
-  },
-  {
-    "id": "_1744605381793_001",
-    "file": "/knowledge-base/images/_1744605381793_001.svg",
-    "pngFallback": "/knowledge-base/images/_1744605381793_001.png",
-    "title": " 1744605381793 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "_1744605381793_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル _1744605381793_001.svg"
-  },
-  {
-    "id": "_1744605381793_002",
-    "file": "/knowledge-base/images/_1744605381793_002.svg",
-    "pngFallback": "/knowledge-base/images/_1744605381793_002.png",
-    "title": " 1744605381793 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "_1744605381793_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル _1744605381793_002.svg"
-  },
-  {
-    "id": "_1744605381793_003",
-    "file": "/knowledge-base/images/_1744605381793_003.svg",
-    "pngFallback": "/knowledge-base/images/_1744605381793_003.png",
-    "title": " 1744605381793 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "_1744605381793_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル _1744605381793_003.svg"
-  },
-  {
-    "id": "_1744605381793_004",
-    "file": "/knowledge-base/images/_1744605381793_004.svg",
-    "pngFallback": "/knowledge-base/images/_1744605381793_004.png",
-    "title": " 1744605381793 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "_1744605381793_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル _1744605381793_004.svg"
-  },
-  {
-    "id": "mc_1744542419008_001",
-    "file": "/knowledge-base/images/mc_1744542419008_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542419008_001.png",
-    "title": "mc 1744542419008 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542419008_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542419008_001.svg"
-  },
-  {
-    "id": "mc_1744542419008_002",
-    "file": "/knowledge-base/images/mc_1744542419008_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542419008_002.png",
-    "title": "mc 1744542419008 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542419008_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542419008_002.svg"
-  },
-  {
-    "id": "mc_1744542419008_003",
-    "file": "/knowledge-base/images/mc_1744542419008_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542419008_003.png",
-    "title": "mc 1744542419008 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542419008_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542419008_003.svg"
-  },
-  {
-    "id": "mc_1744542419008_004",
-    "file": "/knowledge-base/images/mc_1744542419008_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542419008_004.png",
-    "title": "mc 1744542419008 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542419008_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542419008_004.svg"
-  },
-  {
-    "id": "mc_1744542420112_001",
-    "file": "/knowledge-base/images/mc_1744542420112_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542420112_001.png",
-    "title": "mc 1744542420112 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542420112_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542420112_001.svg"
-  },
-  {
-    "id": "mc_1744542420112_002",
-    "file": "/knowledge-base/images/mc_1744542420112_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542420112_002.png",
-    "title": "mc 1744542420112 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542420112_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542420112_002.svg"
-  },
-  {
-    "id": "mc_1744542420112_003",
-    "file": "/knowledge-base/images/mc_1744542420112_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542420112_003.png",
-    "title": "mc 1744542420112 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542420112_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542420112_003.svg"
-  },
-  {
-    "id": "mc_1744542420112_004",
-    "file": "/knowledge-base/images/mc_1744542420112_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744542420112_004.png",
-    "title": "mc 1744542420112 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744542420112_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744542420112_004.svg"
-  },
-  {
-    "id": "mc_1744543489325_001",
-    "file": "/knowledge-base/images/mc_1744543489325_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543489325_001.png",
-    "title": "mc 1744543489325 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543489325_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543489325_001.svg"
-  },
-  {
-    "id": "mc_1744543489325_002",
-    "file": "/knowledge-base/images/mc_1744543489325_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543489325_002.png",
-    "title": "mc 1744543489325 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543489325_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543489325_002.svg"
-  },
-  {
-    "id": "mc_1744543489325_003",
-    "file": "/knowledge-base/images/mc_1744543489325_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543489325_003.png",
-    "title": "mc 1744543489325 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543489325_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543489325_003.svg"
-  },
-  {
-    "id": "mc_1744543489325_004",
-    "file": "/knowledge-base/images/mc_1744543489325_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543489325_004.png",
-    "title": "mc 1744543489325 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543489325_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543489325_004.svg"
-  },
-  {
-    "id": "mc_1744543490791_001",
-    "file": "/knowledge-base/images/mc_1744543490791_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543490791_001.png",
-    "title": "mc 1744543490791 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543490791_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543490791_001.svg"
-  },
-  {
-    "id": "mc_1744543490791_002",
-    "file": "/knowledge-base/images/mc_1744543490791_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543490791_002.png",
-    "title": "mc 1744543490791 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543490791_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543490791_002.svg"
-  },
-  {
-    "id": "mc_1744543490791_003",
-    "file": "/knowledge-base/images/mc_1744543490791_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543490791_003.png",
-    "title": "mc 1744543490791 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543490791_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543490791_003.svg"
-  },
-  {
-    "id": "mc_1744543490791_004",
-    "file": "/knowledge-base/images/mc_1744543490791_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543490791_004.png",
-    "title": "mc 1744543490791 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543490791_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543490791_004.svg"
-  },
-  {
-    "id": "mc_1744543726193_001",
-    "file": "/knowledge-base/images/mc_1744543726193_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543726193_001.png",
-    "title": "mc 1744543726193 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543726193_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543726193_001.svg"
-  },
-  {
-    "id": "mc_1744543726193_002",
-    "file": "/knowledge-base/images/mc_1744543726193_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543726193_002.png",
-    "title": "mc 1744543726193 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543726193_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543726193_002.svg"
-  },
-  {
-    "id": "mc_1744543726193_003",
-    "file": "/knowledge-base/images/mc_1744543726193_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543726193_003.png",
-    "title": "mc 1744543726193 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543726193_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543726193_003.svg"
-  },
-  {
-    "id": "mc_1744543726193_004",
-    "file": "/knowledge-base/images/mc_1744543726193_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543726193_004.png",
-    "title": "mc 1744543726193 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543726193_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543726193_004.svg"
-  },
-  {
-    "id": "mc_1744543728437_001",
-    "file": "/knowledge-base/images/mc_1744543728437_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543728437_001.png",
-    "title": "mc 1744543728437 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543728437_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543728437_001.svg"
-  },
-  {
-    "id": "mc_1744543728437_002",
-    "file": "/knowledge-base/images/mc_1744543728437_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543728437_002.png",
-    "title": "mc 1744543728437 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543728437_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543728437_002.svg"
-  },
-  {
-    "id": "mc_1744543728437_003",
-    "file": "/knowledge-base/images/mc_1744543728437_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543728437_003.png",
-    "title": "mc 1744543728437 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543728437_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543728437_003.svg"
-  },
-  {
-    "id": "mc_1744543728437_004",
-    "file": "/knowledge-base/images/mc_1744543728437_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744543728437_004.png",
-    "title": "mc 1744543728437 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744543728437_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744543728437_004.svg"
-  },
-  {
-    "id": "mc_1744618801689_001",
-    "file": "/knowledge-base/images/mc_1744618801689_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618801689_001.png",
-    "title": "mc 1744618801689 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618801689_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618801689_001.svg"
-  },
-  {
-    "id": "mc_1744618801689_002",
-    "file": "/knowledge-base/images/mc_1744618801689_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618801689_002.png",
-    "title": "mc 1744618801689 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618801689_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618801689_002.svg"
-  },
-  {
-    "id": "mc_1744618801689_003",
-    "file": "/knowledge-base/images/mc_1744618801689_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618801689_003.png",
-    "title": "mc 1744618801689 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618801689_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618801689_003.svg"
-  },
-  {
-    "id": "mc_1744618801689_004",
-    "file": "/knowledge-base/images/mc_1744618801689_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618801689_004.png",
-    "title": "mc 1744618801689 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618801689_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618801689_004.svg"
-  },
-  {
-    "id": "mc_1744618803268_001",
-    "file": "/knowledge-base/images/mc_1744618803268_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618803268_001.png",
-    "title": "mc 1744618803268 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618803268_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618803268_001.svg"
-  },
-  {
-    "id": "mc_1744618803268_002",
-    "file": "/knowledge-base/images/mc_1744618803268_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618803268_002.png",
-    "title": "mc 1744618803268 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618803268_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618803268_002.svg"
-  },
-  {
-    "id": "mc_1744618803268_003",
-    "file": "/knowledge-base/images/mc_1744618803268_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618803268_003.png",
-    "title": "mc 1744618803268 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618803268_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618803268_003.svg"
-  },
-  {
-    "id": "mc_1744618803268_004",
-    "file": "/knowledge-base/images/mc_1744618803268_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744618803268_004.png",
-    "title": "mc 1744618803268 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744618803268_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744618803268_004.svg"
-  },
-  {
-    "id": "mc_1744675852170_001",
-    "file": "/knowledge-base/images/mc_1744675852170_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675852170_001.png",
-    "title": "mc 1744675852170 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675852170_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675852170_001.svg"
-  },
-  {
-    "id": "mc_1744675852170_002",
-    "file": "/knowledge-base/images/mc_1744675852170_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675852170_002.png",
-    "title": "mc 1744675852170 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675852170_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675852170_002.svg"
-  },
-  {
-    "id": "mc_1744675852170_003",
-    "file": "/knowledge-base/images/mc_1744675852170_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675852170_003.png",
-    "title": "mc 1744675852170 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675852170_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675852170_003.svg"
-  },
-  {
-    "id": "mc_1744675852170_004",
-    "file": "/knowledge-base/images/mc_1744675852170_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675852170_004.png",
-    "title": "mc 1744675852170 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675852170_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675852170_004.svg"
-  },
-  {
-    "id": "mc_1744675856229_001",
-    "file": "/knowledge-base/images/mc_1744675856229_001.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675856229_001.png",
-    "title": "mc 1744675856229 001",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675856229_001",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675856229_001.svg"
-  },
-  {
-    "id": "mc_1744675856229_002",
-    "file": "/knowledge-base/images/mc_1744675856229_002.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675856229_002.png",
-    "title": "mc 1744675856229 002",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675856229_002",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675856229_002.svg"
-  },
-  {
-    "id": "mc_1744675856229_003",
-    "file": "/knowledge-base/images/mc_1744675856229_003.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675856229_003.png",
-    "title": "mc 1744675856229 003",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675856229_003",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675856229_003.svg"
-  },
-  {
-    "id": "mc_1744675856229_004",
-    "file": "/knowledge-base/images/mc_1744675856229_004.svg",
-    "pngFallback": "/knowledge-base/images/mc_1744675856229_004.png",
-    "title": "mc 1744675856229 004",
-    "category": "アップロード済みSVG",
-    "keywords": [
-      "mc_1744675856229_004",
-      "SVG",
-      "図面"
-    ],
-    "description": "ファイル mc_1744675856229_004.svg"
+    "description": "保守用車の運転キャビン内部配置図。操作機器と計器類の位置を表示。"
   }
 ]
