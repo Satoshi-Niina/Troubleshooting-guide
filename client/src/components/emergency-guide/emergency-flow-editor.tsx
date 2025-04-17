@@ -152,26 +152,50 @@ const initialEdges: Edge[] = [];
 interface EmergencyFlowEditorProps {
   onSave: (data: any) => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel }) => {
+const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel, initialData }) => {
   const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialData?.nodes || initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   
   // フロータイトルと説明
-  const [flowTitle, setFlowTitle] = useState<string>('新規応急処置フロー');
-  const [flowDescription, setFlowDescription] = useState<string>('');
+  const [flowTitle, setFlowTitle] = useState<string>(initialData?.title || '新規応急処置フロー');
+  const [flowDescription, setFlowDescription] = useState<string>(initialData?.description || '');
   
   // ノードドラッグ参照
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  
+  // フローID
+  const [flowId, setFlowId] = useState<string>(initialData?.id || `flow_${Date.now()}`);
 
   // 接続処理
   const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge({ ...connection, animated: true, type: 'smoothstep' }, eds));
-  }, [setEdges]);
+    // 判断ノードからの接続の場合はラベルを追加
+    const sourceNode = nodes.find(node => node.id === connection.source);
+    let label = '';
+    
+    if (sourceNode?.type === 'decision') {
+      // sourceHandleがyesかnoかで判定
+      if (connection.sourceHandle === 'yes') {
+        label = 'はい';
+      } else if (connection.sourceHandle === 'no') {
+        label = 'いいえ';
+      }
+    }
+    
+    setEdges((eds) => addEdge({ 
+      ...connection, 
+      animated: true, 
+      type: 'smoothstep',
+      label,
+      labelStyle: { fontSize: 12, fill: '#333' },
+      labelBgStyle: { fill: 'rgba(255, 255, 255, 0.8)' }
+    }, eds));
+  }, [setEdges, nodes]);
 
   // ノード選択処理
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -296,11 +320,21 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     
     // フローデータをトラブルシューティング形式に変換
     const flowData = {
-      id: `flow_${Date.now()}`,
+      id: flowId,
       title: flowTitle,
       description: flowDescription,
       nodes: nodes,
       edges: edges,
+      // フローのエッジにラベルがあれば保持
+      edgeLabels: edges.reduce((labels, edge) => {
+        if (edge.label) {
+          return { ...labels, [edge.id]: edge.label };
+        }
+        return labels;
+      }, {}),
+      // 作成日時情報も追加
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
     };
     
     // 親コンポーネントに渡す
@@ -310,7 +344,7 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
       title: "保存しました",
       description: "フローデータを保存しました",
     });
-  }, [flowTitle, flowDescription, nodes, edges, onSave, toast]);
+  }, [flowTitle, flowDescription, nodes, edges, flowId, onSave, toast]);
   
   return (
     <div className="flex flex-col h-full">
@@ -319,6 +353,45 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
           <div className="flex justify-between items-center">
             <CardTitle>応急処置フロー作成</CardTitle>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => {
+                // 現在のフローデータをJSON文字列に変換
+                const flowData = {
+                  id: flowId,
+                  title: flowTitle,
+                  description: flowDescription,
+                  nodes: nodes,
+                  edges: edges,
+                  edgeLabels: edges.reduce((labels, edge) => {
+                    if (edge.label) {
+                      return { ...labels, [edge.id]: edge.label };
+                    }
+                    return labels;
+                  }, {}),
+                };
+                
+                // Blobを作成してダウンロード
+                const jsonStr = JSON.stringify(flowData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // ダウンロードリンクを作成して自動クリック
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${flowTitle.replace(/\s+/g, '_')}_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // クリーンアップ
+                URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                toast({
+                  title: "JSONファイルをダウンロードしました",
+                  description: "フローデータをJSONファイルとして保存しました",
+                });
+              }}>
+                <Download className="mr-1 h-4 w-4" />JSONダウンロード
+              </Button>
               <Button variant="outline" size="sm" onClick={onCancel}><X className="mr-1 h-4 w-4" />キャンセル</Button>
               <Button size="sm" onClick={handleSave}><Save className="mr-1 h-4 w-4" />保存</Button>
             </div>
