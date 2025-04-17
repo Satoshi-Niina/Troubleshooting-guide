@@ -374,8 +374,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             id: "engine_related",
             title: "保守用車のエンジン",
             type: "svg-image",
-            url: "/uploads/images/mc_1744105287766_001.svg",
-            pngFallbackUrl: "/uploads/images/mc_1744105287766_001.png",
+            url: "/knowledge-base/images/mc_1744105287766_001.svg",
+            pngFallbackUrl: "/knowledge-base/images/mc_1744105287766_001.png",
             content: "軌道モータカーのエンジンは高トルクが出せるディーゼルエンジンを使用しています。エンジン故障時は点検が必要です。",
             relevance: 80
           });
@@ -389,8 +389,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             id: "frame_related",
             title: "車体フレーム構造",
             type: "svg-image",
-            url: "/uploads/images/mc_1744105287766_003.svg",
-            pngFallbackUrl: "/uploads/images/mc_1744105287766_003.png",
+            url: "/knowledge-base/images/mc_1744105287766_003.svg",
+            pngFallbackUrl: "/knowledge-base/images/mc_1744105287766_003.png",
             content: "保守用車の車体フレーム構造は、強度と軽量性を両立した設計です。各部材の点検は定期的に行いましょう。",
             relevance: 80
           });
@@ -404,8 +404,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             id: "cabin_related",
             title: "運転キャビン配置図",
             type: "svg-image",
-            url: "/uploads/images/mc_1744105287766_004.svg",
-            pngFallbackUrl: "/uploads/images/mc_1744105287766_004.png",
+            url: "/knowledge-base/images/mc_1744105287766_004.svg",
+            pngFallbackUrl: "/knowledge-base/images/mc_1744105287766_004.png",
             content: "運転キャビン内の各操作機器は人間工学に基づいて配置されています。定期的に各機器の点検を行いましょう。",
             relevance: 80
           });
@@ -419,8 +419,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: "default_help",
           title: "保守用車サポート",
           type: "svg-image",
-          url: "/uploads/images/mc_1744105287766_001.svg",
-          pngFallbackUrl: "/uploads/images/mc_1744105287766_001.png", // PNG代替を追加
+          url: "/knowledge-base/images/mc_1744105287766_001.svg",
+          pngFallbackUrl: "/knowledge-base/images/mc_1744105287766_001.png", // PNG代替を追加
           content: "保守用車の基本情報です。具体的なキーワードで検索するとより詳細な情報が表示されます。",
           relevance: 60
         });
@@ -430,8 +430,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: "default_help_2",
           title: "保守車両点検マニュアル",
           type: "svg-image",
-          url: "/uploads/images/mc_1744105287766_002.svg",
-          pngFallbackUrl: "/uploads/images/mc_1744105287766_002.png", // PNG代替を追加
+          url: "/knowledge-base/images/mc_1744105287766_002.svg",
+          pngFallbackUrl: "/knowledge-base/images/mc_1744105287766_002.png", // PNG代替を追加
           content: "保守用車両の点検手順と安全確認事項です。緊急時は必ず安全を確保してください。",
           relevance: 55
         });
