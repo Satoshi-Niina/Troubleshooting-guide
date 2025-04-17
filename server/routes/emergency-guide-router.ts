@@ -4,6 +4,7 @@ import * as path from 'path';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import AdmZip from 'adm-zip';
+import fetch from 'node-fetch';
 import { log } from '../vite';
 
 // PowerPointファイルからテキスト抽出ライブラリ
@@ -278,6 +279,8 @@ router.post('/process', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, error: 'ファイルがアップロードされていません' });
     }
     
+    // 自動フロー生成オプションを取得
+    const autoGenerateFlow = req.body.autoGenerateFlow === 'true';
     const filePath = req.file.path;
     const fileExtension = path.extname(filePath).toLowerCase();
     
@@ -311,12 +314,48 @@ router.post('/process', upload.single('file'), async (req, res) => {
       }
     }
     
-    return res.json({
+    // レスポンス用のデータ
+    const responseData = {
       success: true,
       message: 'ファイルが正常に処理されました',
       guideId: result.id,
       data: result
-    });
+    };
+    
+    // 自動フロー生成が有効な場合は、非同期でフロー生成プロセスを開始
+    if (autoGenerateFlow) {
+      // まずレスポンスを返してクライアントを待たせない
+      res.json(responseData);
+      
+      try {
+        console.log(`自動フロー生成を開始: ${result.id}`);
+        // 別プロセスでフロー生成APIを呼び出す（バックグラウンド処理）
+        fetch(`http://localhost:${process.env.PORT || 3000}/api/flow-generator/generate-from-guide/${result.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(async response => {
+          if (response.ok) {
+            const generationResult = await response.json();
+            console.log(`フロー生成成功: ${generationResult.flowData.id}`);
+          } else {
+            console.error('フロー生成エラー:', await response.text());
+          }
+        }).catch(err => {
+          console.error('フロー生成リクエストエラー:', err);
+        });
+      } catch (error) {
+        console.error('自動フロー生成開始エラー:', error);
+        // エラーが発生してもクライアントには既にレスポンスを返しているので何もしない
+      }
+      
+      // レスポンスは既に返しているのでここでは何もしない
+      return;
+    }
+    
+    // 自動フロー生成が無効な場合は通常のレスポンスを返す
+    return res.json(responseData);
   } catch (error) {
     console.error('ファイル処理エラー:', error);
     return res.status(500).json({

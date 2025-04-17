@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, UploadCloud, FileText, CheckCircle } from 'lucide-react';
+import { Loader2, UploadCloud, FileText, CheckCircle, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -235,8 +235,9 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
               checked={autoGenerateFlow} 
               onCheckedChange={(checked) => setAutoGenerateFlow(checked === true)}
             />
-            <Label htmlFor="autoGenerateFlow" className="text-sm text-gray-700">
+            <Label htmlFor="autoGenerateFlow" className="text-sm text-gray-700 flex items-center">
               自動的に応急処置フローを生成する
+              <Sparkles className="ml-1 h-3.5 w-3.5 text-amber-500" />
             </Label>
           </div>
         </div>
