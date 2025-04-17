@@ -102,11 +102,13 @@ async function loadImageSearchData() {
           .map((img: any, index: number) => {
             let imagePath = img['抽出パス'];
             
-            // 画像パスの参照を新しい構造に合わせて修正
-            if (imagePath && imagePath.includes('/uploads/images/')) {
-              imagePath = imagePath.replace('/uploads/images/', '/images/');
-            } else if (imagePath && imagePath.includes('/knowledge-base/images/')) {
-              imagePath = imagePath.replace('/knowledge-base/images/', '/images/');
+            // 画像パスの参照を knowledge-base ディレクトリに統一
+            if (imagePath) {
+              // ファイル名だけを抽出
+              const fileName = imagePath.split('/').pop();
+              if (fileName) {
+                imagePath = `/knowledge-base/images/${fileName}`;
+              }
             }
             
             // JPEG画像の場合はできればPNGに置き換え
@@ -156,7 +158,7 @@ async function loadImageSearchData() {
         
         // 再度データを読み込み
         try {
-          const reloadResponse = await fetch(`/uploads/data/image_search_data.json?t=${Date.now()}`);
+          const reloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
           if (reloadResponse.ok) {
             const reloadedData = await reloadResponse.json();
             if (Array.isArray(reloadedData)) {
@@ -166,7 +168,7 @@ async function loadImageSearchData() {
             }
           }
         } catch (error) {
-          console.warn(`uploads/dataからの読み込みに失敗、knowledge-baseから読み込みを試行します:`, error);
+          console.warn(`knowledge-baseからの読み込みに失敗しました:`, error);
           try {
             const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
             if (kbReloadResponse.ok) {
@@ -290,8 +292,8 @@ async function loadImageSearchData() {
     imageSearchData = [
       {
         id: "engine_001",
-        file: "/images/engine_001.svg",
-        pngFallback: "/images/engine_001.png",
+        file: "/knowledge-base/images/engine_001.svg",
+        pngFallback: "/knowledge-base/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -299,8 +301,8 @@ async function loadImageSearchData() {
       },
       {
         id: "cooling_001",
-        file: "/images/cooling_001.svg",
-        pngFallback: "/images/cooling_001.png",
+        file: "/knowledge-base/images/cooling_001.svg",
+        pngFallback: "/knowledge-base/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -308,8 +310,8 @@ async function loadImageSearchData() {
       },
       {
         id: "frame_001",
-        file: "/images/frame_001.svg",
-        pngFallback: "/images/frame_001.png",
+        file: "/knowledge-base/images/frame_001.svg",
+        pngFallback: "/knowledge-base/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -317,8 +319,8 @@ async function loadImageSearchData() {
       },
       {
         id: "cabin_001",
-        file: "/images/cabin_001.svg",
-        pngFallback: "/images/cabin_001.png",
+        file: "/knowledge-base/images/cabin_001.svg",
+        pngFallback: "/knowledge-base/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],

@@ -4,82 +4,29 @@ import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// 画像パスを修正するヘルパー関数
+// 画像パスを修正するヘルパー関数 - より単純化したバージョン
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
-  
-  // すでに knowledge-base パスを持っていれば変更しない
-  if (path.includes('/knowledge-base/images/')) {
-    return path;
-  }
   
   // プロトコルを含むURLの場合はそのまま返す (外部リンク)
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
   
-  // /uploads/images/ のパスを /knowledge-base/images/ に変換
-  // ファイル名だけ保持して新しいパスにする
-  if (path.includes('/uploads/images/')) {
+  // すでに knowledge-base パスを持っていれば変更しない
+  if (path.includes('/knowledge-base/images/')) {
+    return path;
+  }
+  
+  // 画像ファイルの拡張子を持つパスはファイル名だけ抽出して知識ベースのパスに変換
+  if (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
     const fileName = path.split('/').pop();
     if (fileName) {
-      console.log('プレビューモーダル: 画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
+      console.log('プレビューモーダル: パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
       return `/knowledge-base/images/${fileName}`;
     }
   }
-  
-  // public/uploads/images/ のパスを /knowledge-base/images/ に変換
-  if (path.includes('/public/uploads/images/')) {
-    const fileName = path.split('/').pop();
-    if (fileName) {
-      console.log('プレビューモーダル: public画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
-    }
-  }
-  
-  // /uploads/ から始まるがサブフォルダが不明確な場合
-  if (path.startsWith('/uploads/') && !path.includes('/uploads/data/') && !path.includes('/uploads/json/')) {
-    const parts = path.split('/');
-    const fileName = parts.pop(); // 最後の部分（ファイル名）を取得
-    if (fileName) {
-      console.log('プレビューモーダル: 汎用パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
-    }
-  }
-  
-  // アップロードパス (uploads/images/) から始まる相対パスを変換
-  if (path.startsWith('uploads/images/')) {
-    const fileName = path.split('/').pop();
-    if (fileName) {
-      console.log('プレビューモーダル: 相対パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
-    }
-  }
-  
-  // public/images/ から始まるパスを変換
-  if (path.includes('public/images/')) {
-    const fileName = path.split('/').pop();
-    if (fileName) {
-      console.log('プレビューモーダル: public画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
-    }
-  }
-  
-  // 単なるファイル名の場合（パスがない）
-  if (!path.includes('/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
-    console.log('プレビューモーダル: 単純ファイル名からパス生成:', path, ' -> ', `/knowledge-base/images/${path}`);
-    return `/knowledge-base/images/${path}`;
-  }
-  
-  // Knowledge-baseパスが含まれないパスで、イメージファイル拡張子を持つ場合を対応
-  if (!path.includes('/knowledge-base/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
-    const fileName = path.split('/').pop();
-    if (fileName) {
-      console.log('プレビューモーダル: その他画像パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
-    }
-  }
-  
+
   return path;
 }
 
