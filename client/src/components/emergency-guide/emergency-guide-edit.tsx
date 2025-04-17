@@ -544,6 +544,15 @@ const EmergencyGuideEdit: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800"
+                              onClick={() => handleGenerateFlow(file.id, file.title)}
+                            >
+                              <Sparkles className="h-4 w-4 mr-1" />
+                              フロー生成
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
                               onClick={() => {
                                 // 削除確認ダイアログを表示
@@ -554,13 +563,6 @@ const EmergencyGuideEdit: React.FC = () => {
                                   })
                                   .then(response => {
                                     if (response.ok) {
-                                      return response.json();
-                                    } else {
-                                      throw new Error('削除に失敗しました');
-                                    }
-                                  })
-                                  .then(data => {
-                                    if (data.success) {
                                       // 削除成功
                                       toast({
                                         title: '削除完了',
@@ -570,8 +572,9 @@ const EmergencyGuideEdit: React.FC = () => {
                                       setGuideFiles(prevFiles => 
                                         prevFiles.filter(f => f.id !== file.id)
                                       );
+                                      return response.json();
                                     } else {
-                                      throw new Error(data.error || '削除中にエラーが発生しました');
+                                      throw new Error('削除に失敗しました');
                                     }
                                   })
                                   .catch(error => {
