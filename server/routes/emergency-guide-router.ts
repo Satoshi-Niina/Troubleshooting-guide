@@ -54,6 +54,37 @@ const kbTempDir = path.join(knowledgeBaseDir, 'temp');
   }
 });
 
+// クリーンアップ処理：問題となるファイルを削除 (開発用)
+const cleanupSpecificFiles = () => {
+  try {
+    // 問題のあるガイドファイルを確認して削除
+    const problemFile = path.join(kbJsonDir, 'guide_1744876404679_metadata.json');
+    if (fs.existsSync(problemFile)) {
+      console.log('問題となるファイルを削除します:', problemFile);
+      fs.unlinkSync(problemFile);
+    }
+    
+    // 関連する画像を削除
+    if (fs.existsSync(kbImageDir)) {
+      const imageFiles = fs.readdirSync(kbImageDir);
+      const relatedImages = imageFiles.filter(img => img.startsWith('guide_1744876404679'));
+      
+      relatedImages.forEach(imgFile => {
+        const imgPath = path.join(kbImageDir, imgFile);
+        if (fs.existsSync(imgPath)) {
+          fs.unlinkSync(imgPath);
+          console.log('関連画像を削除しました:', imgPath);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('クリーンアップ中にエラーが発生しました:', error);
+  }
+};
+
+// アプリケーション起動時にクリーンアップを実行
+cleanupSpecificFiles();
+
 // Multerの設定
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -405,10 +436,17 @@ router.get('/list', (_req, res) => {
     }
     
     // キャッシュバスティングのためにファイル一覧を再スキャン
-    const files = fs.readdirSync(kbJsonDir)
-      .filter(file => file.endsWith('_metadata.json'));
+    const allFiles = fs.readdirSync(kbJsonDir);
+    console.log('全ファイル一覧:', allFiles);
     
-    console.log('メタデータファイル一覧:', files);
+    // 特定のファイルを除外するためのブラックリスト
+    const blacklist = ['guide_1744876404679_metadata.json'];
+    
+    // メタデータファイルのみをフィルタリング（かつブラックリストを除外）
+    const files = allFiles
+      .filter(file => file.endsWith('_metadata.json') && !blacklist.includes(file));
+    
+    console.log('フィルタリング後のメタデータファイル一覧:', files);
     
     const guides = files.map(file => {
       try {
