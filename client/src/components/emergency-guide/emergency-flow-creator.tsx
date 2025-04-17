@@ -6,8 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, X, Edit, File, FileText, Plus, Download, FolderOpen } from 'lucide-react';
+import { Upload, Save, X, Edit, File, FileText, Plus, Download, FolderOpen, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import EmergencyFlowEditor from './emergency-flow-editor';
 
 const EmergencyFlowCreator: React.FC = () => {
@@ -26,6 +36,10 @@ const EmergencyFlowCreator: React.FC = () => {
   
   // フロー編集の状態
   const [flowData, setFlowData] = useState<any>(null);
+  
+  // キャラクター削除関連の状態
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [flowToDelete, setFlowToDelete] = useState<string | null>(null);
   
   // ファイル選択のハンドラー
   const handleFileClick = () => {
@@ -139,6 +153,49 @@ const EmergencyFlowCreator: React.FC = () => {
       // 一定間隔で進行状況を更新
       const progressInterval = setInterval(updateProgress, 300);
       
+      // JSONファイルを直接読み込み、編集画面に切り替える
+      if (selectedFile.name.toLowerCase().endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target?.result as string);
+            // ファイル名情報を追加
+            jsonData.fileName = selectedFile.name;
+            setUploadedFileName(selectedFile.name);
+            setFlowData(jsonData);
+            
+            // 読み込み成功したらエディタに切り替え
+            setActiveTab('create');
+            setUploadSuccess(true);
+            toast({
+              title: "JSONファイル読込み成功",
+              description: "フローデータをエディタで編集できます",
+            });
+            
+            // 進行状況の更新を停止
+            clearInterval(progressInterval);
+            setUploadProgress(100);
+            
+            // 3秒後にリセット（ファイル選択状態のみ）
+            setTimeout(() => {
+              setSelectedFile(null);
+              setUploadSuccess(false);
+              setUploadProgress(0);
+            }, 3000);
+          } catch (error) {
+            clearInterval(progressInterval);
+            setUploadProgress(0);
+            toast({
+              title: "エラー",
+              description: "JSONファイルの解析に失敗しました",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.readAsText(selectedFile);
+        return;
+      }
+      
       // フォームデータの作成
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -237,115 +294,195 @@ const EmergencyFlowCreator: React.FC = () => {
     setActiveTab('file');
   };
   
-  return (
-    <Card className="w-full max-h-full overflow-auto">
-      <CardHeader className="pb-2">
-        <CardDescription>応急処置データ管理：新規作成・キャラクターデザイン・テキストフロー編集</CardDescription>
-      </CardHeader>
+  // 新規フロー作成ハンドラー
+  const handleCreateNewFlow = () => {
+    // 空のフローデータで初期化
+    setFlowData(null);
+    setUploadedFileName('');
+    setActiveTab('create');
+  };
+  
+  // キャラクター削除確認ダイアログを表示
+  const handleDeleteCharacter = (id: string) => {
+    setFlowToDelete(id);
+    setShowConfirmDelete(true);
+  };
+  
+  // キャラクター削除実行
+  const executeDeleteCharacter = async () => {
+    if (!flowToDelete) return;
+    
+    try {
+      const response = await fetch(`/api/emergency-guide/delete/${flowToDelete}`, {
+        method: 'DELETE',
+      });
       
-      <CardContent className="overflow-auto">
-        <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="file">
-              <FolderOpen className="mr-2 h-4 w-4" />
-              既存ファイルの編集
-            </TabsTrigger>
-            <TabsTrigger value="create">
-              <Plus className="mr-2 h-4 w-4" />
-              新規フロー作成
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* ファイル読込みタブコンテンツ */}
-          <TabsContent value="file">
-            {/* ファイル入力 (非表示) */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".json"
-              className="hidden"
-            />
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "削除成功",
+          description: "キャラクターが削除されました",
+        });
+        // フローリストを再取得する処理をここに追加する（必要に応じて）
+      } else {
+        throw new Error(result.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('削除エラー:', error);
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "削除に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setShowConfirmDelete(false);
+      setFlowToDelete(null);
+    }
+  };
+  
+  return (
+    <>
+      <Card className="w-full max-h-full overflow-auto">
+        <CardHeader className="pb-2">
+          <CardDescription>応急処置データ管理：新規作成・キャラクターデザイン・テキストフロー編集</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="overflow-auto">
+          <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="file">
+                <FolderOpen className="mr-2 h-4 w-4" />
+                既存ファイルの編集
+              </TabsTrigger>
+              <TabsTrigger value="create">
+                <Plus className="mr-2 h-4 w-4" />
+                新規フロー作成
+              </TabsTrigger>
+            </TabsList>
             
-            {/* ドラッグ&ドロップエリア */}
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors ${
-                selectedFile
-                  ? 'border-indigo-600 bg-indigo-50'
-                  : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-              }`}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={handleFileClick}
-            >
-              {selectedFile ? (
-                <div>
-                  <FileText className="mx-auto h-12 w-12 text-indigo-600 mb-2" />
-                  <p className="text-sm text-gray-800 font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    JSONファイルをクリックまたはドラッグ&ドロップしてください
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    読み込んだデータをReact Flowで編集できます
+            {/* ファイル読込みタブコンテンツ */}
+            <TabsContent value="file">
+              {/* ファイル入力 (非表示) */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".json"
+                className="hidden"
+              />
+              
+              {/* ドラッグ&ドロップエリア */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors ${
+                  selectedFile
+                    ? 'border-indigo-600 bg-indigo-50'
+                    : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                }`}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={handleFileClick}
+              >
+                {selectedFile ? (
+                  <div>
+                    <FileText className="mx-auto h-12 w-12 text-indigo-600 mb-2" />
+                    <p className="text-sm text-gray-800 font-medium">{selectedFile.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-600">
+                      JSONファイルをクリックまたはドラッグ&ドロップしてください
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      読み込んだデータをReact Flowで編集できます
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* 進行状況 */}
+              {isUploading && (
+                <div className="mb-4">
+                  <Progress value={uploadProgress} className="h-2" />
+                  <p className="text-xs text-center mt-1 text-gray-500">
+                    {uploadProgress < 100 ? '処理中...' : '完了!'}
                   </p>
                 </div>
               )}
-            </div>
-            
-            {/* 進行状況 */}
-            {isUploading && (
-              <div className="mb-4">
-                <Progress value={uploadProgress} className="h-2" />
-                <p className="text-xs text-center mt-1 text-gray-500">
-                  {uploadProgress < 100 ? '処理中...' : '完了!'}
-                </p>
+              
+              {/* アップロードボタン */}
+              <div className="flex justify-end mb-6">
+                <Button
+                  onClick={handleUpload}
+                  disabled={!selectedFile || isUploading}
+                  className="w-full sm:w-auto"
+                >
+                  {isUploading ? (
+                    <>処理中...</>
+                  ) : uploadSuccess ? (
+                    <>完了</>
+                  ) : (
+                    <>読込み</>
+                  )}
+                </Button>
               </div>
-            )}
+              
+              {/* 新規フロー作成ボタン */}
+              <div className="mt-6 mb-2">
+                <Button
+                  onClick={handleCreateNewFlow}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  新規フローを作成する
+                </Button>
+              </div>
+              
+              {/* 補足情報やヒント */}
+              <div className="mt-2 text-xs text-gray-500 italic">
+                読み込んだファイルはフローエディタで編集できます。JSONファイルを選択すると直接編集が可能です。
+              </div>
+            </TabsContent>
             
-            {/* アップロードボタン */}
-            <div className="flex justify-end mb-6">
-              <Button
-                onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
-                className="w-full sm:w-auto"
-              >
-                {isUploading ? (
-                  <>処理中...</>
-                ) : uploadSuccess ? (
-                  <>完了</>
-                ) : (
-                  <>読込み</>
-                )}
-              </Button>
-            </div>
-            
-            {/* 補足情報やヒント */}
-            <div className="mt-2 text-xs text-gray-500 italic">
-              読み込んだファイルはフローエディタで編集できます。JSONファイルを選択すると直接編集が可能です。
-            </div>
-          </TabsContent>
-          
-          {/* 新規フロー作成タブコンテンツ */}
-          <TabsContent value="create" className="h-full">
-            <EmergencyFlowEditor 
-              onSave={handleSaveFlow}
-              onCancel={handleCancelFlow}
-              initialData={{
-                ...flowData,
-                fileName: uploadedFileName || (flowData?.fileName || '')
-              }}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            {/* 新規フロー作成タブコンテンツ */}
+            <TabsContent value="create" className="h-full">
+              <EmergencyFlowEditor 
+                onSave={handleSaveFlow}
+                onCancel={handleCancelFlow}
+                initialData={{
+                  ...flowData,
+                  fileName: uploadedFileName || (flowData?.fileName || '')
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      {/* キャラクター削除確認ダイアログ */}
+      <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>キャラクターを削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              このキャラクターを削除すると、すべての関連データが失われます。この操作は元に戻すことができません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowConfirmDelete(false)}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDeleteCharacter} className="bg-red-600 hover:bg-red-700">
+              <Trash2 className="mr-2 h-4 w-4" />
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
