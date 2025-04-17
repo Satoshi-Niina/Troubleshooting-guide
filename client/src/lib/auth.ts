@@ -8,12 +8,17 @@ import { LoginCredentials } from '@shared/schema';
  */
 export const login = async (credentials: LoginCredentials) => {
   try {
-    // サーバーに送信
-    const response = await apiRequest('POST', '/api/auth/login', credentials);
-    if (!response.ok) {
-      throw new Error('認証サーバーからのレスポンスエラー');
+    // ハードコードされた認証情報 - テスト用
+    if (credentials.username === 'niina') {
+      // サーバーに送信
+      const response = await apiRequest('POST', '/api/auth/login', credentials);
+      if (!response.ok) {
+        throw new Error('認証サーバーからのレスポンスエラー');
+      }
+      return await response.json();
+    } else {
+      throw new Error('ユーザー名が不正です');
     }
-    return await response.json();
   } catch (error) {
     console.error('Login error:', error);
     throw new Error('ログインに失敗しました');
