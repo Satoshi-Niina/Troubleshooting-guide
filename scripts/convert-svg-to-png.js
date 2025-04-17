@@ -54,9 +54,10 @@ async function convertAllSvgInDirectory(directory) {
   }
 }
 
-// アップロードディレクトリパス
+// ディレクトリパス
 const uploadsImagesDir = path.join(__dirname, '..', 'uploads', 'images');
 const publicUploadsImagesDir = path.join(__dirname, '..', 'public', 'uploads', 'images');
+const knowledgeBaseImagesDir = path.join(__dirname, '..', 'knowledge-base', 'images');
 
 // 変換を実行
 console.log('Starting SVG to PNG conversion...');
@@ -64,6 +65,10 @@ convertAllSvgInDirectory(uploadsImagesDir)
   .then(() => {
     console.log('Processing public directory...');
     return convertAllSvgInDirectory(publicUploadsImagesDir);
+  })
+  .then(() => {
+    console.log('Processing knowledge-base directory...');
+    return convertAllSvgInDirectory(knowledgeBaseImagesDir);
   })
   .then(() => {
     console.log('All conversions completed!');

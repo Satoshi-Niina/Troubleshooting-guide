@@ -566,22 +566,53 @@ async function addEmbeddedImagesToSearchData(
   originalFileName: string
 ): Promise<void> {
   try {
+    // 知識ベースディレクトリのパス
     const rootDir = process.cwd();
-    const imageSearchDataPath = path.join(rootDir, 'public', 'uploads', 'data', 'image_search_data.json');
+    const knowledgeBaseDataPath = path.join(rootDir, 'knowledge-base', 'data', 'image_search_data.json');
     
-    // ディレクトリがない場合は作成
-    if (!fs.existsSync(path.dirname(imageSearchDataPath))) {
-      fs.mkdirSync(path.dirname(imageSearchDataPath), { recursive: true });
-    }
+    // 下位互換性のためにuploadディレクトリのパスも保持
+    const legacyImageSearchDataPath = path.join(rootDir, 'public', 'uploads', 'data', 'image_search_data.json');
+    
+    // ディレクトリが存在しない場合は作成
+    [path.dirname(knowledgeBaseDataPath), path.dirname(legacyImageSearchDataPath)].forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`ディレクトリを作成: ${dir}`);
+      }
+    });
     
     // 画像検索データを読み込む
     let imageSearchData: any[] = [];
     
-    if (fs.existsSync(imageSearchDataPath)) {
+    // 知識ベースから優先的に読み込む
+    if (fs.existsSync(knowledgeBaseDataPath)) {
       try {
-        const jsonContent = fs.readFileSync(imageSearchDataPath, 'utf8');
+        const jsonContent = fs.readFileSync(knowledgeBaseDataPath, 'utf8');
         imageSearchData = JSON.parse(jsonContent);
-        console.log(`既存の画像検索データを読み込みました: ${imageSearchData.length}件`);
+        console.log(`knowledge-baseから画像検索データを読み込みました: ${imageSearchData.length}件`);
+      } catch (jsonErr) {
+        console.error("knowledge-base JSONの読み込みエラー:", jsonErr);
+        
+        // フォールバック: 従来のパスから読み込む
+        if (fs.existsSync(legacyImageSearchDataPath)) {
+          try {
+            const legacyJsonContent = fs.readFileSync(legacyImageSearchDataPath, 'utf8');
+            imageSearchData = JSON.parse(legacyJsonContent);
+            console.log(`従来のパスから画像検索データを読み込みました: ${imageSearchData.length}件`);
+          } catch (legacyErr) {
+            console.error("従来のJSON読み込みエラー:", legacyErr);
+            imageSearchData = [];
+          }
+        } else {
+          imageSearchData = [];
+        }
+      }
+    } else if (fs.existsSync(legacyImageSearchDataPath)) {
+      // knowledge-baseがない場合は従来のパスから読み込む
+      try {
+        const jsonContent = fs.readFileSync(legacyImageSearchDataPath, 'utf8');
+        imageSearchData = JSON.parse(jsonContent);
+        console.log(`従来のパスから画像検索データを読み込みました: ${imageSearchData.length}件`);
       } catch (jsonErr) {
         console.error("JSON読み込みエラー:", jsonErr);
         imageSearchData = [];
@@ -594,11 +625,23 @@ async function addEmbeddedImagesToSearchData(
       const imageId = `${baseFileName}_img_${(i+1).toString().padStart(3, '0')}`;
       const imageExt = path.extname(imagePath);
       
+      // SVGファイルパスを生成（PNGからSVGへのパス変換を行う）
+      const svgImagePath = imagePath.replace(/\.png$/i, '.svg');
+      
+      // SVGを優先
+      const primaryImagePath = svgImagePath;
+      // PNGフォールバックはそのまま
+      const pngFallbackPath = imagePath;
+      
+      // knowledge-baseのパスを使うように更新
+      const knowledgeBasePrimaryPath = primaryImagePath.replace('/uploads/', '/knowledge-base/');
+      const knowledgeBasePngFallback = pngFallbackPath.replace('/uploads/', '/knowledge-base/');
+      
       // 画像検索アイテムを作成
       const newImageItem = {
         id: imageId,
-        file: imagePath,
-        pngFallback: undefined, // 既にPNGなのでフォールバック不要
+        file: knowledgeBasePrimaryPath,
+        pngFallback: knowledgeBasePngFallback,
         title: `${originalFileName}内の画像 ${i+1}`,
         category: '保守用車マニュアル画像',
         keywords: ["保守用車", "マニュアル", "図面", "画像"],
@@ -606,7 +649,7 @@ async function addEmbeddedImagesToSearchData(
         metadata: {
           uploadDate: new Date().toISOString(),
           fileSize: -1, // ファイルサイズは不明
-          fileType: imageExt.substring(1).toUpperCase(),
+          fileType: 'SVG', // SVGを優先
           sourceFile: originalFileName,
           extractedFrom: 'PowerPoint'
         }
@@ -621,9 +664,12 @@ async function addEmbeddedImagesToSearchData(
       }
     }
     
-    // 更新したデータを書き込み
-    fs.writeFileSync(imageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
-    console.log(`埋め込み画像を画像検索データに追加しました: ${imagePaths.length}件`);
+    // 更新したデータを両方の場所に書き込み
+    fs.writeFileSync(knowledgeBaseDataPath, JSON.stringify(imageSearchData, null, 2));
+    fs.writeFileSync(legacyImageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
+    console.log(`埋め込み画像を画像検索データに追加しました（${imagePaths.length}件）`);
+    console.log(`- knowledge-baseパス: ${knowledgeBaseDataPath}`);
+    console.log(`- 従来のパス: ${legacyImageSearchDataPath}`);
     
   } catch (error) {
     console.error('埋め込み画像の画像検索データ追加エラー:', error);
