@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import multer from 'multer';
@@ -510,71 +510,69 @@ router.post('/update/:id', (req, res) => {
 router.delete('/delete/:id', (req, res) => {
   try {
     const id = req.params.id;
-    console.log(`削除リクエスト受信: ID=${id}`);
+    console.log(`応急処置ガイド削除リクエスト: ID=${id}`);
     
-    // 対象ファイルを検索
-    const files = fs.readdirSync(kbJsonDir)
-      .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
-    
-    if (files.length === 0) {
-      console.log(`削除対象が見つかりません: ${id}`);
-      // 成功レスポンスを返す（すでに存在しないためファイルが削除されたことと同じ結果）
-      return res.json({
-        success: true,
-        message: 'ガイドデータは既に存在しません',
-        id,
-        status: 'not_found'
-      });
+    // 知識ベースJson（メタデータ）ディレクトリから直接ファイルを検索
+    if (!fs.existsSync(kbJsonDir)) {
+      return res.status(404).json({ error: 'JSONディレクトリが見つかりません' });
     }
     
-    const filePath = path.join(kbJsonDir, files[0]);
-    console.log(`削除対象ファイル: ${filePath}`);
+    // 削除すべきJSONファイル名を探す
+    const jsonFiles = fs.readdirSync(kbJsonDir);
+    const targetFile = jsonFiles.find(file => file.startsWith(id));
+    
+    if (!targetFile) {
+      return res.status(404).json({ error: `指定されたガイド (ID: ${id}) が見つかりません` });
+    }
+    
+    // ファイルパス
+    const filePath = path.join(kbJsonDir, targetFile);
+    
+    // ファイルに関連する情報を保存
+    const fileName = targetFile;
+    let title = `ファイル_${id}`;
+    
+    // JSONファイルの内容を読み取り、タイトルなどを取得
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(content);
+      
+      if (data.metadata && data.metadata.タイトル) {
+        title = data.metadata.タイトル;
+      } else if (data.title) {
+        title = data.title;
+      }
+    } catch (readError) {
+      console.warn(`削除前のファイル内容読み取りに失敗: ${filePath}`, readError);
+    }
     
     // ファイルを削除
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-      console.log(`メタデータファイル削除成功: ${filePath}`);
-    } else {
-      console.log(`メタデータファイルが存在しません: ${filePath}`);
+      console.log(`JSONファイルを削除しました: ${filePath}`);
     }
     
-    // 削除した画像ファイルのカウント
-    let deletedImageCount = 0;
-    
-    // uploads ディレクトリの使用は廃止しました
-    // 知識ベースディレクトリの画像のみ削除
-    
-    // 知識ベースディレクトリの画像を削除
-    const kbImageDir = path.join(process.cwd(), 'knowledge-base', 'images');
-    if (fs.existsSync(kbImageDir)) {
-      try {
-        const kbImagePattern = new RegExp(`^${id}_.*`);
-        const kbImageFiles = fs.readdirSync(kbImageDir)
-          .filter(file => kbImagePattern.test(file));
+    // 関連する画像ファイルを削除（オプション）
+    try {
+      if (fs.existsSync(kbImageDir)) {
+        const imageFiles = fs.readdirSync(kbImageDir);
+        const relatedImages = imageFiles.filter(img => img.startsWith(id));
         
-        console.log(`関連knowledge-base画像ファイル数: ${kbImageFiles.length}`);
-        
-        for (const imageFile of kbImageFiles) {
-          const imagePath = path.join(kbImageDir, imageFile);
-          if (fs.existsSync(imagePath)) {
-            try {
-              fs.unlinkSync(imagePath);
-              deletedImageCount++;
-              console.log(`削除したknowledge-base画像ファイル: ${imagePath}`);
-            } catch (err) {
-              console.error(`knowledge-base画像ファイル削除エラー: ${imagePath}`, err);
-            }
-          }
+        for (const imgFile of relatedImages) {
+          const imgPath = path.join(kbImageDir, imgFile);
+          fs.unlinkSync(imgPath);
+          console.log(`関連画像を削除しました: ${imgPath}`);
         }
-      } catch (err) {
-        console.error(`knowledge-base画像ディレクトリ処理エラー: ${kbImageDir}`, err);
       }
+    } catch (imgError) {
+      console.warn('関連画像の削除中にエラーが発生しました:', imgError);
     }
     
-    res.json({
+    console.log(`応急処置ガイドを削除しました: ID=${id}, タイトル=${title}`);
+    
+    return res.json({
       success: true,
-      message: 'ガイドデータが削除されました',
-      id
+      message: `応急処置ガイド「${title}」を削除しました`
     });
   } catch (error) {
     console.error('ガイド削除エラー:', error);
@@ -650,47 +648,67 @@ router.delete('/delete/:id', async (req: Request, res: Response) => {
     const guideId = req.params.id;
     console.log(`応急処置ガイド削除リクエスト: ID=${guideId}`);
     
-    // 知識ベースディレクトリパス
-    const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
-    const documentsDir = path.join(knowledgeBaseDir, 'documents');
-    
-    // 削除対象のファイルを見つける
-    const indexPath = path.join(knowledgeBaseDir, 'index.json');
-    if (!fs.existsSync(indexPath)) {
-      return res.status(404).json({ error: 'ガイド一覧が見つかりません' });
+    // 知識ベースJson（メタデータ）ディレクトリから直接ファイルを検索
+    if (!fs.existsSync(kbJsonDir)) {
+      return res.status(404).json({ error: 'JSONディレクトリが見つかりません' });
     }
     
-    // 一覧データを読み込む
-    const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-    const guides = indexData.guides || [];
+    // 削除すべきJSONファイル名を探す
+    const jsonFiles = fs.readdirSync(kbJsonDir);
+    const targetFile = jsonFiles.find(file => file.startsWith(guideId));
     
-    // 削除対象のガイドを探す
-    const guideIndex = guides.findIndex((guide: any) => guide.id === guideId);
-    if (guideIndex === -1) {
+    if (!targetFile) {
       return res.status(404).json({ error: `指定されたガイド (ID: ${guideId}) が見つかりません` });
     }
     
-    // 削除するガイドの情報を保存
-    const guideToDelete = guides[guideIndex];
+    // ファイルパス
+    const filePath = path.join(kbJsonDir, targetFile);
     
-    // 関連ファイルを削除（知識ベースディレクトリのみ使用）
-    if (guideToDelete.filePath && fs.existsSync(guideToDelete.filePath)) {
-      fs.unlinkSync(guideToDelete.filePath);
-      console.log(`関連ファイルを削除: ${guideToDelete.filePath}`);
+    // ファイルに関連する情報を保存
+    const fileName = targetFile;
+    let title = `ファイル_${guideId}`;
+    
+    // JSONファイルの内容を読み取り、タイトルなどを取得
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(content);
+      
+      if (data.metadata && data.metadata.タイトル) {
+        title = data.metadata.タイトル;
+      } else if (data.title) {
+        title = data.title;
+      }
+    } catch (readError) {
+      console.warn(`削除前のファイル内容読み取りに失敗: ${filePath}`, readError);
     }
     
-    // インデックスから削除
-    guides.splice(guideIndex, 1);
+    // ファイルを削除
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`JSONファイルを削除しました: ${filePath}`);
+    }
     
-    // 更新したインデックスを保存
-    indexData.guides = guides;
-    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
+    // 関連する画像ファイルを削除（オプション）
+    try {
+      if (fs.existsSync(kbImageDir)) {
+        const imageFiles = fs.readdirSync(kbImageDir);
+        const relatedImages = imageFiles.filter(img => img.startsWith(guideId));
+        
+        for (const imgFile of relatedImages) {
+          const imgPath = path.join(kbImageDir, imgFile);
+          fs.unlinkSync(imgPath);
+          console.log(`関連画像を削除しました: ${imgPath}`);
+        }
+      }
+    } catch (imgError) {
+      console.warn('関連画像の削除中にエラーが発生しました:', imgError);
+    }
     
-    console.log(`応急処置ガイドを削除しました: ID=${guideId}, タイトル=${guideToDelete.title}`);
+    console.log(`応急処置ガイドを削除しました: ID=${guideId}, タイトル=${title}`);
     
     return res.json({
       success: true,
-      message: `応急処置ガイド「${guideToDelete.title}」を削除しました`
+      message: `応急処置ガイド「${title}」を削除しました`
     });
   } catch (error) {
     console.error('応急処置ガイド削除エラー:', error);
