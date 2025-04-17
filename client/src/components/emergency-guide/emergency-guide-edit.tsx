@@ -601,25 +601,48 @@ const EmergencyGuideEdit: React.FC = () => {
                                     
                                     // レスポンスを確認
                                     if (response.ok) {
-                                      // レスポンスデータを取得
-                                      const result = await response.json();
-                                      console.log('削除成功:', result);
-                                      
-                                      // 削除成功メッセージを表示
-                                      toast({
-                                        title: '削除完了',
-                                        description: `「${file.title}」を削除しました`,
-                                      });
-                                      
-                                      // 一覧から該当項目を削除（クライアント側で即時反映）
-                                      setGuideFiles(prevFiles => 
-                                        prevFiles.filter(f => f.id !== file.id)
-                                      );
-                                      
-                                      // 少し遅延させてから一覧を再取得（サーバー側の反映を待つ）
-                                      setTimeout(() => {
-                                        fetchGuideFiles();
-                                      }, 500);
+                                      try {
+                                        // レスポンスデータを取得（JSONでない場合に備えて例外処理を追加）
+                                        const contentType = response.headers.get('content-type');
+                                        if (contentType && contentType.includes('application/json')) {
+                                          const result = await response.json();
+                                          console.log('削除成功:', result);
+                                        } else {
+                                          console.log('削除成功: JSONではないレスポンス');
+                                        }
+                                        
+                                        // 削除成功メッセージを表示
+                                        toast({
+                                          title: '削除完了',
+                                          description: `「${file.title}」を削除しました`,
+                                        });
+                                        
+                                        // 一覧から該当項目を削除（クライアント側で即時反映）
+                                        setGuideFiles(prevFiles => 
+                                          prevFiles.filter(f => f.id !== file.id)
+                                        );
+                                        
+                                        // 少し遅延させてから一覧を再取得（サーバー側の反映を待つ）
+                                        setTimeout(() => {
+                                          fetchGuideFiles();
+                                        }, 500);
+                                      } catch (parseError) {
+                                        console.error('JSONパースエラー:', parseError);
+                                        // JSONパースエラーでも成功としてUIを更新
+                                        toast({
+                                          title: '削除完了',
+                                          description: `「${file.title}」を削除しました`,
+                                        });
+                                        
+                                        // 一覧から該当項目を削除（クライアント側で即時反映）
+                                        setGuideFiles(prevFiles => 
+                                          prevFiles.filter(f => f.id !== file.id)
+                                        );
+                                        
+                                        setTimeout(() => {
+                                          fetchGuideFiles();
+                                        }, 500);
+                                      }
                                     } else {
                                       // エラーレスポンスの詳細を取得
                                       const errorData = await response.json();

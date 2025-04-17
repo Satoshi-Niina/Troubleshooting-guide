@@ -617,6 +617,8 @@ router.delete('/delete/:id', (req, res) => {
     
     console.log(`応急処置ガイドを削除しました: ID=${id}, タイトル=${title}`);
     
+    // 明示的にContent-Typeヘッダーを設定してからJSONレスポンスを返す
+    res.setHeader('Content-Type', 'application/json');
     return res.json({
       success: true,
       message: `応急処置ガイド「${title}」を削除しました`
