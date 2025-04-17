@@ -24,7 +24,7 @@ const kbJsonDir = path.join(knowledgeBaseDir, 'json');
 const kbImageDir = path.join(knowledgeBaseDir, 'images');
 
 // ディレクトリの存在確認と作成
-[uploadsDir, pptDir, jsonDir, imageDir].forEach(dir => {
+[uploadsDir, pptDir, jsonDir, imageDir, knowledgeBaseDir, kbJsonDir, kbImageDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -449,14 +449,14 @@ router.get('/list', (_req, res) => {
 router.get('/detail/:id', (req, res) => {
   try {
     const id = req.params.id;
-    const files = fs.readdirSync(jsonDir)
+    const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
     
     if (files.length === 0) {
       return res.status(404).json({ error: 'ガイドが見つかりません' });
     }
     
-    const filePath = path.join(jsonDir, files[0]);
+    const filePath = path.join(kbJsonDir, files[0]);
     const content = fs.readFileSync(filePath, 'utf8');
     const data = JSON.parse(content);
     
