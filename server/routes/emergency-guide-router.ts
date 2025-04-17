@@ -569,40 +569,45 @@ router.delete('/delete/:id', (req, res) => {
       return res.status(404).json({ error: 'JSONディレクトリが見つかりません' });
     }
     
-    // 削除すべきJSONファイル名を探す
+    // すべてのJSONファイルを検索し、マッチするものを選択
     const jsonFiles = fs.readdirSync(kbJsonDir);
     console.log(`削除処理: ID=${id}, ファイル一覧:`, jsonFiles);
     
-    // mcで始まるIDとguideで始まるIDで処理を分ける
-    let targetFile;
+    // IDによる検索方法を選択
+    const matchingFiles: string[] = [];
+    
     if (id.startsWith('mc_')) {
-      // mc_形式のIDの場合は厳密なID検索
-      targetFile = jsonFiles.find(file => {
-        // IDのプレフィックス部分（mc_123456など）を抽出
-        const idPrefix = id.split('_')[1]; // mc_123456 -> 123456
-        return file.includes(idPrefix);
+      // mc_形式のIDの場合は厳密なID検索 (数値部分で照合)
+      const idPrefix = id.split('_')[1]; // mc_123456 -> 123456
+      console.log(`mc_タイプのID検索: プレフィックス=${idPrefix}`);
+      
+      jsonFiles.forEach(file => {
+        if (file.includes(idPrefix)) {
+          matchingFiles.push(file);
+        }
       });
     } else {
-      // 通常のguide_形式のIDはそのまま前方一致で検索
-      targetFile = jsonFiles.find(file => file.startsWith(id));
+      // guide_形式のIDは前方一致で検索
+      jsonFiles.forEach(file => {
+        if (file.startsWith(id)) {
+          matchingFiles.push(file);
+        }
+      });
     }
     
-    console.log(`ターゲットファイル: ${targetFile || 'なし'}`);
+    console.log(`マッチするファイル (${matchingFiles.length}件):`, matchingFiles);
     
-    if (!targetFile) {
+    if (matchingFiles.length === 0) {
       return res.status(404).json({ error: `指定されたガイド (ID: ${id}) が見つかりません` });
     }
     
-    // ファイルパス
-    const filePath = path.join(kbJsonDir, targetFile);
-    
-    // ファイルに関連する情報を保存
-    const fileName = targetFile;
+    // 最初のファイルからタイトル情報などを取得
+    const mainFilePath = path.join(kbJsonDir, matchingFiles[0]);
     let title = `ファイル_${id}`;
     
     // JSONファイルの内容を読み取り、タイトルなどを取得
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(mainFilePath, 'utf8');
       const data = JSON.parse(content);
       
       if (data.metadata && data.metadata.タイトル) {
@@ -611,13 +616,43 @@ router.delete('/delete/:id', (req, res) => {
         title = data.title;
       }
     } catch (readError) {
-      console.warn(`削除前のファイル内容読み取りに失敗: ${filePath}`, readError);
+      console.warn(`削除前のファイル内容読み取りに失敗: ${mainFilePath}`, readError);
     }
     
-    // ファイルを削除
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`JSONファイルを削除しました: ${filePath}`);
+    // すべてのマッチするファイルを削除
+    let deletedCount = 0;
+    for (const file of matchingFiles) {
+      const filePath = path.join(kbJsonDir, file);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`JSONファイルを削除しました: ${filePath}`);
+        deletedCount++;
+      }
+    }
+    
+    console.log(`削除されたJSONファイル数: ${deletedCount}件`);
+    
+    // index.jsonから該当エントリを削除（存在する場合）
+    const indexPath = path.join(knowledgeBaseDir, 'index.json');
+    if (fs.existsSync(indexPath)) {
+      try {
+        const indexContent = fs.readFileSync(indexPath, 'utf8');
+        const indexData = JSON.parse(indexContent);
+        
+        // IDに基づいてエントリを削除
+        if (Array.isArray(indexData.guides)) {
+          const beforeCount = indexData.guides.length;
+          indexData.guides = indexData.guides.filter((guide: any) => guide.id !== id);
+          const afterCount = indexData.guides.length;
+          
+          if (beforeCount !== afterCount) {
+            fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
+            console.log(`インデックスから削除しました: ${beforeCount - afterCount}エントリ`);
+          }
+        }
+      } catch (indexError) {
+        console.warn('インデックスの更新に失敗しました:', indexError);
+      }
     }
     
     // 関連する画像ファイルを削除
