@@ -16,9 +16,11 @@ interface TroubleshootingStep {
   options?: {
     text?: string;
     label?: string;
-    next: string;
+    next?: string;
+    nextStep?: string;
   }[];
   next?: string;
+  nextStep?: string;
   checklist?: string[];
   end?: boolean;
 }

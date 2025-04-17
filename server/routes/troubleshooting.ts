@@ -60,7 +60,8 @@ export function registerTroubleshootingRoutes(app: Express) {
             id: data.id || path.basename(file, '.json'),
             title: data.title || '未設定タイトル',
             description: data.description || '',
-            trigger: data.trigger || []
+            trigger: data.trigger || [],
+            triggerKeywords: data.triggerKeywords || []
           };
         })
         .filter(Boolean); // nullを除外
@@ -221,12 +222,20 @@ export function registerTroubleshootingRoutes(app: Express) {
             score += 8;
           }
           
-          // トリガーキーワードが一致する場合
+          // トリガーキーワードが一致する場合（旧形式のtrigger配列）
           if (data.trigger && Array.isArray(data.trigger)) {
             const matchingTriggers = data.trigger.filter(function(trigger: unknown) {
               return typeof trigger === 'string' && trigger.toLowerCase().includes(lowerQuery);
             });
             score += matchingTriggers.length * 15;
+          }
+          
+          // 新形式のtriggerKeywordsが一致する場合
+          if (data.triggerKeywords && Array.isArray(data.triggerKeywords)) {
+            const matchingKeywords = data.triggerKeywords.filter(function(keyword: unknown) {
+              return typeof keyword === 'string' && keyword.toLowerCase().includes(lowerQuery);
+            });
+            score += matchingKeywords.length * 15;
           }
           
           // ステップ内容に検索語が含まれる場合
@@ -244,6 +253,7 @@ export function registerTroubleshootingRoutes(app: Express) {
               title: data.title || '',
               description: data.description || '',
               trigger: data.trigger || [],
+              triggerKeywords: data.triggerKeywords || [],
               score
             };
           }
