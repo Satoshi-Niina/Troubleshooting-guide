@@ -13,14 +13,19 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public directory
 app.use('/static', express.static(path.join(process.cwd(), 'public')));
 
-// 画像ファイルへのアクセスを一元化
-// 両方のパスへのアクセスを直接処理
-app.use('/uploads/images', express.static(path.join(process.cwd(), 'public', 'uploads', 'images')));
+// 知識ベースディレクトリへのアクセスを一元化
 app.use('/knowledge-base/images', express.static(path.join(process.cwd(), 'knowledge-base', 'images')));
-
-// Serve knowledge-base/data directory for JSON data
 app.use('/knowledge-base/data', express.static(path.join(process.cwd(), 'knowledge-base', 'data')));
 app.use('/knowledge-base/json', express.static(path.join(process.cwd(), 'knowledge-base', 'json')));
+app.use('/knowledge-base/media', express.static(path.join(process.cwd(), 'knowledge-base', 'media')));
+
+// 下位互換性のために/uploadsからのリクエストも/knowledge-baseに転送
+app.use('/uploads/images', (req, res) => {
+  res.redirect(req.baseUrl.replace('/uploads', '/knowledge-base') + req.path);
+});
+app.use('/uploads/media', (req, res) => {
+  res.redirect(req.baseUrl.replace('/uploads', '/knowledge-base') + req.path);
+});
 
 // Add a test route to serve our HTML test page
 app.get('/test', (req, res) => {

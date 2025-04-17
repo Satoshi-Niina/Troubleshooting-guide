@@ -62,7 +62,7 @@ export function registerSyncRoutes(app: Express): void {
       }
       
       // アップロードされたメディアのメタデータを返す
-      const mediaUrl = `/uploads/media/${req.file.filename}`;
+      const mediaUrl = `/knowledge-base/media/${req.file.filename}`;
       
       // メディアの種類（画像/動画/音声）を判定
       let mediaType = 'image';
@@ -112,12 +112,11 @@ export function registerSyncRoutes(app: Express): void {
       const processedMessages = [];
       for (const message of messages) {
         try {
-          // メッセージを保存
+          // メッセージを保存（timestampはサーバー側で設定される）
           const savedMessage = await storage.createMessage({
             chatId,
             content: message.content,
-            isAiResponse: message.role === 'assistant',
-            timestamp: new Date(message.timestamp || Date.now())
+            isAiResponse: message.role === 'assistant'
           });
           
           // メディアを処理
