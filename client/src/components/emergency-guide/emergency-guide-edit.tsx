@@ -46,8 +46,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Pencil, Save, X, Plus, Trash2, FileText, LifeBuoy, Sparkles } from 'lucide-react';
+import { Loader2, Pencil, Save, X, Plus, Trash2, FileText, LifeBuoy, Sparkles, AlertCircle, RefreshCcw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { WarningDialog } from '../shared/warning-dialog';
 
 // APIからのガイドファイル型定義
 interface GuideFile {
@@ -593,10 +594,16 @@ const EmergencyGuideEdit: React.FC = () => {
                               size="sm"
                               className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
                               onClick={async () => {
-                                // 削除確認ダイアログを表示
-                                if (confirm(`「${file.title}」を削除してもよろしいですか？\n削除すると元に戻せません。`)) {
+                                // 削除ハンドラー
+                                const handleDeleteGuide = async () => {
                                   // 削除処理
                                   try {
+                                    // 削除開始メッセージを表示
+                                    toast({
+                                      title: '削除中',
+                                      description: `「${file.title}」を削除しています...`,
+                                    });
+                                    
                                     // 削除リクエストを送信
                                     const response = await fetch(`/api/emergency-guide/delete/${file.id}`, {
                                       method: 'DELETE'
@@ -607,8 +614,9 @@ const EmergencyGuideEdit: React.FC = () => {
                                       try {
                                         // レスポンスデータを取得（JSONでない場合に備えて例外処理を追加）
                                         const contentType = response.headers.get('content-type');
+                                        let result;
                                         if (contentType && contentType.includes('application/json')) {
-                                          const result = await response.json();
+                                          result = await response.json();
                                           console.log('削除成功:', result);
                                         } else {
                                           console.log('削除成功: JSONではないレスポンス');
@@ -628,24 +636,26 @@ const EmergencyGuideEdit: React.FC = () => {
                                         // サーバー側の処理完了を待つため十分な遅延を設定
                                         console.log(`ID=${file.id}を削除しました。リスト更新を待機中...`);
                                         
-                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ
+                                        // サーバーキャッシュをクリア
+                                        try {
+                                          console.log('サーバーキャッシュをクリア中...');
+                                          await fetch('/api/tech-support/clear-cache', {
+                                            method: 'POST',
+                                            headers: {
+                                              'Cache-Control': 'no-cache',
+                                              'Pragma': 'no-cache'
+                                            }
+                                          });
+                                          console.log('サーバーキャッシュクリア完了');
+                                        } catch (e) {
+                                          console.error('キャッシュクリア失敗:', e);
+                                        }
+                                        
+                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ (2.5秒)
                                         setTimeout(async () => {
                                           console.log('サーバーからデータを再取得します...');
-                                          
-                                          // サーバークリアコマンドを呼び出し
-                                          try {
-                                            await fetch('/api/tech-support/clear-cache', {
-                                              method: 'POST'
-                                            });
-                                          } catch (e) {
-                                            console.error('キャッシュクリア失敗:', e);
-                                          }
-                                          
-                                          // より長い遅延で確実に最新データを取得
-                                          setTimeout(() => {
-                                            fetchGuideFiles();
-                                          }, 500);
-                                        }, 2000); // 2秒待機
+                                          fetchGuideFiles();
+                                        }, 2500);
                                       } catch (parseError) {
                                         console.error('JSONパースエラー:', parseError);
                                         // JSONパースエラーでも成功としてUIを更新
