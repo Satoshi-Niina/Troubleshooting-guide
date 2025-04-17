@@ -1,0 +1,95 @@
+{
+  "id": "example_flow",
+  "title": "サンプルフロー",
+  "description": "サンプル説明文です。このフローは救急処置の基本的な流れを表しています。",
+  "author": "管理者",
+  "createdAt": "2025-04-17T12:37:00.000Z",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "start",
+      "position": { "x": 250, "y": 50 },
+      "data": { "label": "開始" }
+    },
+    {
+      "id": "2",
+      "type": "step",
+      "position": { "x": 250, "y": 150 },
+      "data": { "label": "安全確認" }
+    },
+    {
+      "id": "3",
+      "type": "decision",
+      "position": { "x": 250, "y": 250 },
+      "data": { 
+        "label": "患者は意識がありますか？",
+        "choices": ["はい", "いいえ"]
+      }
+    },
+    {
+      "id": "4",
+      "type": "step",
+      "position": { "x": 100, "y": 350 },
+      "data": { "label": "声をかけて状態を確認" }
+    },
+    {
+      "id": "5",
+      "type": "step",
+      "position": { "x": 400, "y": 350 },
+      "data": { "label": "回復体位にして救急車を呼ぶ" }
+    },
+    {
+      "id": "6",
+      "type": "step",
+      "position": { "x": 100, "y": 450 },
+      "data": { "label": "バイタルサイン確認" }
+    },
+    {
+      "id": "7",
+      "type": "end",
+      "position": { "x": 250, "y": 550 },
+      "data": { "label": "終了" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2",
+      "animated": true
+    },
+    {
+      "id": "e2-3",
+      "source": "2",
+      "target": "3"
+    },
+    {
+      "id": "e3-4",
+      "source": "3",
+      "target": "4",
+      "sourceHandle": "はい"
+    },
+    {
+      "id": "e3-5",
+      "source": "3",
+      "target": "5",
+      "sourceHandle": "いいえ"
+    },
+    {
+      "id": "e4-6",
+      "source": "4",
+      "target": "6"
+    },
+    {
+      "id": "e5-7",
+      "source": "5",
+      "target": "7"
+    },
+    {
+      "id": "e6-7",
+      "source": "6",
+      "target": "7"
+    }
+  ],
+  "fileName": "example_flow.json"
+}

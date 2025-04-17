@@ -105,23 +105,72 @@ function updateIndexFile(metadata: any) {
 router.get('/list', async (req: Request, res: Response) => {
   try {
     const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+    const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
     
     if (!fs.existsSync(jsonDir)) {
-      return res.status(200).json([]);
+      fs.mkdirSync(jsonDir, { recursive: true });
     }
-    
-    const files = fs.readdirSync(jsonDir)
-      .filter(file => file.startsWith('flow_') && file.endsWith('_metadata.json'));
     
     const flowList = [];
     
-    for (const file of files) {
-      const filePath = path.join(jsonDir, file);
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const metadata = JSON.parse(content);
-      flowList.push(metadata);
+    // JSONディレクトリからメタデータを読み込む
+    if (fs.existsSync(jsonDir)) {
+      const jsonFiles = fs.readdirSync(jsonDir)
+        .filter(file => (file.endsWith('_metadata.json') || file.includes('example_flow_metadata')));
+      
+      let jsonMetadataCount = 0;
+      for (const file of jsonFiles) {
+        try {
+          const filePath = path.join(jsonDir, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const metadata = JSON.parse(content);
+          flowList.push({
+            ...metadata,
+            source: 'json'
+          });
+          jsonMetadataCount++;
+        } catch (err) {
+          console.error(`メタデータ読み込みエラー (${file}):`, err);
+        }
+      }
+      
+      log(`jsonDirから${jsonMetadataCount}個のメタデータファイルを取得しました`);
     }
     
+    // トラブルシューティングディレクトリからJSONを読み込む
+    if (fs.existsSync(troubleshootingDir)) {
+      const tsFiles = fs.readdirSync(troubleshootingDir)
+        .filter(file => file.endsWith('.json'));
+      
+      let tsCount = 0;
+      for (const file of tsFiles) {
+        try {
+          const filePath = path.join(troubleshootingDir, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const tsData = JSON.parse(content);
+          
+          // IDとタイトルがある場合のみ追加
+          if (tsData.id && tsData.title) {
+            flowList.push({
+              id: `ts_${file.replace('.json', '')}`,
+              filePath: filePath,
+              fileName: file,
+              title: tsData.title,
+              createdAt: new Date().toISOString(),
+              slideCount: tsData.slides ? tsData.slides.length : 0,
+              source: 'troubleshooting'
+            });
+            tsCount++;
+          }
+        } catch (err) {
+          console.error(`トラブルシューティングファイル読み込みエラー (${file}):`, err);
+        }
+      }
+      
+      log(`troubleshootingDirから${tsCount}個のJSONファイルを取得しました`);
+    }
+    
+    log(`合計${flowList.length}個のガイドを取得しました`);
     return res.status(200).json(flowList);
   } catch (error) {
     console.error('フロー一覧取得エラー:', error);
@@ -144,35 +193,78 @@ router.get('/detail/:id', async (req: Request, res: Response) => {
       });
     }
     
-    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-    const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
-    
-    if (!fs.existsSync(metadataPath)) {
-      return res.status(404).json({
-        success: false,
-        error: '指定されたフローが見つかりません'
+    // トラブルシューティングのIDか通常フローのIDかを判断
+    if (id.startsWith('ts_')) {
+      // トラブルシューティングファイルの場合
+      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+      const filename = id.replace('ts_', '') + '.json';
+      const filePath = path.join(troubleshootingDir, filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          error: '指定されたトラブルシューティングファイルが見つかりません'
+        });
+      }
+      
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const flowData = JSON.parse(content);
+      
+      return res.status(200).json({
+        id: id,
+        data: flowData
+      });
+    } else if (id === 'example_flow') {
+      // サンプルフローの場合
+      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+      const flowPath = path.join(jsonDir, 'example_flow.json');
+      
+      if (!fs.existsSync(flowPath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'サンプルフローファイルが見つかりません'
+        });
+      }
+      
+      const flowContent = fs.readFileSync(flowPath, 'utf-8');
+      const flowData = JSON.parse(flowContent);
+      
+      return res.status(200).json({
+        id: 'example_flow',
+        data: flowData
+      });
+    } else {
+      // 通常のフローファイルの場合
+      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+      const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
+      
+      if (!fs.existsSync(metadataPath)) {
+        return res.status(404).json({
+          success: false,
+          error: '指定されたフローが見つかりません'
+        });
+      }
+      
+      const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+      const metadata = JSON.parse(metadataContent);
+      
+      const flowPath = path.join(jsonDir, metadata.fileName);
+      
+      if (!fs.existsSync(flowPath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'フローデータファイルが見つかりません'
+        });
+      }
+      
+      const flowContent = fs.readFileSync(flowPath, 'utf-8');
+      const flowData = JSON.parse(flowContent);
+      
+      return res.status(200).json({
+        id: metadata.id,
+        data: flowData
       });
     }
-    
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    const metadata = JSON.parse(metadataContent);
-    
-    const flowPath = path.join(jsonDir, metadata.fileName);
-    
-    if (!fs.existsSync(flowPath)) {
-      return res.status(404).json({
-        success: false,
-        error: 'フローデータファイルが見つかりません'
-      });
-    }
-    
-    const flowContent = fs.readFileSync(flowPath, 'utf-8');
-    const flowData = JSON.parse(flowContent);
-    
-    return res.status(200).json({
-      id: metadata.id,
-      data: flowData
-    });
   } catch (error) {
     console.error('フロー詳細取得エラー:', error);
     return res.status(500).json({

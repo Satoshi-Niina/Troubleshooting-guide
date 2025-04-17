@@ -423,14 +423,18 @@ const EmergencyFlowCreator: React.FC = () => {
         
         <CardContent className="overflow-auto">
           <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="file">
                 <FolderOpen className="mr-2 h-4 w-4" />
-                既存ファイルの編集
+                新規作成
               </TabsTrigger>
               <TabsTrigger value="create">
                 <Plus className="mr-2 h-4 w-4" />
-                新規フロー作成
+                キャラクターデザイン
+              </TabsTrigger>
+              <TabsTrigger value="text">
+                <FileText className="mr-2 h-4 w-4" />
+                テキスト編集
               </TabsTrigger>
             </TabsList>
             
@@ -573,7 +577,7 @@ const EmergencyFlowCreator: React.FC = () => {
               </div>
             </TabsContent>
             
-            {/* 新規フロー作成タブコンテンツ */}
+            {/* キャラクターデザインタブコンテンツ */}
             <TabsContent value="create" className="h-full">
               <EmergencyFlowEditor 
                 onSave={handleSaveFlow}
@@ -583,6 +587,136 @@ const EmergencyFlowCreator: React.FC = () => {
                   fileName: uploadedFileName || (flowData?.fileName || '')
                 }}
               />
+            </TabsContent>
+            
+            {/* テキスト編集タブコンテンツ */}
+            <TabsContent value="text" className="h-full">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">テキスト編集</h3>
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={() => setActiveTab('create')}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      ビジュアル編集に切替
+                    </Button>
+                    <Button
+                      onClick={handleSaveFlow}
+                      variant="default"
+                      size="sm"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      保存
+                    </Button>
+                  </div>
+                </div>
+                
+                {flowData ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="flowTitle">タイトル</Label>
+                        <Input 
+                          id="flowTitle" 
+                          value={flowData.title || ''}
+                          onChange={(e) => setFlowData({...flowData, title: e.target.value})}
+                          placeholder="タイトルを入力"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="flowAuthor">作成者</Label>
+                        <Input 
+                          id="flowAuthor" 
+                          value={flowData.author || ''}
+                          onChange={(e) => setFlowData({...flowData, author: e.target.value})}
+                          placeholder="作成者を入力"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="flowDescription">説明</Label>
+                      <textarea
+                        id="flowDescription"
+                        className="w-full min-h-[100px] p-2 border rounded-md"
+                        value={flowData.description || ''}
+                        onChange={(e) => setFlowData({...flowData, description: e.target.value})}
+                        placeholder="フローの説明を入力"
+                      />
+                    </div>
+                    
+                    {flowData.nodes && (
+                      <div>
+                        <Label className="mb-2 block">ノード ({flowData.nodes.length}件)</Label>
+                        <div className="border rounded-md overflow-hidden">
+                          <div className="grid grid-cols-12 bg-gray-100 p-2 text-xs font-medium text-gray-600">
+                            <div className="col-span-1">ID</div>
+                            <div className="col-span-2">タイプ</div>
+                            <div className="col-span-4">内容</div>
+                            <div className="col-span-5">接続先</div>
+                          </div>
+                          <div className="max-h-[400px] overflow-y-auto">
+                            {flowData.nodes.map((node: any, index: number) => (
+                              <div key={node.id} className="grid grid-cols-12 p-2 text-sm border-t">
+                                <div className="col-span-1 text-gray-500">{node.id}</div>
+                                <div className="col-span-2">
+                                  <span className={`px-2 py-1 rounded-full text-xs ${
+                                    node.type === 'start' ? 'bg-green-100 text-green-800' :
+                                    node.type === 'step' ? 'bg-blue-100 text-blue-800' :
+                                    node.type === 'decision' ? 'bg-amber-100 text-amber-800' :
+                                    node.type === 'end' ? 'bg-red-100 text-red-800' : 'bg-gray-100'
+                                  }`}>
+                                    {node.type === 'start' ? 'スタート' :
+                                     node.type === 'step' ? 'ステップ' :
+                                     node.type === 'decision' ? '判断' :
+                                     node.type === 'end' ? '終了' : node.type}
+                                  </span>
+                                </div>
+                                <div className="col-span-4 break-words">
+                                  {node.data?.label || '内容なし'}
+                                </div>
+                                <div className="col-span-5">
+                                  {flowData.edges?.filter((edge: any) => edge.source === node.id).map((edge: any, idx: number) => (
+                                    <span key={idx} className="inline-block mr-2 mb-1 px-2 py-1 bg-gray-100 rounded-md text-xs">
+                                      {edge.sourceHandle && '条件: ' + edge.sourceHandle + ' → '}
+                                      {edge.target}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <Label htmlFor="jsonContent">JSONコード</Label>
+                      <textarea
+                        id="jsonContent"
+                        className="w-full min-h-[200px] p-2 font-mono text-xs border rounded-md"
+                        value={JSON.stringify(flowData, null, 2)}
+                        onChange={(e) => {
+                          try {
+                            const newData = JSON.parse(e.target.value);
+                            setFlowData(newData);
+                          } catch (error) {
+                            // パースエラーは無視
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg border-gray-200">
+                    <p className="text-gray-500">フローデータがありません</p>
+                    <p className="text-xs text-gray-400 mt-1">「新規作成」タブでフローを作成するか、既存のフローを読み込んでください</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
