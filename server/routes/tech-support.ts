@@ -170,11 +170,14 @@ const storage = multer.diskStorage({
     
     if (processingType === 'image_search' && 
         (file.mimetype.includes('svg') || file.mimetype.includes('image'))) {
-      // 画像検索用の画像ファイルは公開imagesディレクトリに直接保存
-      cb(null, publicImagesDir);
+      // 画像検索用の画像ファイルはknowledge-baseのimagesディレクトリに直接保存
+      cb(null, knowledgeBaseImagesDir);
     } else {
-      // 文書ファイルは一時保存用uploadsディレクトリに保存
-      cb(null, uploadsTempDir);
+      // 文書ファイルは一時保存用tempディレクトリに保存
+      // knowledge-baseディレクトリに一時ファイル格納ディレクトリを作成
+      const knowledgeBaseTempDir = path.join(knowledgeBaseDir, 'temp');
+      ensureDirectoryExists(knowledgeBaseTempDir);
+      cb(null, knowledgeBaseTempDir);
     }
   },
   filename: function (req, file, cb) {
