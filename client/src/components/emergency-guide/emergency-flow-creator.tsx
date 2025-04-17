@@ -13,7 +13,7 @@ import EmergencyFlowEditor from './emergency-flow-editor';
 const EmergencyFlowCreator: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<string>('upload');
+  const [activeTab, setActiveTab] = useState<string>('file');
   
   // アップロード関連の状態
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -156,8 +156,8 @@ const EmergencyFlowCreator: React.FC = () => {
           description: "応急処置フローが保存されました",
         });
         
-        // アップロードタブに戻る
-        setActiveTab('upload');
+        // ファイル読込みタブに戻る
+        setActiveTab('file');
       } else {
         throw new Error(result.error || 'フローの保存に失敗しました');
       }
@@ -173,7 +173,7 @@ const EmergencyFlowCreator: React.FC = () => {
   
   // フロー作成キャンセルハンドラー
   const handleCancelFlow = () => {
-    setActiveTab('upload');
+    setActiveTab('file');
   };
   
   return (
@@ -184,15 +184,15 @@ const EmergencyFlowCreator: React.FC = () => {
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upload">
-              <Upload className="mr-2 h-4 w-4" />
-              アップロード
+            <TabsTrigger value="file">
+              <FolderOpen className="mr-2 h-4 w-4" />
+              ファイル読込み
             </TabsTrigger>
             <TabsTrigger value="create">
               <Plus className="mr-2 h-4 w-4" />
-              UIフロー作成
+              新規フロー作成
             </TabsTrigger>
             <TabsTrigger value="edit">
               <Edit className="mr-2 h-4 w-4" />
