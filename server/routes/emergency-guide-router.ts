@@ -644,4 +644,61 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   }
 });
 
+// 応急処置ガイドの削除エンドポイント
+router.delete('/delete/:id', async (req: Request, res: Response) => {
+  try {
+    const guideId = req.params.id;
+    console.log(`応急処置ガイド削除リクエスト: ID=${guideId}`);
+    
+    // 知識ベースディレクトリパス
+    const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
+    const documentsDir = path.join(knowledgeBaseDir, 'documents');
+    
+    // 削除対象のファイルを見つける
+    const indexPath = path.join(knowledgeBaseDir, 'index.json');
+    if (!fs.existsSync(indexPath)) {
+      return res.status(404).json({ error: 'ガイド一覧が見つかりません' });
+    }
+    
+    // 一覧データを読み込む
+    const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+    const guides = indexData.guides || [];
+    
+    // 削除対象のガイドを探す
+    const guideIndex = guides.findIndex((guide: any) => guide.id === guideId);
+    if (guideIndex === -1) {
+      return res.status(404).json({ error: `指定されたガイド (ID: ${guideId}) が見つかりません` });
+    }
+    
+    // 削除するガイドの情報を保存
+    const guideToDelete = guides[guideIndex];
+    
+    // 関連ファイルを削除（知識ベースディレクトリのみ使用）
+    if (guideToDelete.filePath && fs.existsSync(guideToDelete.filePath)) {
+      fs.unlinkSync(guideToDelete.filePath);
+      console.log(`関連ファイルを削除: ${guideToDelete.filePath}`);
+    }
+    
+    // インデックスから削除
+    guides.splice(guideIndex, 1);
+    
+    // 更新したインデックスを保存
+    indexData.guides = guides;
+    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
+    
+    console.log(`応急処置ガイドを削除しました: ID=${guideId}, タイトル=${guideToDelete.title}`);
+    
+    return res.json({
+      success: true,
+      message: `応急処置ガイド「${guideToDelete.title}」を削除しました`
+    });
+  } catch (error) {
+    console.error('応急処置ガイド削除エラー:', error);
+    return res.status(500).json({ 
+      error: '応急処置ガイドの削除に失敗しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export const emergencyGuideRouter = router;
