@@ -200,8 +200,8 @@ const EmergencyFlowCreator: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* アップロードタブコンテンツ */}
-          <TabsContent value="upload">
+          {/* ファイル読込みタブコンテンツ */}
+          <TabsContent value="file">
             {/* ファイル入力 (非表示) */}
             <input
               type="file"
@@ -320,7 +320,7 @@ const EmergencyFlowCreator: React.FC = () => {
             </div>
           </TabsContent>
           
-          {/* UIフロー作成タブコンテンツ */}
+          {/* 新規フロー作成タブコンテンツ */}
           <TabsContent value="create" className="h-full">
             <EmergencyFlowEditor 
               onSave={handleSaveFlow}
