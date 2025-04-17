@@ -562,11 +562,17 @@ const EmergencyGuideEdit: React.FC = () => {
           console.error('キャッシュクリア失敗:', e);
         }
         
-        // より長い遅延を設定してサーバー側の処理完了を確実に待つ (2.5秒)
+        // より長い遅延を設定してサーバー側の処理完了を確実に待つ (3秒)
         setTimeout(() => {
           console.log('サーバーからデータを再取得します...');
           fetchGuideFiles();
-        }, 2500);
+          
+          // さらに遅延して2回目のフェッチを実行（削除後の整合性を確保するため）
+          setTimeout(() => {
+            console.log('整合性確認のため、2回目のデータ取得を実行...');
+            fetchGuideFiles();
+          }, 1500);
+        }, 3000);
       } else {
         // エラーレスポンスの詳細を取得
         const errorData = await response.json();

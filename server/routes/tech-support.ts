@@ -221,25 +221,81 @@ router.post('/clear-cache', (req, res) => {
     const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
     if (fs.existsSync(jsonDir)) {
       try {
+        // 実際のファイル一覧を取得
         const files = fs.readdirSync(jsonDir);
         console.log(`検証: knowledge-base/jsonディレクトリに${files.length}個のファイルが存在`);
+        
+        // キャッシュからファイルの実在性を再チェック
+        for (const file of files) {
+          const fullPath = path.join(jsonDir, file);
+          try {
+            // ファイルの存在を確認し、アクセス可能かチェック
+            fs.accessSync(fullPath, fs.constants.F_OK | fs.constants.R_OK);
+          } catch (err) {
+            // アクセスできない場合は警告を出す
+            console.warn(`警告: ファイルにアクセスできません: ${fullPath}`, err);
+          }
+        }
       } catch (readErr) {
         console.error('ディレクトリ読み取りエラー:', readErr);
       }
     }
     
-    // index.json ファイルの更新（存在する場合）
+    // index.json ファイルの再構築（トラッキングファイル）
     const indexJsonPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
-    if (fs.existsSync(indexJsonPath)) {
-      try {
-        // タイムスタンプを更新して書き込みなおす
-        const indexData = JSON.parse(fs.readFileSync(indexJsonPath, 'utf8'));
-        indexData.lastUpdated = new Date().toISOString();
-        fs.writeFileSync(indexJsonPath, JSON.stringify(indexData, null, 2), 'utf8');
-        console.log('index.jsonファイルを更新しました');
-      } catch (indexErr) {
-        console.error('index.json更新エラー:', indexErr);
+    
+    try {
+      // 実際のファイルリストを取得
+      const jsonFiles = fs.existsSync(jsonDir) ? fs.readdirSync(jsonDir) : [];
+      
+      // 現在のメタデータファイルから最新インデックスを再構築
+      const indexData = {
+        lastUpdated: new Date().toISOString(),
+        guides: [] as any[],
+        fileCount: jsonFiles.length
+      };
+      
+      // ブラックリストファイル（無視するファイル）
+      const blacklistFiles = ['guide_1744876404679_metadata.json', 'guide_metadata.json'];
+      
+      // 有効なメタデータファイルのみを追加
+      const validFiles = jsonFiles.filter(file => 
+        file.endsWith('_metadata.json') && 
+        !blacklistFiles.includes(file)
+      );
+      
+      console.log('有効なJSONファイル:', validFiles);
+      
+      // インデックスに追加
+      for (const file of validFiles) {
+        try {
+          const content = fs.readFileSync(path.join(jsonDir, file), 'utf8');
+          const data = JSON.parse(content);
+          const id = file.replace('_metadata.json', '');
+          
+          let title = id;
+          if (data.metadata && data.metadata.タイトル) {
+            title = data.metadata.タイトル;
+          } else if (data.title) {
+            title = data.title;
+          }
+          
+          indexData.guides.push({
+            id,
+            title,
+            filePath: path.join(jsonDir, file),
+            fileName: file
+          });
+        } catch (parseErr) {
+          console.error(`ファイルの解析エラー ${file}:`, parseErr);
+        }
       }
+      
+      // インデックスを保存
+      fs.writeFileSync(indexJsonPath, JSON.stringify(indexData, null, 2), 'utf8');
+      console.log('index.jsonファイルを更新しました');
+    } catch (indexErr) {
+      console.error('index.json更新エラー:', indexErr);
     }
     
     return res.json({
