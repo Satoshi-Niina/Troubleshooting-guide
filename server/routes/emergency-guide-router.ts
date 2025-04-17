@@ -10,6 +10,34 @@ import { log } from '../vite';
 // PowerPointファイルからテキスト抽出ライブラリ
 import * as mammoth from 'mammoth';
 
+// 型定義
+interface ImageText {
+  画像パス: string;
+  テキスト: string;
+}
+
+interface Slide {
+  スライド番号?: number;
+  タイトル?: string;
+  本文?: string[];
+  ノート?: string;
+  画像テキスト?: ImageText[];
+  imageUrl?: string;
+}
+
+interface GuideData {
+  slides?: Slide[];
+  metadata?: {
+    タイトル: string;
+    作成者?: string;
+    作成日?: string;
+    修正日?: string;
+    説明?: string;
+  };
+  title?: string;
+  description?: string;
+}
+
 const router = Router();
 
 // 知識ベースディレクトリの設定 - uploadsフォルダの使用を廃止
@@ -459,9 +487,9 @@ router.get('/detail/:id', (req, res) => {
     // アップロードパス(/uploads/)からナレッジベースパス(/knowledge-base/)への変換
     // スライド内の画像パスを更新
     if (data.slides && Array.isArray(data.slides)) {
-      data.slides.forEach(slide => {
+      data.slides.forEach((slide: any) => {
         if (slide.画像テキスト && Array.isArray(slide.画像テキスト)) {
-          slide.画像テキスト.forEach(imgText => {
+          slide.画像テキスト.forEach((imgText: any) => {
             if (imgText.画像パス && imgText.画像パス.startsWith('/uploads/')) {
               // パスを/knowledge-baseに置き換え
               imgText.画像パス = imgText.画像パス.replace('/uploads/', '/knowledge-base/');

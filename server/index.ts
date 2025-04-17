@@ -71,14 +71,13 @@ app.use((req, res, next) => {
     initializeKnowledgeBase();
     console.log('知識ベースの初期化が完了しました');
     
-    // ディレクトリの確認と作成
+    // ディレクトリの確認と作成 - uploads不要
     const dirs = [
       'knowledge-base/images',
       'knowledge-base/json',
       'knowledge-base/data',
-      'public/uploads/images',
-      'public/uploads/json',
-      'public/uploads/data'
+      'knowledge-base/media',
+      'knowledge-base/ppt'
     ];
     
     for (const dir of dirs) {

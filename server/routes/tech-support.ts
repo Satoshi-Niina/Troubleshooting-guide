@@ -852,7 +852,7 @@ router.post('/sync-knowledge-base', async (req, res) => {
     
     return res.json({
       success: true,
-      message: 'データを同期しました (uploads -> knowledge-base)',
+      message: 'データを同期しました (knowledge-base)',
       results: syncResults
     });
   } catch (error) {
