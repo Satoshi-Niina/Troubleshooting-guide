@@ -439,12 +439,49 @@ export async function searchKnowledgeBase(query: string): Promise<DocumentChunk[
     // 知識ベースを初期化
     initializeKnowledgeBase();
     
+    // クエリが空や極端に短い場合はデフォルトの緊急処置情報を検索
+    if (!query || query.trim().length < 2) {
+      query = "保守用車 応急処置";
+      console.log(`クエリが短すぎるため、デフォルトクエリに変更: "${query}"`);
+    }
+    
+    // エンジン関連の特別処理
+    if (query.toLowerCase().includes('エンジン')) {
+      query = "エンジン 構造 保守用車 トラブル";
+      console.log(`"エンジン"クエリのため、拡張クエリに変更: "${query}"`);
+    }
+    
     // インデックスを読み込み
     const index = loadKnowledgeBaseIndex();
     console.log(`インデックス内のドキュメント数: ${index.documents.length}`);
     
     // 検索結果を格納する配列
     const relevantChunks: DocumentChunk[] = [];
+    
+    // トラブルシューティングデータの読み込み(JSON)を試みる
+    try {
+      const troubleshootingPath = path.join(KNOWLEDGE_BASE_DIR, 'troubleshooting');
+      if (fs.existsSync(troubleshootingPath)) {
+        const files = fs.readdirSync(troubleshootingPath).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+          const filePath = path.join(troubleshootingPath, file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const data = JSON.parse(content);
+          // トラブルシューティングデータを関連チャンクに変換
+          const chunk: DocumentChunk = {
+            text: `トラブルシューティング: ${data.title}\n${data.description || ''}\n${JSON.stringify(data.steps)}`,
+            metadata: {
+              source: file,
+              chunkNumber: 0
+            }
+          };
+          relevantChunks.push(chunk);
+        }
+        console.log(`トラブルシューティングデータを追加: ${files.length}件`);
+      }
+    } catch (err) {
+      console.error('トラブルシューティングデータ読み込みエラー:', err);
+    }
     
     // すべてのドキュメントを検索
     for (const docInfo of index.documents) {

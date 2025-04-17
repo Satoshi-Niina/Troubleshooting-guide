@@ -15,8 +15,8 @@
   },
   {
     "id": "cooling_001",
-    "file": "/images/cooling_001.svg",
-    "pngFallback": "/images/cooling_001.png",
+    "file": "/knowledge-base/images/cooling_001.png",
+    "pngFallback": "/knowledge-base/images/cooling_001.png",
     "title": "冷却システム概略図",
     "category": "冷却系統",
     "keywords": [
@@ -29,8 +29,8 @@
   },
   {
     "id": "frame_001",
-    "file": "/images/frame_001.svg",
-    "pngFallback": "/images/frame_001.png",
+    "file": "/knowledge-base/images/frame_001.png",
+    "pngFallback": "/knowledge-base/images/frame_001.png",
     "title": "車体フレーム構造",
     "category": "車体",
     "keywords": [
@@ -44,8 +44,8 @@
   },
   {
     "id": "cabin_001",
-    "file": "/images/cabin_001.svg",
-    "pngFallback": "/images/cabin_001.png",
+    "file": "/knowledge-base/images/cabin_001.svg",
+    "pngFallback": "/knowledge-base/images/cabin_001.png",
     "title": "運転キャビン配置図",
     "category": "運転室",
     "keywords": [
