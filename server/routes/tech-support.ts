@@ -828,19 +828,19 @@ router.post('/sync-knowledge-base', async (req, res) => {
     // 実際の同期は行わず、空の結果を返す
     const syncResults: Record<string, any> = {
       images: {
-        from: '/home/runner/workspace/public/uploads/images',
+        from: '/home/runner/workspace/knowledge-base/images',
         to: knowledgeBaseDirs.images,
         fileCount: 0,
         copiedCount: 0
       },
       json: {
-        from: '/home/runner/workspace/public/uploads/json',
+        from: '/home/runner/workspace/knowledge-base/json',
         to: knowledgeBaseDirs.json,
         fileCount: 0,
         copiedCount: 0
       },
       data: {
-        from: '/home/runner/workspace/public/uploads/data',
+        from: '/home/runner/workspace/knowledge-base/data',
         to: knowledgeBaseDirs.data,
         fileCount: 0,
         copiedCount: 0

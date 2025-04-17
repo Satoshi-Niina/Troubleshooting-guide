@@ -168,9 +168,9 @@ export async function extractPptxText(filePath: string): Promise<string> {
     console.log('=== ディレクトリ構造と対応するURLパス ===');
     console.log(`- ルートディレクトリ: ${rootDir}`);
     console.log(`- 公開ディレクトリ: ${publicDir} (URL: /)`);
-    console.log(`- 公開アップロードディレクトリ: ${publicUploadsDir} (URL: /uploads)`);
-    console.log(`- 公開画像ディレクトリ: ${publicImagesDir} (URL: /uploads/images)`);
-    console.log(`- 公開JSONディレクトリ: ${publicJsonDir} (URL: /uploads/json)`);
+    console.log(`- 公開アップロードディレクトリ: ${publicUploadsDir} (URL: /knowledge-base)`);
+    console.log(`- 公開画像ディレクトリ: ${publicImagesDir} (URL: /knowledge-base/images)`);
+    console.log(`- 公開JSONディレクトリ: ${publicJsonDir} (URL: /knowledge-base/json)`);
     
     // ディレクトリの存在確認
     console.log('\n=== 存在確認 ===');
@@ -279,7 +279,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
         }
         
         // 画像のURLパス
-        const imgUrl = `/uploads/images/${imgFileName}`;
+        const imgUrl = `/knowledge-base/images/${imgFileName}`;
         extractedImagePaths.push(imgUrl);
         
         // メタデータに追加（形式はPNGに統一）
@@ -380,7 +380,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
           本文: [slideTexts[i].content],
           ノート: `スライド ${slideNum}のノート: ${slideTexts[i].title}\n${slideTexts[i].content}`,
           画像テキスト: [{
-            画像パス: `/uploads/images/${slideFileName}.png`,
+            画像パス: `/knowledge-base/images/${slideFileName}.png`,
             テキスト: slideTexts[i].content
           }]
         });
@@ -521,13 +521,13 @@ export async function extractPptxText(filePath: string): Promise<string> {
       title: fileName,
       description: `保守用車緊急対応マニュアル: ${fileName}`,
       details: extractedText,
-      image_path: allImageUrls.length > 0 ? allImageUrls[0] : `/uploads/images/${slideImageBaseName}_001.png`,
+      image_path: allImageUrls.length > 0 ? allImageUrls[0] : `/knowledge-base/images/${slideImageBaseName}_001.png`,
       all_slides: allSlidesUrls.length > 0 ? allSlidesUrls : 
         Array.from({length: 4}, (_, i) => 
-          `/uploads/images/${slideImageBaseName}_${(i+1).toString().padStart(3, '0')}.png`
+          `/knowledge-base/images/${slideImageBaseName}_${(i+1).toString().padStart(3, '0')}.png`
         ),
       all_images: embeddedImageUrls.length > 0 ? embeddedImageUrls : undefined,
-      metadata_json: `/uploads/json/${slideImageBaseName}_metadata.json`,
+      metadata_json: `/knowledge-base/json/${slideImageBaseName}_metadata.json`,
       keywords: ["PowerPoint", "保守用車", "緊急対応", "マニュアル", fileName]
     };
     
