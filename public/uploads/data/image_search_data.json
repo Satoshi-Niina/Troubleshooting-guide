@@ -1,0 +1,102 @@
+[
+  {
+    "id": "engine_001",
+    "file": "/knowledge-base/images/engine_001.svg",
+    "pngFallback": "/knowledge-base/images/engine_001.png",
+    "title": "エンジン基本構造図",
+    "category": "エンジン",
+    "keywords": [
+      "エンジン",
+      "モーター",
+      "動力系",
+      "駆動部"
+    ],
+    "description": "保守用車のディーゼルエンジン基本構造図。主要部品とその配置を示す。"
+  },
+  {
+    "id": "cooling_001",
+    "file": "/knowledge-base/images/cooling_001.png",
+    "pngFallback": "/knowledge-base/images/cooling_001.png",
+    "title": "冷却システム概略図",
+    "category": "冷却系統",
+    "keywords": [
+      "冷却",
+      "ラジエーター",
+      "水漏れ",
+      "オーバーヒート"
+    ],
+    "description": "保守用車の冷却システム概略図。冷却水の流れと主要コンポーネントを表示。"
+  },
+  {
+    "id": "frame_001",
+    "file": "/knowledge-base/images/frame_001.png",
+    "pngFallback": "/knowledge-base/images/frame_001.png",
+    "title": "車体フレーム構造",
+    "category": "車体",
+    "keywords": [
+      "フレーム",
+      "シャーシ",
+      "車体",
+      "構造",
+      "強度部材"
+    ],
+    "description": "保守用車の車体フレーム構造図。サイドメンバーとクロスメンバーの配置を表示。"
+  },
+  {
+    "id": "cabin_001",
+    "file": "/knowledge-base/images/cabin_001.svg",
+    "pngFallback": "/knowledge-base/images/cabin_001.png",
+    "title": "運転キャビン配置図",
+    "category": "運転室",
+    "keywords": [
+      "キャビン",
+      "運転室",
+      "操作パネル",
+      "計器盤"
+    ],
+    "description": "保守用車の運転キャビン内部配置図。操作機器と計器類の位置を表示。"
+  },
+  {
+    "id": "mc_1744105287766_001",
+    "file": "/knowledge-base/images/mc_1744105287766_001.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_001.png",
+    "title": "エンジン冷却系統",
+    "category": "冷却系統",
+    "keywords": [
+      "冷却",
+      "ラジエーター",
+      "水漏れ",
+      "オーバーヒート"
+    ],
+    "description": "エンジン冷却システムの構成と水流の流れ。オーバーヒートの検知ポイントを表示。"
+  },
+  {
+    "id": "mc_1744105287766_002",
+    "file": "/knowledge-base/images/mc_1744105287766_002.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_002.png",
+    "title": "車体フレーム構造",
+    "category": "車体",
+    "keywords": [
+      "フレーム",
+      "シャーシ",
+      "車体",
+      "構造",
+      "強度部材"
+    ],
+    "description": "保守用車の車体フレーム構造図。サイドメンバーとクロスメンバーの配置を表示。"
+  },
+  {
+    "id": "mc_1744105287766_003",
+    "file": "/knowledge-base/images/mc_1744105287766_003.svg",
+    "pngFallback": "/knowledge-base/images/mc_1744105287766_003.png",
+    "title": "運転キャビン配置図",
+    "category": "運転室",
+    "keywords": [
+      "キャビン",
+      "運転室",
+      "操作パネル",
+      "計器盤"
+    ],
+    "description": "保守用車の運転キャビン内部配置図。操作機器と計器類の位置を表示。"
+  }
+]
