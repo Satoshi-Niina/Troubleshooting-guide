@@ -399,8 +399,37 @@ async function processFile(filePath: string): Promise<any> {
         const jsonData = JSON.parse(jsonContent);
         
         // JSON構造を検証
-        if (!jsonData.metadata || !jsonData.slides || !Array.isArray(jsonData.slides)) {
-          throw new Error('JSONファイルの形式が無効です。正しい応急処置フロー形式のJSONファイルが必要です。');
+        if (!jsonData) {
+          throw new Error('JSONファイルの解析に失敗しました。有効なJSONファイルを確認してください。');
+        }
+        
+        // 必要に応じて構造を構築（metadata、slidesがない場合は作成）
+        if (!jsonData.metadata) {
+          console.log('JSONにmetadataがないため、作成します');
+          jsonData.metadata = {
+            タイトル: fileName || '応急処置フローデータ',
+            作成者: 'システム',
+            作成日: new Date().toISOString(),
+            修正日: new Date().toISOString(),
+            説明: 'JSONファイルから生成された応急処置フローです'
+          };
+        }
+        
+        if (!jsonData.slides || !Array.isArray(jsonData.slides)) {
+          console.log('JSONにslidesがないか配列ではないため、作成します');
+          // 通常のJSONからスライドを作成
+          jsonData.slides = [];
+          
+          // データからスライドを構築
+          const slideData = {
+            スライド番号: 1,
+            タイトル: jsonData.metadata?.タイトル || fileName || 'JSONデータ',
+            本文: ['JSONデータから自動生成されたスライドです'],
+            ノート: 'JSONファイルから生成された内容です',
+            画像テキスト: []
+          };
+          
+          jsonData.slides.push(slideData);
         }
         
         // 画像パスの修正（必要に応じて）
@@ -503,30 +532,97 @@ router.post('/process', upload.single('file'), async (req, res) => {
 // ガイドファイル一覧を取得するエンドポイント
 router.get('/list', (_req, res) => {
   try {
+    // メインのJSONディレクトリをチェック
     if (!fs.existsSync(jsonDir)) {
-      return res.status(404).json({ error: 'ディレクトリが見つかりません' });
+      fs.mkdirSync(jsonDir, { recursive: true });
+      console.log(`jsonDirが存在しなかったため作成しました: ${jsonDir}`);
     }
     
-    const files = fs.readdirSync(jsonDir)
-      .filter(file => file.endsWith('_metadata.json'));
+    // メインのJSONディレクトリからファイルを取得
+    const jsonFiles = fs.existsSync(jsonDir) 
+      ? fs.readdirSync(jsonDir).filter(file => file.endsWith('_metadata.json'))
+      : [];
+      
+    console.log(`jsonDirから${jsonFiles.length}個のメタデータファイルを取得しました`);
     
-    const guides = files.map(file => {
-      const filePath = path.join(jsonDir, file);
-      const content = fs.readFileSync(filePath, 'utf8');
-      const data = JSON.parse(content);
+    // トラブルシューティングディレクトリをチェック
+    const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+    if (!fs.existsSync(troubleshootingDir)) {
+      fs.mkdirSync(troubleshootingDir, { recursive: true });
+      console.log(`troubleshootingDirが存在しなかったため作成しました: ${troubleshootingDir}`);
+    }
+    
+    // トラブルシューティングディレクトリからファイルを取得
+    const troubleshootingFiles = fs.existsSync(troubleshootingDir)
+      ? fs.readdirSync(troubleshootingDir).filter(file => file.endsWith('.json'))
+      : [];
       
-      const id = file.split('_')[0] + '_' + file.split('_')[1];
-      
-      return {
-        id,
-        filePath,
-        fileName: file,
-        title: data.metadata.タイトル,
-        createdAt: data.metadata.作成日,
-        slideCount: data.slides.length
-      };
+    console.log(`troubleshootingDirから${troubleshootingFiles.length}個のJSONファイルを取得しました`);
+    
+    // ガイドリストの構築
+    const guides: Array<{
+      id: string;
+      filePath: string;
+      fileName: string;
+      title: string;
+      createdAt: string;
+      slideCount: number;
+      source?: string;
+    }> = [];
+    
+    // メインJSONディレクトリからのガイド
+    jsonFiles.forEach(file => {
+      try {
+        const filePath = path.join(jsonDir, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const data = JSON.parse(content);
+        
+        const id = file.split('_')[0] + '_' + file.split('_')[1];
+        
+        guides.push({
+          id,
+          filePath,
+          fileName: file,
+          title: data.metadata?.タイトル || path.basename(file, '_metadata.json'),
+          createdAt: data.metadata?.作成日 || new Date().toISOString(),
+          slideCount: Array.isArray(data.slides) ? data.slides.length : 0,
+          source: 'regular'
+        });
+      } catch (err) {
+        console.error(`ファイル ${file} の処理中にエラーが発生しました:`, err);
+      }
     });
     
+    // トラブルシューティングディレクトリからのガイド
+    troubleshootingFiles.forEach(file => {
+      try {
+        const filePath = path.join(troubleshootingDir, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const data = JSON.parse(content);
+        
+        // ファイル名からIDを取得（拡張子を除く）
+        const id = path.basename(file, '.json');
+        
+        guides.push({
+          id: `ts_${id}`, // トラブルシューティングの識別子をつける
+          filePath,
+          fileName: file,
+          title: data.metadata?.タイトル || data.title || id,
+          createdAt: data.metadata?.作成日 || data.createdAt || new Date().toISOString(),
+          slideCount: Array.isArray(data.slides) ? data.slides.length : (Array.isArray(data.steps) ? data.steps.length : 0),
+          source: 'troubleshooting'
+        });
+      } catch (err) {
+        console.error(`トラブルシューティングファイル ${file} の処理中にエラーが発生しました:`, err);
+      }
+    });
+    
+    // 作成日の新しい順にソート
+    guides.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    console.log(`合計${guides.length}個のガイドを取得しました`);
     res.json(guides);
   } catch (error) {
     console.error('ガイド一覧取得エラー:', error);
@@ -538,23 +634,76 @@ router.get('/list', (_req, res) => {
 router.get('/detail/:id', (req, res) => {
   try {
     const id = req.params.id;
-    const files = fs.readdirSync(jsonDir)
-      .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
     
-    if (files.length === 0) {
-      return res.status(404).json({ error: 'ガイドが見つかりません' });
+    // トラブルシューティングファイルかどうかをチェック
+    if (id.startsWith('ts_')) {
+      // トラブルシューティングファイルの場合
+      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+      const tsId = id.replace('ts_', ''); // プレフィックスを削除
+      
+      const filePath = path.join(troubleshootingDir, `${tsId}.json`);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'トラブルシューティングファイルが見つかりません' });
+      }
+      
+      const content = fs.readFileSync(filePath, 'utf8');
+      const jsonData = JSON.parse(content);
+      
+      // データ構造を標準化
+      const data = {
+        metadata: jsonData.metadata || {
+          タイトル: jsonData.title || tsId,
+          作成者: 'システム',
+          作成日: jsonData.createdAt || new Date().toISOString(),
+          修正日: new Date().toISOString(),
+          説明: jsonData.description || 'トラブルシューティングフロー'
+        },
+        slides: jsonData.slides || []
+      };
+      
+      // stepsがあれば、slidesに変換
+      if (jsonData.steps && Array.isArray(jsonData.steps) && data.slides.length === 0) {
+        data.slides = jsonData.steps.map((step: any, index: number) => ({
+          スライド番号: index + 1,
+          タイトル: step.title || `ステップ ${index + 1}`,
+          本文: [step.description || ''],
+          ノート: step.note || '',
+          画像テキスト: step.imageUrl ? [{
+            画像パス: step.imageUrl,
+            テキスト: step.imageCaption || ''
+          }] : []
+        }));
+      }
+      
+      res.json({
+        id,
+        filePath,
+        fileName: path.basename(filePath),
+        data,
+        source: 'troubleshooting'
+      });
+    } else {
+      // 通常のガイドファイルの場合
+      const files = fs.readdirSync(jsonDir)
+        .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
+      
+      if (files.length === 0) {
+        return res.status(404).json({ error: 'ガイドが見つかりません' });
+      }
+      
+      const filePath = path.join(jsonDir, files[0]);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(content);
+      
+      res.json({
+        id,
+        filePath,
+        fileName: files[0],
+        data,
+        source: 'regular'
+      });
     }
-    
-    const filePath = path.join(jsonDir, files[0]);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const data = JSON.parse(content);
-    
-    res.json({
-      id,
-      filePath,
-      fileName: files[0],
-      data
-    });
   } catch (error) {
     console.error('ガイド詳細取得エラー:', error);
     res.status(500).json({ error: 'ガイド詳細の取得に失敗しました' });
