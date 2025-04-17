@@ -23,14 +23,14 @@
         { "text": "24V以上ある", "next": "check_starter" },
         { "text": "24V未満", "next": "replace_battery" }
       ],
-      "imageUrl": "/knowledge-base/images/mc_1744105287766_001.svg"
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "replace_battery",
       "title": "バッテリー交換",
       "message": "バッテリーの充電または交換が必要です。充電後に再度お試しください。",
       "options": [{ "text": "バッテリーを充電/交換した", "next": "start" }],
-      "imageUrl": "/knowledge-base/images/mc_1744105287766_002.png"
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "check_starter",
