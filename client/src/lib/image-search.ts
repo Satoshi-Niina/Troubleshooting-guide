@@ -61,11 +61,14 @@ async function loadImageSearchData() {
         // 画像パスを取得
         let imagePath = slide['画像テキスト'] && slide['画像テキスト'][0] ? slide['画像テキスト'][0]['画像パス'] : "";
         
-        // 画像パスの参照を新しい構造に合わせて修正
-        if (imagePath && imagePath.includes('/uploads/images/')) {
-          imagePath = imagePath.replace('/uploads/images/', '/images/');
-        } else if (imagePath && imagePath.includes('/knowledge-base/images/')) {
-          imagePath = imagePath.replace('/knowledge-base/images/', '/images/');
+        // 画像パスの参照を knowledge-base/images に統一
+        if (imagePath) {
+          // ファイル名だけを抽出
+          const fileName = imagePath.split('/').pop();
+          if (fileName) {
+            // 知識ベースの画像ディレクトリに統一
+            imagePath = `/knowledge-base/images/${fileName}`;
+          }
         }
         
         // JPEG画像の場合はPNGに置き換える
