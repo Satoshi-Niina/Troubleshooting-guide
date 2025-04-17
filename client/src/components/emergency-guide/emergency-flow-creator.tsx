@@ -21,11 +21,8 @@ const EmergencyFlowCreator: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   
-  // オプション
-  const [saveOriginalFile, setSaveOriginalFile] = useState(true);
-  const [extractKnowledgeBase, setExtractKnowledgeBase] = useState(true);
-  const [extractImageSearch, setExtractImageSearch] = useState(true);
-  const [createTroubleshooting, setCreateTroubleshooting] = useState(true);
+  // アップロード完了時のファイル名を保持
+  const [uploadedFileName, setUploadedFileName] = useState<string>('');
   
   // フロー編集の状態
   const [flowData, setFlowData] = useState<any>(null);
@@ -40,7 +37,36 @@ const EmergencyFlowCreator: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      setSelectedFile(files[0]);
+      const file = files[0];
+      setSelectedFile(file);
+      
+      // JSONファイルの場合は直接読み込む
+      if (file.name.toLowerCase().endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target?.result as string);
+            // ファイル名情報を追加
+            jsonData.fileName = file.name;
+            setUploadedFileName(file.name);
+            setFlowData(jsonData);
+            
+            // 読み込み成功したらエディタに切り替え
+            setActiveTab('create');
+            toast({
+              title: "JSONファイル読み込み",
+              description: "フローデータをエディタで編集できます",
+            });
+          } catch (error) {
+            toast({
+              title: "エラー",
+              description: "JSONファイルの解析に失敗しました",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
     }
   };
   
@@ -53,7 +79,36 @@ const EmergencyFlowCreator: React.FC = () => {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      setSelectedFile(files[0]);
+      const file = files[0];
+      setSelectedFile(file);
+      
+      // JSONファイルの場合は直接読み込む
+      if (file.name.toLowerCase().endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target?.result as string);
+            // ファイル名情報を追加
+            jsonData.fileName = file.name;
+            setUploadedFileName(file.name);
+            setFlowData(jsonData);
+            
+            // 読み込み成功したらエディタに切り替え
+            setActiveTab('create');
+            toast({
+              title: "JSONファイル読み込み",
+              description: "フローデータをエディタで編集できます",
+            });
+          } catch (error) {
+            toast({
+              title: "エラー",
+              description: "JSONファイルの解析に失敗しました",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
     }
   };
   
@@ -87,10 +142,16 @@ const EmergencyFlowCreator: React.FC = () => {
       // フォームデータの作成
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('keepOriginalFile', saveOriginalFile.toString());
-      formData.append('extractKnowledgeBase', extractKnowledgeBase.toString());
-      formData.append('extractImageSearch', extractImageSearch.toString());
-      formData.append('createTroubleshooting', createTroubleshooting.toString());
+      // ファイル名を保存
+      setUploadedFileName(selectedFile.name);
+      
+      // すべてのオプションを有効化
+      formData.append('options', JSON.stringify({
+        keepOriginalFile: true,
+        extractKnowledgeBase: true,
+        extractImageSearch: true,
+        createTroubleshooting: true
+      }));
       
       // ファイルの送信
       const response = await fetch('/api/data-processor/process', {
@@ -265,53 +326,9 @@ const EmergencyFlowCreator: React.FC = () => {
               </Button>
             </div>
             
-            {/* データ保存オプション */}
-            <div className="space-y-3 border rounded-md p-4 bg-gray-50">
-              <h3 className="font-medium mb-2">処理オプション</h3>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="saveOriginalFile" 
-                  checked={saveOriginalFile} 
-                  onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
-                />
-                <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
-                  元のファイルも保存する
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="extractKnowledgeBase" 
-                  checked={extractKnowledgeBase} 
-                  onCheckedChange={(checked) => setExtractKnowledgeBase(checked === true)}
-                />
-                <Label htmlFor="extractKnowledgeBase" className="text-sm text-gray-700">
-                  ナレッジベースに登録する
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="extractImageSearch" 
-                  checked={extractImageSearch} 
-                  onCheckedChange={(checked) => setExtractImageSearch(checked === true)}
-                />
-                <Label htmlFor="extractImageSearch" className="text-sm text-gray-700">
-                  画像検索データを抽出する
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="createTroubleshooting" 
-                  checked={createTroubleshooting} 
-                  onCheckedChange={(checked) => setCreateTroubleshooting(checked === true)}
-                />
-                <Label htmlFor="createTroubleshooting" className="text-sm text-gray-700">
-                  トラブルシューティングフローを自動生成する
-                </Label>
-              </div>
+            {/* 補足情報やヒント */}
+            <div className="mt-2 text-xs text-gray-500 italic">
+              読み込んだファイルはフローエディタで編集できます。JSONファイルを選択すると直接編集が可能です。
             </div>
           </TabsContent>
           
@@ -320,7 +337,10 @@ const EmergencyFlowCreator: React.FC = () => {
             <EmergencyFlowEditor 
               onSave={handleSaveFlow}
               onCancel={handleCancelFlow}
-              initialData={flowData}
+              initialData={{
+                ...flowData,
+                fileName: uploadedFileName || (flowData?.fileName || '')
+              }}
             />
           </TabsContent>
         </Tabs>
