@@ -20,6 +20,7 @@ import techSupportRouter from './routes/tech-support';
 import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
 import emergencyGuideRouter from './routes/emergency-guide';
+import { emergencyFlowRouter } from './routes/emergency-flow-router';
 import { registerSyncRoutes } from './routes/sync-routes';
 import { flowGeneratorRouter } from './routes/flow-generator';
 
