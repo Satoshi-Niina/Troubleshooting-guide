@@ -47,6 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register emergency guide routes
   app.use('/api/emergency-guide', emergencyGuideRouter);
   
+  // Register emergency flow routes
+  app.use('/api/emergency-flow', emergencyFlowRouter);
+  
   // Register flow generator routes
   app.use('/api/flow-generator', flowGeneratorRouter);
   

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, memo } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -12,7 +12,10 @@ import ReactFlow, {
   ConnectionMode,
   Panel,
   NodeTypes,
-  ReactFlowProvider
+  ReactFlowProvider,
+  Handle,
+  Position,
+  NodeProps
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
@@ -24,11 +27,106 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Save, X, Check, Trash, Copy } from 'lucide-react';
 
-// カスタムノードタイプ
-import StartNode from './nodes/start-node';
-import StepNode from './nodes/step-node';
-import DecisionNode from './nodes/decision-node';
-import EndNode from './nodes/end-node';
+// カスタムノードコンポーネント定義
+const StartNode = memo(({ data }: NodeProps) => {
+  return (
+    <div className="px-4 py-2 shadow-md rounded-full bg-green-500 text-white min-w-[100px] text-center">
+      <div className="font-bold">{data.label || '開始'}</div>
+      
+      {/* 出力ハンドルのみ */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
+    </div>
+  );
+});
+
+const StepNode = memo(({ data }: NodeProps) => {
+  return (
+    <div className="px-4 py-2 shadow-md rounded-md bg-blue-100 border border-blue-500 min-w-[150px]">
+      <div className="font-bold text-blue-800">{data.label || 'ステップ'}</div>
+      {data.message && (
+        <div className="mt-2 text-sm text-gray-700">{data.message}</div>
+      )}
+      
+      {/* 入力と出力のハンドル */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
+    </div>
+  );
+});
+
+const DecisionNode = memo(({ data }: NodeProps) => {
+  return (
+    <div className="px-4 py-2 shadow-md rounded-md bg-yellow-100 border border-yellow-500 min-w-[150px]" style={{ 
+      transform: 'rotate(45deg)',
+      transformOrigin: 'center',
+      width: '120px',
+      height: '120px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <div style={{ transform: 'rotate(-45deg)' }} className="text-center">
+        <div className="font-bold text-yellow-800">{data.label || '判断'}</div>
+        {data.message && (
+          <div className="mt-2 text-sm text-gray-700">{data.message}</div>
+        )}
+      </div>
+      
+      {/* 入力と複数の出力ハンドル */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        id="yes"
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        id="no"
+        isConnectable={true}
+      />
+    </div>
+  );
+});
+
+const EndNode = memo(({ data }: NodeProps) => {
+  return (
+    <div className="px-4 py-2 shadow-md rounded-full bg-red-500 text-white min-w-[100px] text-center">
+      <div className="font-bold">{data.label || '終了'}</div>
+      
+      {/* 入力ハンドルのみ */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: '#555' }}
+        isConnectable={true}
+      />
+    </div>
+  );
+});
 
 // ノードタイプの定義
 const nodeTypes: NodeTypes = {

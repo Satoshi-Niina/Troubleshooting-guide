@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmergencyGuideUploader from "@/components/emergency-guide/emergency-guide-uploader";
 import EmergencyGuideEdit from "@/components/emergency-guide/emergency-guide-edit";
+import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-creator";
 import { Helmet } from "react-helmet";
 
 const EmergencyGuidePage: React.FC = () => {
@@ -37,13 +38,18 @@ const EmergencyGuidePage: React.FC = () => {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 mb-8">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
+          <TabsTrigger value="flow">UIフロー作成</TabsTrigger>
           <TabsTrigger value="edit">フロー編集</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4">
           <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
+        </TabsContent>
+        
+        <TabsContent value="flow" className="space-y-4">
+          <EmergencyFlowCreator />
         </TabsContent>
 
         <TabsContent value="edit" className="space-y-4">
