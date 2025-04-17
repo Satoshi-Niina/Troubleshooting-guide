@@ -397,13 +397,18 @@ router.post('/process', upload.single('file'), async (req, res) => {
 // ガイドファイル一覧を取得するエンドポイント
 router.get('/list', (_req, res) => {
   try {
+    console.log('ガイド一覧を取得します...');
+    
     // 知識ベースディレクトリからファイルを読み取る
     if (!fs.existsSync(kbJsonDir)) {
       return res.status(404).json({ error: 'ディレクトリが見つかりません' });
     }
     
+    // キャッシュバスティングのためにファイル一覧を再スキャン
     const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.endsWith('_metadata.json'));
+    
+    console.log('メタデータファイル一覧:', files);
     
     const guides = files.map(file => {
       try {
@@ -566,7 +571,23 @@ router.delete('/delete/:id', (req, res) => {
     
     // 削除すべきJSONファイル名を探す
     const jsonFiles = fs.readdirSync(kbJsonDir);
-    const targetFile = jsonFiles.find(file => file.startsWith(id));
+    console.log(`削除処理: ID=${id}, ファイル一覧:`, jsonFiles);
+    
+    // mcで始まるIDとguideで始まるIDで処理を分ける
+    let targetFile;
+    if (id.startsWith('mc_')) {
+      // mc_形式のIDの場合は厳密なID検索
+      targetFile = jsonFiles.find(file => {
+        // IDのプレフィックス部分（mc_123456など）を抽出
+        const idPrefix = id.split('_')[1]; // mc_123456 -> 123456
+        return file.includes(idPrefix);
+      });
+    } else {
+      // 通常のguide_形式のIDはそのまま前方一致で検索
+      targetFile = jsonFiles.find(file => file.startsWith(id));
+    }
+    
+    console.log(`ターゲットファイル: ${targetFile || 'なし'}`);
     
     if (!targetFile) {
       return res.status(404).json({ error: `指定されたガイド (ID: ${id}) が見つかりません` });

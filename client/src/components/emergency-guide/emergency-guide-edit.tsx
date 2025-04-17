@@ -622,10 +622,14 @@ const EmergencyGuideEdit: React.FC = () => {
                                           prevFiles.filter(f => f.id !== file.id)
                                         );
                                         
-                                        // 少し遅延させてから一覧を再取得（サーバー側の反映を待つ）
+                                        // サーバー側の処理完了を待つため十分な遅延を設定
+                                        console.log(`ID=${file.id}を削除しました。リスト更新を待機中...`);
+                                        
+                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ
                                         setTimeout(() => {
+                                          console.log('サーバーからデータを再取得します...');
                                           fetchGuideFiles();
-                                        }, 500);
+                                        }, 1500);
                                       } catch (parseError) {
                                         console.error('JSONパースエラー:', parseError);
                                         // JSONパースエラーでも成功としてUIを更新
@@ -639,9 +643,14 @@ const EmergencyGuideEdit: React.FC = () => {
                                           prevFiles.filter(f => f.id !== file.id)
                                         );
                                         
+                                        // サーバー側の処理完了を待つため十分な遅延を設定
+                                        console.log(`ID=${file.id}を削除しました（エラー処理後）。リスト更新を待機中...`);
+                                        
+                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ
                                         setTimeout(() => {
+                                          console.log('サーバーからデータを再取得します...');
                                           fetchGuideFiles();
-                                        }, 500);
+                                        }, 1500);
                                       }
                                     } else {
                                       // エラーレスポンスの詳細を取得
