@@ -5,16 +5,16 @@ import multer from 'multer';
 import { storage } from '../storage';
 import { insertMediaSchema } from '@shared/schema';
 
-// アップロード先ディレクトリを確保
-const uploadsDir = path.join(process.cwd(), 'uploads', 'media');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// 知識ベースディレクトリを使用
+const mediaDir = path.join(process.cwd(), 'knowledge-base', 'media');
+if (!fs.existsSync(mediaDir)) {
+  fs.mkdirSync(mediaDir, { recursive: true });
 }
 
 // multerストレージ設定
 const mediaStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, mediaDir);
   },
   filename: (req, file, cb) => {
     const timestamp = Date.now();

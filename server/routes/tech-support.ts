@@ -41,13 +41,13 @@ function cleanupTempDirectory(dirPath: string): void {
   }
 }
 
-// アップロードディレクトリのクリーンアップ（knowledge-baseのチェック付き）
-async function cleanupUploadsWithVerification(): Promise<void> {
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  const subDirs = ['temp', 'images', 'json', 'ppt', 'data'];
+// 一時ディレクトリのクリーンアップ（知識ベースディレクトリのみ）
+async function cleanupTempDirectories(): Promise<void> {
+  const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
+  const subDirs = ['temp'];
   
   for (const subDir of subDirs) {
-    const dirPath = path.join(uploadsDir, subDir);
+    const dirPath = path.join(knowledgeBaseDir, subDir);
     if (!fs.existsSync(dirPath)) continue;
     
     try {
@@ -150,17 +150,15 @@ const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
 // public/imagesディレクトリを画像検索用に使用
 const publicImagesDir = path.join(process.cwd(), 'public', 'images');
 
-// uploadsディレクトリは一時ファイル保存用に使用
-const uploadsDir = path.join(process.cwd(), 'uploads');
-const uploadsTempDir = path.join(uploadsDir, 'temp');
+// 知識ベース一時ディレクトリのパス
+const knowledgeBaseTempDir = path.join(knowledgeBaseDir, 'temp');
 
 // ディレクトリが存在することを確認
 ensureDirectoryExists(knowledgeBaseDir);
 ensureDirectoryExists(knowledgeBaseDataDir);
 ensureDirectoryExists(knowledgeBaseImagesDir);
+ensureDirectoryExists(knowledgeBaseTempDir);
 ensureDirectoryExists(publicImagesDir);
-ensureDirectoryExists(uploadsDir);
-ensureDirectoryExists(uploadsTempDir);
 
 // Multerストレージ設定
 const storage = multer.diskStorage({
@@ -441,8 +439,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     
     // アップロード開始時に一時ディレクトリのクリーンアップを実行
     try {
-      // uploads/tempディレクトリをクリーンアップ
-      cleanupTempDirectory(uploadsTempDir);
+      // 知識ベース一時ディレクトリをクリーンアップ
+      cleanupTempDirectory(knowledgeBaseTempDir);
       console.log('一時ディレクトリをクリーンアップしました');
     } catch (cleanupError) {
       console.error('一時ディレクトリのクリーンアップに失敗しました:', cleanupError);
@@ -791,7 +789,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 router.post('/cleanup-uploads', async (req, res) => {
   try {
     // クリーンアップ処理を実行
-    await cleanupUploadsWithVerification();
+    await cleanupTempDirectories();
     
     return res.json({
       success: true,
