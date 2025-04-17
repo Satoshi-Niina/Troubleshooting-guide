@@ -41,6 +41,39 @@ const EmergencyFlowCreator: React.FC = () => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [flowToDelete, setFlowToDelete] = useState<string | null>(null);
   
+  // 保存済みフローのリスト
+  const [flowList, setFlowList] = useState<any[]>([]);
+  const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
+  
+  // フロー一覧を取得
+  const fetchFlowList = async () => {
+    try {
+      setIsLoadingFlowList(true);
+      const response = await fetch('/api/emergency-guide/list');
+      
+      if (!response.ok) {
+        throw new Error('フロー一覧の取得に失敗しました');
+      }
+      
+      const data = await response.json();
+      setFlowList(data);
+    } catch (error) {
+      console.error('フロー一覧取得エラー:', error);
+      toast({
+        title: "エラー",
+        description: "フロー一覧の取得に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingFlowList(false);
+    }
+  };
+  
+  // コンポーネントマウント時にフローリストを取得
+  useEffect(() => {
+    fetchFlowList();
+  }, []);
+  
   // ファイル選択のハンドラー
   const handleFileClick = () => {
     if (fileInputRef.current) {
@@ -308,6 +341,42 @@ const EmergencyFlowCreator: React.FC = () => {
     setShowConfirmDelete(true);
   };
   
+  // 特定のフローを読み込む
+  const loadFlow = async (id: string) => {
+    try {
+      const response = await fetch(`/api/emergency-guide/detail/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('フローデータの取得に失敗しました');
+      }
+      
+      const data = await response.json();
+      // フローデータを設定
+      setFlowData(data.data);
+      
+      // ファイル名を設定（フロー名から）
+      const flow = flowList.find(f => f.id === id);
+      if (flow) {
+        setUploadedFileName(flow.fileName || `${flow.title}.json`);
+      }
+      
+      // エディタタブに切り替え
+      setActiveTab('create');
+      
+      toast({
+        title: "フロー読込み",
+        description: "フローデータをエディタで編集できます",
+      });
+    } catch (error) {
+      console.error('フロー読込みエラー:', error);
+      toast({
+        title: "エラー",
+        description: "フローデータの読込みに失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // キャラクター削除実行
   const executeDeleteCharacter = async () => {
     if (!flowToDelete) return;
@@ -324,7 +393,8 @@ const EmergencyFlowCreator: React.FC = () => {
           title: "削除成功",
           description: "キャラクターが削除されました",
         });
-        // フローリストを再取得する処理をここに追加する（必要に応じて）
+        // 削除後にフローリストを再取得
+        fetchFlowList();
       } else {
         throw new Error(result.error || '削除に失敗しました');
       }
