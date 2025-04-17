@@ -299,23 +299,70 @@ async function processPowerPointFile(filePath: string): Promise<any> {
 async function processJsonFile(filePath: string): Promise<any> {
   try {
     const fileId = `guide_${Date.now()}`;
+    console.log(`JSONファイル処理: ID=${fileId}`);
+    
+    // 知識ベースディレクトリが存在することを確認
+    if (!fs.existsSync(kbJsonDir)) {
+      fs.mkdirSync(kbJsonDir, { recursive: true });
+      console.log(`知識ベースJSONディレクトリを作成: ${kbJsonDir}`);
+    }
+
     const fileContent = fs.readFileSync(filePath, 'utf8');
     const jsonData = JSON.parse(fileContent);
+    
+    // ファイルパスとファイル名をログ出力
+    console.log(`元のファイルパス: ${filePath}`);
+    console.log(`元のファイル名: ${path.basename(filePath)}`);
+    
+    // 知識ベースJSONディレクトリを確認
+    const jsonDirFiles = fs.readdirSync(kbJsonDir);
+    console.log(`知識ベースJSONディレクトリの内容（処理前）: ${jsonDirFiles.length}件`);
     
     // JSONデータを応急処置ガイド形式に変換
     // この場合は既に応急処置フロー形式のJSONと想定
     
+    // アップロードされた画像パスがある場合、相対パスに変換
+    if (jsonData.steps) {
+      for (const step of jsonData.steps) {
+        if (step.imageUrl && step.imageUrl.startsWith('/uploads/')) {
+          step.imageUrl = step.imageUrl.replace('/uploads/', '/knowledge-base/');
+        }
+      }
+    }
+    
     // 知識ベースディレクトリに保存（画像パスはナレッジベースの相対パスを使用）
     const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
-    fs.copyFileSync(filePath, kbJsonFilePath);
+    console.log(`保存先ファイルパス: ${kbJsonFilePath}`);
+    
+    // JSONデータを文字列に変換して保存（コピーではなく書き込み）
+    fs.writeFileSync(kbJsonFilePath, JSON.stringify(jsonData, null, 2));
+    console.log(`ファイルを保存しました: ${kbJsonFilePath}`);
+    
+    // 保存後の確認
+    if (fs.existsSync(kbJsonFilePath)) {
+      console.log(`ファイルが正常に保存されたことを確認: ${kbJsonFilePath}`);
+    } else {
+      console.error(`エラー: ファイルが保存されていません: ${kbJsonFilePath}`);
+    }
     
     // トラブルシューティングディレクトリにも保存
-    const knowledgeBasePath = path.join('knowledge-base', 'troubleshooting', path.basename(filePath));
-    fs.copyFileSync(filePath, knowledgeBasePath);
+    const troubleshootingDir = path.join(knowledgeBaseDir, 'troubleshooting');
+    if (!fs.existsSync(troubleshootingDir)) {
+      fs.mkdirSync(troubleshootingDir, { recursive: true });
+    }
+    
+    const troubleshootingFilePath = path.join(troubleshootingDir, `${fileId}.json`);
+    fs.writeFileSync(troubleshootingFilePath, JSON.stringify(jsonData, null, 2));
+    console.log(`トラブルシューティング用のJSONも保存: ${troubleshootingFilePath}`);
     
     // タイトルなどの情報を取得
     const title = jsonData.title || path.basename(filePath, '.json');
     const slideCount = jsonData.steps ? jsonData.steps.length : 0;
+    
+    // 最終確認
+    const jsonDirFilesAfter = fs.readdirSync(kbJsonDir);
+    console.log(`知識ベースJSONディレクトリの内容（処理後）: ${jsonDirFilesAfter.length}件`);
+    console.log(`新規ファイルが追加されたか: ${jsonDirFilesAfter.includes(`${fileId}_metadata.json`)}`);
     
     return {
       id: fileId,
@@ -610,7 +657,7 @@ router.post('/update/:id', (req, res) => {
 });
 
 // ガイドデータを削除するエンドポイント
-router.delete('/delete/:id', (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
     const id = req.params.id;
     console.log(`応急処置ガイド削除リクエスト: ID=${id}`);
@@ -766,24 +813,38 @@ router.delete('/delete/:id', (req, res) => {
         break;
       }
       
-      // 最終チェック
-      if (attempt === 2) {
-        // 非同期で削除タスクをキューに入れる
-        setTimeout(() => {
-          try {
-            for (const file of matchingFiles) {
-              const filePath = path.join(kbJsonDir, file);
-              if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                console.log(`バックグラウンド削除: ${filePath}`);
-              }
-            }
-          } catch (e) {
-            console.error('バックグラウンド削除エラー:', e);
-          }
-        }, 1000);
-      }
+      // 次の試行前に少し待機
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
+    
+    // 最終チェック（すべての試行が終わった後）
+    // 非同期で削除タスクをキューに入れる
+    setTimeout(() => {
+      try {
+        for (const file of matchingFiles) {
+          const filePath = path.join(kbJsonDir, file);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`バックグラウンド削除: ${filePath}`);
+          }
+        }
+        
+        // 追加のクリーンアップ: トラブルシューティングディレクトリ内の関連ファイルも削除
+        const troubleshootingDir = path.join(knowledgeBaseDir, 'troubleshooting');
+        if (fs.existsSync(troubleshootingDir)) {
+          const tsFiles = fs.readdirSync(troubleshootingDir);
+          for (const tsFile of tsFiles) {
+            if (tsFile.includes(id.split('_')[1])) {
+              const tsFilePath = path.join(troubleshootingDir, tsFile);
+              fs.unlinkSync(tsFilePath);
+              console.log(`バックグラウンド削除（トラブルシューティング）: ${tsFilePath}`);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('バックグラウンド削除エラー:', e);
+      }
+    }, 1000);
     
     // キャッシュバスティングのためのヘッダー設定
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
