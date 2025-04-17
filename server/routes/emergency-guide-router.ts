@@ -18,6 +18,11 @@ const pptDir = path.join(uploadsDir, 'ppt');
 const jsonDir = path.join(uploadsDir, 'json');
 const imageDir = path.join(uploadsDir, 'images');
 
+// 知識ベースディレクトリの設定
+const knowledgeBaseDir = path.resolve('./knowledge-base');
+const kbJsonDir = path.join(knowledgeBaseDir, 'json');
+const kbImageDir = path.join(knowledgeBaseDir, 'images');
+
 // ディレクトリの存在確認と作成
 [uploadsDir, pptDir, jsonDir, imageDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
@@ -368,16 +373,17 @@ router.post('/process', upload.single('file'), async (req, res) => {
 // ガイドファイル一覧を取得するエンドポイント
 router.get('/list', (_req, res) => {
   try {
-    if (!fs.existsSync(jsonDir)) {
+    // 知識ベースディレクトリからファイルを読み取る
+    if (!fs.existsSync(kbJsonDir)) {
       return res.status(404).json({ error: 'ディレクトリが見つかりません' });
     }
     
-    const files = fs.readdirSync(jsonDir)
+    const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.endsWith('_metadata.json'));
     
     const guides = files.map(file => {
       try {
-        const filePath = path.join(jsonDir, file);
+        const filePath = path.join(kbJsonDir, file);
         const content = fs.readFileSync(filePath, 'utf8');
         const data = JSON.parse(content);
         
@@ -423,7 +429,7 @@ router.get('/list', (_req, res) => {
         const id = file.split('_')[0] + '_' + file.split('_')[1];
         return {
           id,
-          filePath: path.join(jsonDir, file),
+          filePath: path.join(kbJsonDir, file),
           fileName: `エラーファイル_${id}`,
           title: `エラーファイル_${id}`,
           createdAt: new Date().toISOString(),
