@@ -731,16 +731,57 @@ router.delete('/delete/:id', (req, res) => {
     console.log('削除後のディレクトリ内容:', remainingFiles);
     console.log('削除したファイル:', matchingFiles);
     
-    // 削除が不完全な場合は強制再試行
-    for (const file of matchingFiles) {
-      const filePath = path.join(kbJsonDir, file);
-      if (fs.existsSync(filePath)) {
-        console.log(`削除が不完全なため強制再試行: ${filePath}`);
-        try {
-          fs.unlinkSync(filePath);
-        } catch (e) {
-          console.error('強制削除に失敗:', e);
+    // 削除が不完全な場合は強制再試行（最大3回）
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let allDeleted = true;
+      
+      for (const file of matchingFiles) {
+        const filePath = path.join(kbJsonDir, file);
+        if (fs.existsSync(filePath)) {
+          allDeleted = false;
+          console.log(`削除が不完全なため強制再試行 (${attempt + 1}/3): ${filePath}`);
+          try {
+            // ファイルを強制的に削除
+            fs.unlinkSync(filePath);
+            console.log(`  → 削除成功: ${filePath}`);
+          } catch (e) {
+            console.error(`  → 削除失敗: ${e}`);
+            
+            // 100ms待機してから再試行
+            await new Promise(resolve => setTimeout(resolve, 100));
+            try {
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`  → 2回目の削除が成功: ${filePath}`);
+              }
+            } catch (e2) {
+              console.error(`  → 2回目の削除も失敗: ${e2}`);
+            }
+          }
         }
+      }
+      
+      if (allDeleted) {
+        console.log(`すべてのファイルが正常に削除されました (試行: ${attempt + 1}回目で完了)`);
+        break;
+      }
+      
+      // 最終チェック
+      if (attempt === 2) {
+        // 非同期で削除タスクをキューに入れる
+        setTimeout(() => {
+          try {
+            for (const file of matchingFiles) {
+              const filePath = path.join(kbJsonDir, file);
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`バックグラウンド削除: ${filePath}`);
+              }
+            }
+          } catch (e) {
+            console.error('バックグラウンド削除エラー:', e);
+          }
+        }, 1000);
       }
     }
     
