@@ -416,12 +416,12 @@ const EmergencyFlowCreator: React.FC = () => {
   
   return (
     <>
-      <Card className="w-full max-h-full overflow-auto">
-        <CardHeader className="pb-2">
+      <Card className="w-full h-screen max-h-[calc(100vh-120px)] overflow-auto">
+        <CardHeader className="pb-2 sticky top-0 bg-white z-10">
           <CardDescription>応急処置データ管理：新規作成・キャラクターデザイン・テキストフロー編集</CardDescription>
         </CardHeader>
         
-        <CardContent className="overflow-auto">
+        <CardContent className="overflow-y-auto pb-24">
           <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="file">
@@ -549,27 +549,14 @@ const EmergencyFlowCreator: React.FC = () => {
                     {flowList.map((flow) => (
                       <div 
                         key={flow.id} 
-                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer flex justify-between"
+                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => loadFlow(flow.id)}
                       >
-                        <div className="flex-1" onClick={() => loadFlow(flow.id)}>
-                          <h4 className="text-md font-medium">{flow.title || 'タイトルなし'}</h4>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('ja-JP') : '日付なし'}
-                            {flow.nodeCount ? ` • ${flow.nodeCount}ノード` : ''}
-                          </p>
-                        </div>
-                        <div className="flex items-center">
-                          <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteCharacter(flow.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <h4 className="text-md font-medium">{flow.title || 'タイトルなし'}</h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('ja-JP') : '日付なし'}
+                          {flow.nodeCount ? ` • ${flow.nodeCount}ノード` : ''}
+                        </p>
                       </div>
                     ))}
                   </div>
