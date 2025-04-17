@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Save, X, Check, Trash, Copy } from 'lucide-react';
+import { Plus, Save, X, Check, Trash, Copy, Download } from 'lucide-react';
 
 // カスタムノードコンポーネント定義
 const StartNode = memo(({ data }: NodeProps) => {
