@@ -505,6 +505,19 @@ router.get('/list', (_req, res) => {
       }
     });
     
+    // リスト取得前の最終状態チェック（完全にファイルシステムと同期するため）
+    console.log('応急ガイド一覧をレスポンス送信前に最終検証:');
+    console.log('- JSONディレクトリの内容:', fs.readdirSync(kbJsonDir));
+    console.log('- 返却するガイド数:', guides.length);
+    console.log('- ガイドID一覧:', guides.map(g => g.id).join(', '));
+    
+    // ヘッダーの追加でキャッシュを無効化
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    
+    // レスポンスを返す
     res.json(guides);
   } catch (error) {
     console.error('ガイド一覧取得エラー:', error);
@@ -711,11 +724,37 @@ router.delete('/delete/:id', (req, res) => {
     
     console.log(`応急処置ガイドを削除しました: ID=${id}, タイトル=${title}`);
     
-    // 明示的にContent-Typeヘッダーを設定してからJSONレスポンスを返す
+    // 削除後の最終確認（ファイルシステムを再チェック）
+    const remainingFiles = fs.readdirSync(kbJsonDir);
+    console.log('----------- 削除後の状態 -----------');
+    console.log('削除したID:', id);
+    console.log('削除後のディレクトリ内容:', remainingFiles);
+    console.log('削除したファイル:', matchingFiles);
+    
+    // 削除が不完全な場合は強制再試行
+    for (const file of matchingFiles) {
+      const filePath = path.join(kbJsonDir, file);
+      if (fs.existsSync(filePath)) {
+        console.log(`削除が不完全なため強制再試行: ${filePath}`);
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error('強制削除に失敗:', e);
+        }
+      }
+    }
+    
+    // キャッシュバスティングのためのヘッダー設定
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('Content-Type', 'application/json');
+    
     return res.json({
       success: true,
-      message: `応急処置ガイド「${title}」を削除しました`
+      message: `応急処置ガイド「${title}」を削除しました`,
+      deletedFiles: matchingFiles
     });
   } catch (error) {
     console.error('ガイド削除エラー:', error);

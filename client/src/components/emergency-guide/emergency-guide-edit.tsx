@@ -118,13 +118,16 @@ const EmergencyGuideEdit: React.FC = () => {
   const fetchGuideFiles = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/emergency-guide/list');
+      // キャッシュバスティングのためにタイムスタンプパラメータを追加
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/emergency-guide/list?_t=${timestamp}`);
       
       if (!response.ok) {
         throw new Error('ガイドファイル一覧の取得に失敗しました');
       }
       
       const data = await response.json();
+      console.log('サーバーから取得したガイド一覧:', data);
       setGuideFiles(data);
     } catch (error) {
       console.error('ガイドファイル取得エラー:', error);
