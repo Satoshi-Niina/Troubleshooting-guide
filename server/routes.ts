@@ -21,6 +21,7 @@ import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
 import emergencyGuideRouter from './routes/emergency-guide';
 import { registerSyncRoutes } from './routes/sync-routes';
+import { flowGeneratorRouter } from './routes/flow-generator';
 
 // Extend the express-session types
 declare module 'express-session' {
@@ -44,6 +45,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register emergency guide routes
   app.use('/api/emergency-guide', emergencyGuideRouter);
+  
+  // Register flow generator routes
+  app.use('/api/flow-generator', flowGeneratorRouter);
   
   // Register sync routes for offline capabilities
   registerSyncRoutes(app);

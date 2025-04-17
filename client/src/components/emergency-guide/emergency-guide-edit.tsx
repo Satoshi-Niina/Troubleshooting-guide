@@ -554,15 +554,24 @@ const EmergencyGuideEdit: React.FC = () => {
                                   })
                                   .then(response => {
                                     if (response.ok) {
+                                      return response.json();
+                                    } else {
+                                      throw new Error('削除に失敗しました');
+                                    }
+                                  })
+                                  .then(data => {
+                                    if (data.success) {
                                       // 削除成功
                                       toast({
                                         title: '削除完了',
                                         description: `「${file.title}」を削除しました`,
                                       });
-                                      // リストを更新
-                                      fetchGuideFiles();
+                                      // リストから削除されたアイテムを除外
+                                      setGuideFiles(prevFiles => 
+                                        prevFiles.filter(f => f.id !== file.id)
+                                      );
                                     } else {
-                                      throw new Error('削除に失敗しました');
+                                      throw new Error(data.error || '削除中にエラーが発生しました');
                                     }
                                   })
                                   .catch(error => {
