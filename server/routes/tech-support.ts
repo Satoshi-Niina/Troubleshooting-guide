@@ -210,11 +210,60 @@ const upload = multer({
 const router = express.Router();
 
 /**
+ * キャッシュをクリアするエンドポイント
+ * 削除操作後にクライアントがこれを呼び出すことで、最新情報を確実に取得
+ */
+router.post('/clear-cache', (req, res) => {
+  try {
+    console.log('サーバーキャッシュクリア要求を受信しました');
+    
+    // 知識ベースJSONディレクトリの再検証
+    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+    if (fs.existsSync(jsonDir)) {
+      try {
+        const files = fs.readdirSync(jsonDir);
+        console.log(`検証: knowledge-base/jsonディレクトリに${files.length}個のファイルが存在`);
+      } catch (readErr) {
+        console.error('ディレクトリ読み取りエラー:', readErr);
+      }
+    }
+    
+    // index.json ファイルの更新（存在する場合）
+    const indexJsonPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+    if (fs.existsSync(indexJsonPath)) {
+      try {
+        // タイムスタンプを更新して書き込みなおす
+        const indexData = JSON.parse(fs.readFileSync(indexJsonPath, 'utf8'));
+        indexData.lastUpdated = new Date().toISOString();
+        fs.writeFileSync(indexJsonPath, JSON.stringify(indexData, null, 2), 'utf8');
+        console.log('index.jsonファイルを更新しました');
+      } catch (indexErr) {
+        console.error('index.json更新エラー:', indexErr);
+      }
+    }
+    
+    return res.json({
+      success: true,
+      message: 'サーバーキャッシュをクリアしました',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('キャッシュクリアエラー:', error);
+    return res.status(500).json({
+      error: 'キャッシュクリアに失敗しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
  * JSON ファイル一覧を取得するエンドポイント
  * 最新のJSONファイルを優先的に取得
  */
 router.get('/list-json-files', (req, res) => {
   try {
+    console.log('JSONファイル一覧取得リクエストを受信...');
+    
     // ファイルは知識ベースディレクトリに一元化
     const jsonDirs = [
       path.join(process.cwd(), 'knowledge-base', 'json')  // メインの場所
@@ -222,20 +271,53 @@ router.get('/list-json-files', (req, res) => {
     
     let allJsonFiles: string[] = [];
     
+    // 問題が発生しているファイルのブラックリスト
+    const blacklistedFiles = [
+      'guide_1744876404679_metadata.json', // 問題が発生しているファイル
+      'guide_metadata.json'  // 別の問題が報告されているファイル
+    ];
+    console.log(`ブラックリストファイル: ${blacklistedFiles.join(', ')}`);
+    
     // 各ディレクトリからメタデータJSONファイルを収集
     for (const jsonDir of jsonDirs) {
       if (fs.existsSync(jsonDir)) {
-        const files = fs.readdirSync(jsonDir)
-          .filter(file => file.endsWith('_metadata.json'));
+        // ディレクトリの内容を確認し、すべてのファイルをログ出力
+        const allFiles = fs.readdirSync(jsonDir);
+        console.log(`${jsonDir}内のすべてのファイル:`, allFiles);
+        
+        // 実在するJSONファイルのみフィルタリング
+        const files = allFiles
+          .filter(file => file.endsWith('_metadata.json'))
+          .filter(file => {
+            // ブラックリストにあるファイルを除外
+            if (blacklistedFiles.includes(file)) {
+              console.log(`ブラックリストのため除外: ${file}`);
+              return false;
+            }
+            
+            // 実際にファイルが存在するか確認
+            const filePath = path.join(jsonDir, file);
+            const exists = fs.existsSync(filePath);
+            if (!exists) {
+              console.log(`ファイルが実際には存在しないため除外: ${filePath}`);
+              return false;
+            }
+            
+            return true;
+          });
+        
+        console.log(`${jsonDir}内の有効なメタデータファイル: ${files.length}件`);
         allJsonFiles = [...allJsonFiles, ...files];
       } else {
         // ディレクトリが存在しない場合は作成
         fs.mkdirSync(jsonDir, { recursive: true });
+        console.log(`ディレクトリを作成しました: ${jsonDir}`);
       }
     }
     
     // 重複を排除して一意のファイル名リストにする
     const uniqueJsonFiles = Array.from(new Set(allJsonFiles));
+    console.log(`重複除外後のファイル数: ${uniqueJsonFiles.length}件`);
     
     // タイムスタンプでソート（新しい順）
     const sortedFiles = uniqueJsonFiles.sort((a, b) => {
@@ -245,6 +327,13 @@ router.get('/list-json-files', (req, res) => {
       return parseInt(timestampB) - parseInt(timestampA);
     });
     
+    // 応答ヘッダーを設定して、キャッシュを無効化
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    
+    // ファイル一覧をJSONで返す
     return res.json(sortedFiles);
   } catch (error) {
     console.error('JSONファイル一覧取得エラー:', error);
