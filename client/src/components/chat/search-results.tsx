@@ -8,14 +8,14 @@ import { cancelSearch } from "@/lib/image-search";
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
-  // すでに uploads/images パスを持っていれば変更しない
-  if (path.includes('/uploads/images/')) {
+  // knowledge-base/images/ パスを持っていれば変更しない
+  if (path.includes('/knowledge-base/images/')) {
     return path;
   }
   
-  // knowledge-base/images/ パスはそのまま維持
-  if (path.includes('/knowledge-base/images/')) {
-    return path;
+  // /uploads/images/ から始まる場合は /knowledge-base/images/ に変換
+  if (path.includes('/uploads/images/')) {
+    return path.replace('/uploads/images/', '/knowledge-base/images/');
   }
   
   // /images/ から始まる場合は /knowledge-base/images/ に変換
@@ -28,13 +28,13 @@ function fixImagePath(path: string | undefined): string {
     const parts = path.split('/');
     const fileName = parts.pop(); // 最後の部分（ファイル名）を取得
     if (fileName) {
-      return `/uploads/images/${fileName}`;
+      return `/knowledge-base/images/${fileName}`;
     }
   }
   
   // 単なるファイル名の場合（パスがない）
   if (!path.includes('/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
-    return `/uploads/images/${path}`;
+    return `/knowledge-base/images/${path}`;
   }
   
   return path;
