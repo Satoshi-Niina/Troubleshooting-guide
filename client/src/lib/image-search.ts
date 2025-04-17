@@ -191,40 +191,29 @@ async function loadImageSearchData() {
       console.error("画像検索データの初期化に失敗:", initError);
     }
     
-    // それでも失敗した場合は直接JSONファイルを読み込む（エラーハンドリング用）
-    console.log("直接JSONからの読み込みを試みます");
+    // 直接knowledge-baseからJSONファイルを読み込む（エラーハンドリング用）
+    console.log("knowledge-baseからJSONの読み込みを試みます");
     try {
-      // 複数のパスから試行して読み込む（より堅牢に）
-      const possiblePaths = [
-        '/knowledge-base/data/image_search_data.json', // 最優先 - メインの保存場所
-        '/image_search_data.json', // ルートに直接配置したファイル
-        '/uploads/data/image_search_data.json', // 古い保存場所
-        '/public/uploads/data/image_search_data.json', // 古い保存場所 (代替)
-        './image_search_data.json' // 相対パス
-      ];
+      // knowledge-baseパスのみ使用（一元化）
+      const knowledgeBasePath = '/knowledge-base/data/image_search_data.json';
       
       let directData = null;
       
-      // いずれかのパスからデータを読み込めるか試行
-      for (const path of possiblePaths) {
-        try {
-          const directFetch = await fetch(`${path}?t=${Date.now()}`, { 
-            cache: 'no-store',  // キャッシュを無視
-            headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
-          });
-          
-          if (directFetch.ok) {
-            const fetchedData = await directFetch.json();
-            if (Array.isArray(fetchedData) && fetchedData.length > 0) {
-              console.log(`パス ${path} から画像検索データを読み込みました: ${fetchedData.length}件`);
-              directData = fetchedData;
-              break; // 成功したらループを抜ける
-            }
+      try {
+        const directFetch = await fetch(`${knowledgeBasePath}?t=${Date.now()}`, { 
+          cache: 'no-store',  // キャッシュを無視
+          headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
+        });
+        
+        if (directFetch.ok) {
+          const fetchedData = await directFetch.json();
+          if (Array.isArray(fetchedData) && fetchedData.length > 0) {
+            console.log(`知識ベースから画像検索データを読み込みました: ${fetchedData.length}件`);
+            directData = fetchedData;
           }
-        } catch (pathError) {
-          console.warn(`パス ${path} からの読み込みに失敗:`, pathError);
-          // 次のパスを試行するためエラーを無視
         }
+      } catch (pathError) {
+        console.warn(`知識ベースからの読み込みに失敗:`, pathError);
       }
       
       // いずれかのパスから読み込めたら使用
@@ -246,11 +235,9 @@ async function loadImageSearchData() {
             // 少し待機して再試行
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // 初期化後に各データソースから順に試行
+            // 初期化後は知識ベースから試行
             const retryPaths = [
-              '/knowledge-base/data/image_search_data.json',
-              '/image_search_data.json',
-              '/uploads/data/image_search_data.json'
+              '/knowledge-base/data/image_search_data.json'
             ];
             
             let retryData = null;
@@ -475,19 +462,19 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       
       // データが読み込まれているか最終確認
       if (imageSearchData.length === 0) {
-        console.log('画像検索データがまだ読み込まれていません。デフォルトデータを使用します');
-        // ルートJSONを直接読み込み
+        console.log('画像検索データがまだ読み込まれていません。知識ベースからの最終読み込みを試みます');
+        // knowledge-baseから直接読み込み
         try {
-          const response = await fetch('/image_search_data.json');
+          const response = await fetch('/knowledge-base/data/image_search_data.json');
           if (response.ok) {
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
               imageSearchData = data;
-              console.log(`直接JSONファイルから ${data.length} 件のデータを読み込みました`);
+              console.log(`知識ベースから ${data.length} 件のデータを読み込みました`);
             }
           }
         } catch (err) {
-          console.error('直接読み込みの最終試行に失敗:', err);
+          console.error('知識ベースからの最終読み込みに失敗:', err);
         }
       }
       
