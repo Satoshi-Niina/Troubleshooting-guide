@@ -19,6 +19,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [saveOriginalFile, setSaveOriginalFile] = useState(false);
+  const [autoGenerateFlow, setAutoGenerateFlow] = useState(true);
 
   // ドラッグ&ドロップエリアのイベントハンドラー
   const handleDragOver = (e: React.DragEvent) => {
@@ -93,6 +94,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("saveOriginalFile", saveOriginalFile.toString());
+      formData.append("autoGenerateFlow", autoGenerateFlow.toString());
       
       // 模擬的な進捗表示用のインターバル
       const progressInterval = setInterval(() => {
@@ -216,15 +218,27 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
         )}
         
         {/* データ保存オプション */}
-        <div className="flex items-center space-x-2 mb-4">
-          <Checkbox 
-            id="saveOriginalFile" 
-            checked={saveOriginalFile} 
-            onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
-          />
-          <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
-            元のファイルも保存する
-          </Label>
+        <div className="flex flex-col space-y-2 mb-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="saveOriginalFile" 
+              checked={saveOriginalFile} 
+              onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
+            />
+            <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
+              元のファイルも保存する
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="autoGenerateFlow" 
+              checked={autoGenerateFlow} 
+              onCheckedChange={(checked) => setAutoGenerateFlow(checked === true)}
+            />
+            <Label htmlFor="autoGenerateFlow" className="text-sm text-gray-700">
+              自動的に応急処置フローを生成する
+            </Label>
+          </div>
         </div>
         
         {/* アップロードボタン */}
