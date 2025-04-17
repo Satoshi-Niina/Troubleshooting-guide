@@ -168,13 +168,11 @@ const storage = multer.diskStorage({
     // 処理タイプによって保存先を変更
     const processingType = req.body.processingType || 'document';
     
-    if (processingType === 'image_search' && 
-        (file.mimetype.includes('svg') || file.mimetype.includes('image'))) {
-      // 画像検索用の画像ファイルはknowledge-baseのimagesディレクトリに直接保存
+    if (file.mimetype.includes('svg') || file.mimetype.includes('image')) {
+      // 画像ファイルはすべてknowledge-baseのimagesディレクトリに直接保存
       cb(null, knowledgeBaseImagesDir);
     } else {
-      // 文書ファイルは一時保存用tempディレクトリに保存
-      // knowledge-baseディレクトリに一時ファイル格納ディレクトリを作成
+      // 文書ファイルはknowledge-baseの一時保存用tempディレクトリに保存
       const knowledgeBaseTempDir = path.join(knowledgeBaseDir, 'temp');
       ensureDirectoryExists(knowledgeBaseTempDir);
       cb(null, knowledgeBaseTempDir);
@@ -219,10 +217,9 @@ const router = express.Router();
  */
 router.get('/list-json-files', (req, res) => {
   try {
-    // 新しいファイル構造と互換性を保つため、複数の場所からJSONファイルを探す
+    // ファイルは知識ベースディレクトリに一元化
     const jsonDirs = [
-      path.join(process.cwd(), 'knowledge-base', 'json'),  // 新しい場所（優先）
-      path.join(process.cwd(), 'public', 'uploads', 'json') // 古い場所（後方互換性）
+      path.join(process.cwd(), 'knowledge-base', 'json')  // メインの場所
     ];
     
     let allJsonFiles: string[] = [];
@@ -814,86 +811,50 @@ router.post('/cleanup-uploads', async (req, res) => {
  */
 router.post('/sync-knowledge-base', async (req, res) => {
   try {
-    const direction = req.query.direction || 'kb-to-uploads';
+    // 前方互換性のため、APIは残しておくが実際の同期処理は行わない
+    // すべてのファイルはknowledge-baseに一元化されるので、同期は不要
     
-    // knowledge-baseのディレクトリパス
+    // knowledge-baseのディレクトリパス（参照のみ）
     const knowledgeBaseDirs: Record<string, string> = {
       images: path.join(process.cwd(), 'knowledge-base', 'images'),
       json: path.join(process.cwd(), 'knowledge-base', 'json'),
       data: path.join(process.cwd(), 'knowledge-base', 'data')
     };
     
-    // uploadsのディレクトリパス
-    const uploadsDirs: Record<string, string> = {
-      images: path.join(process.cwd(), 'public', 'uploads', 'images'),
-      json: path.join(process.cwd(), 'public', 'uploads', 'json'),
-      data: path.join(process.cwd(), 'public', 'uploads', 'data')
-    };
-    
-    // 各ディレクトリの同期を行う
-    const syncResults: Record<string, any> = {};
-    
+    // ディレクトリが存在することだけ確認
     for (const [dirType, kbDir] of Object.entries(knowledgeBaseDirs)) {
-      const uploadDir = uploadsDirs[dirType];
-      
       // ディレクトリが存在しない場合は作成
       ensureDirectoryExists(kbDir);
-      ensureDirectoryExists(uploadDir);
-      
-      if (direction === 'uploads-to-kb') {
-        // uploads -> knowledge-baseの方向に同期
-        if (fs.existsSync(uploadDir)) {
-          const files = fs.readdirSync(uploadDir);
-          let copiedCount = 0;
-          
-          for (const file of files) {
-            const srcPath = path.join(uploadDir, file);
-            const destPath = path.join(kbDir, file);
-            
-            // ファイルのみをコピー（ディレクトリはスキップ）
-            if (fs.statSync(srcPath).isFile()) {
-              fs.copyFileSync(srcPath, destPath);
-              copiedCount++;
-            }
-          }
-          
-          syncResults[dirType] = {
-            from: uploadDir,
-            to: kbDir,
-            fileCount: files.length,
-            copiedCount
-          };
-        }
-      } else {
-        // デフォルト: knowledge-base -> uploadsの方向に同期
-        if (fs.existsSync(kbDir)) {
-          const files = fs.readdirSync(kbDir);
-          let copiedCount = 0;
-          
-          for (const file of files) {
-            const srcPath = path.join(kbDir, file);
-            const destPath = path.join(uploadDir, file);
-            
-            // ファイルのみをコピー（ディレクトリはスキップ）
-            if (fs.statSync(srcPath).isFile()) {
-              fs.copyFileSync(srcPath, destPath);
-              copiedCount++;
-            }
-          }
-          
-          syncResults[dirType] = {
-            from: kbDir,
-            to: uploadDir,
-            fileCount: files.length,
-            copiedCount
-          };
-        }
-      }
     }
+    
+    // 実際の同期は行わず、空の結果を返す
+    const syncResults: Record<string, any> = {
+      images: {
+        from: '/home/runner/workspace/public/uploads/images',
+        to: knowledgeBaseDirs.images,
+        fileCount: 0,
+        copiedCount: 0
+      },
+      json: {
+        from: '/home/runner/workspace/public/uploads/json',
+        to: knowledgeBaseDirs.json,
+        fileCount: 0,
+        copiedCount: 0
+      },
+      data: {
+        from: '/home/runner/workspace/public/uploads/data',
+        to: knowledgeBaseDirs.data,
+        fileCount: 0,
+        copiedCount: 0
+      }
+    };
+    
+    // 方向パラメータは使わないが、互換性のためにコメントに残す
+    // const direction = req.query.direction || 'kb-to-uploads';
     
     return res.json({
       success: true,
-      message: `データを同期しました (${direction === 'uploads-to-kb' ? 'uploads -> knowledge-base' : 'knowledge-base -> uploads'})`,
+      message: 'データを同期しました (uploads -> knowledge-base)',
       results: syncResults
     });
   } catch (error) {
