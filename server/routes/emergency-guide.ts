@@ -74,13 +74,13 @@ const storage = multer.diskStorage({
 
 // ファイルフィルター（許可する拡張子）
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedExtensions = ['.pptx', '.ppt', '.xlsx', '.xls', '.pdf'];
+  const allowedExtensions = ['.pptx', '.ppt', '.xlsx', '.xls', '.pdf', '.json'];
   const ext = path.extname(file.originalname).toLowerCase();
   
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('サポートされていないファイル形式です。PowerPoint (.pptx, .ppt)、Excel (.xlsx, .xls)、または PDF (.pdf) ファイルのみアップロードできます。'));
+    cb(new Error('サポートされていないファイル形式です。PowerPoint (.pptx, .ppt)、Excel (.xlsx, .xls)、PDF (.pdf)、または JSON (.json) ファイルのみアップロードできます。'));
   }
 };
 
@@ -366,7 +366,7 @@ async function processFile(filePath: string): Promise<any> {
             作成者: 'PDF抽出',
             作成日: new Date().toISOString(),
             修正日: new Date().toISOString(),
-            説明: `PDFファイル「${fileName}」から生成された応急復旧フローです`
+            説明: `PDFファイル「${fileName}」から生成された応急処置フローです`
           },
           slides
         };
@@ -387,6 +387,63 @@ async function processFile(filePath: string): Promise<any> {
       } catch (error) {
         console.error('PDFファイル処理エラー:', error);
         throw new Error('PDFファイルの処理に失敗しました');
+      }
+    } else if (fileExtension.toLowerCase() === '.json') {
+      // JSONファイルの処理
+      console.log('JSONファイルを処理します:', filePath);
+      const fileName = path.basename(filePath, fileExtension);
+      
+      try {
+        // JSONファイルの内容を読み取る
+        const jsonContent = fs.readFileSync(filePath, 'utf8');
+        const jsonData = JSON.parse(jsonContent);
+        
+        // JSON構造を検証
+        if (!jsonData.metadata || !jsonData.slides || !Array.isArray(jsonData.slides)) {
+          throw new Error('JSONファイルの形式が無効です。正しい応急処置フロー形式のJSONファイルが必要です。');
+        }
+        
+        // 画像パスの修正（必要に応じて）
+        jsonData.slides.forEach((slide: any) => {
+          if (slide.画像テキスト && Array.isArray(slide.画像テキスト)) {
+            slide.画像テキスト.forEach((imgText: any) => {
+              if (imgText.画像パス && imgText.画像パス.startsWith('/uploads/')) {
+                imgText.画像パス = imgText.画像パス.replace('/uploads/', '/knowledge-base/');
+              }
+            });
+          }
+        });
+        
+        // メタデータの更新
+        jsonData.metadata.作成日 = jsonData.metadata.作成日 || new Date().toISOString();
+        jsonData.metadata.修正日 = new Date().toISOString();
+        
+        // 説明を更新し、「応急復旧」を「応急処置」に統一
+        if (jsonData.metadata.説明 && jsonData.metadata.説明.includes('応急復旧')) {
+          jsonData.metadata.説明 = jsonData.metadata.説明.replace(/応急復旧/g, '応急処置');
+        }
+        
+        // タイトルの「応急復旧」を「応急処置」に統一
+        if (jsonData.metadata.タイトル && jsonData.metadata.タイトル.includes('応急復旧')) {
+          jsonData.metadata.タイトル = jsonData.metadata.タイトル.replace(/応急復旧/g, '応急処置');
+        }
+        
+        // 新しいJSONファイルに保存
+        const jsonFilePath = path.join(jsonDir, `${fileId}_metadata.json`);
+        fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2));
+        
+        return {
+          id: fileId,
+          filePath: jsonFilePath,
+          fileName: path.basename(filePath),
+          title: jsonData.metadata.タイトル || fileName,
+          createdAt: new Date().toISOString(),
+          slideCount: jsonData.slides.length,
+          data: jsonData
+        };
+      } catch (error) {
+        console.error('JSONファイル処理エラー:', error);
+        throw new Error(`JSONファイルの処理に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
       }
     } else {
       throw new Error('サポートされていないファイル形式です');
@@ -566,7 +623,7 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        content: `応急復旧フロー「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`,
+        content: `応急処置フロー「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`,
         isUserMessage: false
       })
     });
@@ -579,12 +636,12 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
     
     res.json({
       success: true,
-      message: '応急復旧フローがチャットに送信されました',
+      message: '応急処置フローがチャットに送信されました',
       messageId: result.id
     });
   } catch (error) {
     console.error('フロー送信エラー:', error);
-    res.status(500).json({ error: '応急復旧フローのチャットへの送信に失敗しました' });
+    res.status(500).json({ error: '応急処置フローのチャットへの送信に失敗しました' });
   }
 });
 
