@@ -12,19 +12,15 @@ import * as mammoth from 'mammoth';
 
 const router = Router();
 
-// アップロードディレクトリの設定
-const uploadsDir = path.resolve('./uploads');
-const pptDir = path.join(uploadsDir, 'ppt');
-const jsonDir = path.join(uploadsDir, 'json');
-const imageDir = path.join(uploadsDir, 'images');
-
-// 知識ベースディレクトリの設定
+// 知識ベースディレクトリの設定 - uploadsフォルダの使用を廃止
 const knowledgeBaseDir = path.resolve('./knowledge-base');
+const kbPptDir = path.join(knowledgeBaseDir, 'ppt');
 const kbJsonDir = path.join(knowledgeBaseDir, 'json');
 const kbImageDir = path.join(knowledgeBaseDir, 'images');
+const kbTempDir = path.join(knowledgeBaseDir, 'temp');
 
 // ディレクトリの存在確認と作成
-[uploadsDir, pptDir, jsonDir, imageDir, knowledgeBaseDir, kbJsonDir, kbImageDir].forEach(dir => {
+[knowledgeBaseDir, kbPptDir, kbJsonDir, kbImageDir, kbTempDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -33,7 +29,7 @@ const kbImageDir = path.join(knowledgeBaseDir, 'images');
 // Multerの設定
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, pptDir);
+    cb(null, kbPptDir);
   },
   filename: (_req, file, cb) => {
     const timestamp = Date.now();
