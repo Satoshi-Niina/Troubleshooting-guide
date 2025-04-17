@@ -538,22 +538,46 @@ const EmergencyGuideEdit: React.FC = () => {
                               size="sm"
                               onClick={() => window.location.href = `/troubleshooting?guideId=${file.id}`}
                             >
-                              <LifeBuoy className="h-4 w-4 mr-1" />
-                              フロー編集
+                              <Pencil className="h-4 w-4 mr-1" />
+                              編集
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
+                              className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
                               onClick={() => {
-                                // 選択したファイルIDを設定
-                                setSelectedGuideId(file.id);
-                                // ファイルの詳細データを取得
-                                fetchGuideData(file.id);
-                                // モーダルダイアログで表示するように状態変更
-                                setShowGuideDetailDialog(true);
+                                // 削除確認ダイアログを表示
+                                if (confirm(`「${file.title}」を削除してもよろしいですか？\n削除すると元に戻せません。`)) {
+                                  // 削除処理
+                                  fetch(`/api/emergency-guide/delete/${file.id}`, {
+                                    method: 'DELETE'
+                                  })
+                                  .then(response => {
+                                    if (response.ok) {
+                                      // 削除成功
+                                      toast({
+                                        title: '削除完了',
+                                        description: `「${file.title}」を削除しました`,
+                                      });
+                                      // リストを更新
+                                      fetchGuideFiles();
+                                    } else {
+                                      throw new Error('削除に失敗しました');
+                                    }
+                                  })
+                                  .catch(error => {
+                                    console.error('削除エラー:', error);
+                                    toast({
+                                      title: 'エラー',
+                                      description: 'ファイルの削除に失敗しました',
+                                      variant: 'destructive',
+                                    });
+                                  });
+                                }
                               }}
                             >
-                              詳細
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              削除
                             </Button>
                           </div>
                         </TableCell>
