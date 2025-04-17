@@ -1,29 +1,12 @@
 {
-  "documents": [
+  "lastUpdated": "2025-04-17T09:05:50.551Z",
+  "guides": [
     {
-      "id": "doc_1744853473706_826",
-      "title": "保守用車ナレッジ_1744853473363.txt",
-      "path": "/home/runner/workspace/knowledge-base/doc_1744853473706_826/保守用車ナレッジ_1744853473363.txt",
-      "type": "text",
-      "chunkCount": 83,
-      "addedAt": "2025-04-17T01:31:23.291Z"
-    },
-    {
-      "id": "doc_1744853532561_174",
-      "title": "MC応急処置サンプル_1744853495965.pptx",
-      "path": "/home/runner/workspace/knowledge-base/doc_1744853532561_174/MC応急処置サンプル_1744853495965.pptx",
-      "type": "powerpoint",
-      "chunkCount": 6,
-      "addedAt": "2025-04-17T01:32:14.566Z"
-    },
-    {
-      "id": "doc_1744866656393_812",
-      "title": "応急処置フロー.json_1744866656389.txt",
-      "path": "/home/runner/workspace/knowledge-base/doc_1744866656393_812/応急処置フロー.json_1744866656389.txt",
-      "type": "text",
-      "chunkCount": 8,
-      "addedAt": "2025-04-17T05:11:00.805Z"
+      "id": "guide_1744880627835",
+      "title": "guide_1744880627071",
+      "filePath": "/home/runner/workspace/knowledge-base/json/guide_1744880627835_metadata.json",
+      "fileName": "guide_1744880627835_metadata.json"
     }
   ],
-  "lastUpdated": "2025-04-17T08:43:10.659Z"
+  "fileCount": 1
 }

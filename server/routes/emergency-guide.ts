@@ -396,40 +396,103 @@ async function processFile(filePath: string): Promise<any> {
       try {
         // JSONファイルの内容を読み取る
         const jsonContent = fs.readFileSync(filePath, 'utf8');
-        const jsonData = JSON.parse(jsonContent);
+        let jsonData = JSON.parse(jsonContent);
         
         // JSON構造を検証
         if (!jsonData) {
           throw new Error('JSONファイルの解析に失敗しました。有効なJSONファイルを確認してください。');
         }
         
-        // 必要に応じて構造を構築（metadata、slidesがない場合は作成）
-        if (!jsonData.metadata) {
-          console.log('JSONにmetadataがないため、作成します');
-          jsonData.metadata = {
-            タイトル: fileName || '応急処置フローデータ',
-            作成者: 'システム',
-            作成日: new Date().toISOString(),
-            修正日: new Date().toISOString(),
-            説明: 'JSONファイルから生成された応急処置フローです'
+        console.log('元のJSONデータの構造:', Object.keys(jsonData));
+        
+        // トラブルシューティング形式かどうかを確認
+        const isTroubleshootingFormat = jsonData.steps && Array.isArray(jsonData.steps);
+        
+        if (isTroubleshootingFormat) {
+          console.log('トラブルシューティング形式のJSONを検出しました。steps配列があります。');
+          
+          // トラブルシューティング形式からガイド形式に変換
+          const convertedData = {
+            metadata: {
+              タイトル: jsonData.title || fileName || '応急処置フローデータ',
+              作成者: 'システム',
+              作成日: new Date().toISOString(),
+              修正日: new Date().toISOString(),
+              説明: jsonData.description || 'トラブルシューティングフローから生成された応急処置フローです',
+              原形式: 'troubleshooting'
+            },
+            slides: jsonData.steps.map((step: any, index: number) => ({
+              スライド番号: index + 1,
+              タイトル: step.title || `ステップ ${index + 1}`,
+              本文: [step.message || step.description || ''],
+              ノート: step.options ? `選択肢: ${step.options.map((opt: any) => opt.text).join(', ')}` : '',
+              画像テキスト: []
+            })),
+            original: jsonData // 元のJSONデータも保持
           };
+          
+          // 変換後のデータで置き換え
+          jsonData = convertedData;
+          console.log('トラブルシューティング形式からガイド形式に変換しました');
+        } else {
+          // 標準的なガイド形式に変換
+          
+          // 必要に応じて構造を構築（metadata、slidesがない場合は作成）
+          if (!jsonData.metadata) {
+            console.log('JSONにmetadataがないため、作成します');
+            jsonData.metadata = {
+              タイトル: jsonData.title || fileName || '応急処置フローデータ',
+              作成者: 'システム',
+              作成日: new Date().toISOString(),
+              修正日: new Date().toISOString(),
+              説明: jsonData.description || 'JSONファイルから生成された応急処置フローです'
+            };
+          }
+          
+          if (!jsonData.slides || !Array.isArray(jsonData.slides)) {
+            console.log('JSONにslidesがないか配列ではないため、作成します');
+            
+            // slidesを作成
+            jsonData.slides = [];
+            
+            // stepsがあれば、それをslidesに変換
+            if (jsonData.steps && Array.isArray(jsonData.steps)) {
+              console.log('steps配列をslidesに変換します');
+              jsonData.slides = jsonData.steps.map((step: any, index: number) => ({
+                スライド番号: index + 1,
+                タイトル: step.title || `ステップ ${index + 1}`,
+                本文: [step.message || step.description || ''],
+                ノート: step.options ? `選択肢: ${step.options.map((opt: any) => opt.text).join(', ')}` : '',
+                画像テキスト: []
+              }));
+            } else {
+              // データからシンプルなスライドを生成
+              const slideData = {
+                スライド番号: 1,
+                タイトル: jsonData.metadata?.タイトル || jsonData.title || fileName || 'JSONデータ',
+                本文: [jsonData.description || 'JSONデータから自動生成されたスライドです'],
+                ノート: 'JSONファイルから生成された内容です',
+                画像テキスト: []
+              };
+              
+              jsonData.slides.push(slideData);
+            }
+          }
         }
         
-        if (!jsonData.slides || !Array.isArray(jsonData.slides)) {
-          console.log('JSONにslidesがないか配列ではないため、作成します');
-          // 通常のJSONからスライドを作成
-          jsonData.slides = [];
-          
-          // データからスライドを構築
-          const slideData = {
-            スライド番号: 1,
-            タイトル: jsonData.metadata?.タイトル || fileName || 'JSONデータ',
-            本文: ['JSONデータから自動生成されたスライドです'],
-            ノート: 'JSONファイルから生成された内容です',
-            画像テキスト: []
-          };
-          
-          jsonData.slides.push(slideData);
+        // 元のJSON形式を保存するためのトラブルシューティングディレクトリ
+        const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+        
+        // トラブルシューティングディレクトリが存在しない場合は作成
+        if (!fs.existsSync(troubleshootingDir)) {
+          fs.mkdirSync(troubleshootingDir, { recursive: true });
+        }
+        
+        // トラブルシューティング形式のJSONの場合、元の形式も保存
+        if (isTroubleshootingFormat) {
+          const tsFilePath = path.join(troubleshootingDir, `${path.basename(fileName, '.json')}.json`);
+          fs.writeFileSync(tsFilePath, jsonContent);
+          console.log(`トラブルシューティング形式のJSONを保存しました: ${tsFilePath}`);
         }
         
         // 画像パスの修正（必要に応じて）
@@ -720,31 +783,167 @@ router.post('/update/:id', (req, res) => {
       return res.status(400).json({ error: 'データが提供されていません' });
     }
     
-    const files = fs.readdirSync(jsonDir)
-      .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
-    
-    if (files.length === 0) {
-      return res.status(404).json({ error: 'ガイドが見つかりません' });
+    // トラブルシューティングファイルかどうかをチェック
+    if (id.startsWith('ts_')) {
+      // トラブルシューティングファイルの場合
+      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+      const tsId = id.replace('ts_', ''); // プレフィックスを削除
+      
+      const filePath = path.join(troubleshootingDir, `${tsId}.json`);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'トラブルシューティングファイルが見つかりません' });
+      }
+      
+      // 元のデータを読み込む
+      const content = fs.readFileSync(filePath, 'utf8');
+      const originalData = JSON.parse(content);
+      
+      // トラブルシューティング形式を保持したまま、必要なフィールドを更新
+      let updatedTsData = originalData;
+      
+      // メタデータを更新
+      if (data.metadata) {
+        updatedTsData.title = data.metadata.タイトル || originalData.title;
+        updatedTsData.description = data.metadata.説明 || originalData.description;
+      }
+      
+      // スライドからステップに変換（必要な場合）
+      if (data.slides && Array.isArray(data.slides) && data.slides.length > 0) {
+        // ステップがない場合は作成
+        if (!updatedTsData.steps || !Array.isArray(updatedTsData.steps)) {
+          updatedTsData.steps = [];
+        }
+        
+        // スライドデータをステップに変換
+        data.slides.forEach((slide: any, index: number) => {
+          if (index < updatedTsData.steps.length) {
+            // 既存のステップを更新
+            updatedTsData.steps[index].title = slide.タイトル || updatedTsData.steps[index].title;
+            updatedTsData.steps[index].message = Array.isArray(slide.本文) ? slide.本文[0] : slide.本文 || updatedTsData.steps[index].message;
+            updatedTsData.steps[index].description = Array.isArray(slide.本文) ? slide.本文[0] : slide.本文 || updatedTsData.steps[index].description;
+          } else {
+            // 新しいステップを追加
+            updatedTsData.steps.push({
+              id: `step${index + 1}`,
+              title: slide.タイトル || `ステップ ${index + 1}`,
+              message: Array.isArray(slide.本文) ? slide.本文[0] : slide.本文 || '',
+              description: Array.isArray(slide.本文) ? slide.本文[0] : slide.本文 || '',
+              options: []
+            });
+          }
+        });
+      }
+      
+      // 更新日時を設定
+      updatedTsData.updatedAt = new Date().toISOString();
+      
+      // ファイルに書き込み
+      fs.writeFileSync(filePath, JSON.stringify(updatedTsData, null, 2));
+      
+      // 通常のJSONとしても保存（バックアップ）
+      if (data.metadata) {
+        data.metadata.修正日 = new Date().toISOString();
+      }
+      
+      // トラブルシューティングファイルの対応するメタデータファイルを取得
+      const guideFileName = `ts_${tsId}_metadata.json`;
+      const guideFilePath = path.join(jsonDir, guideFileName);
+      
+      // メタデータファイルが存在する場合は更新
+      if (fs.existsSync(guideFilePath)) {
+        fs.writeFileSync(guideFilePath, JSON.stringify(data, null, 2));
+      }
+      
+      res.json({
+        success: true,
+        message: 'トラブルシューティングデータが更新されました',
+        id
+      });
+    } else {
+      // 通常のガイドファイルの場合
+      const files = fs.readdirSync(jsonDir)
+        .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
+      
+      if (files.length === 0) {
+        return res.status(404).json({ error: 'ガイドが見つかりません' });
+      }
+      
+      const filePath = path.join(jsonDir, files[0]);
+      
+      // 更新日時を現在の日時に設定
+      if (data.metadata) {
+        data.metadata.修正日 = new Date().toISOString();
+      }
+      
+      // ファイルに書き込み
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+      
+      res.json({
+        success: true,
+        message: 'ガイドデータが更新されました',
+        id
+      });
     }
-    
-    const filePath = path.join(jsonDir, files[0]);
-    
-    // 更新日時を現在の日時に設定
-    if (data.metadata) {
-      data.metadata.修正日 = new Date().toISOString();
-    }
-    
-    // ファイルに書き込み
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    
-    res.json({
-      success: true,
-      message: 'ガイドデータが更新されました',
-      id
-    });
   } catch (error) {
     console.error('ガイド更新エラー:', error);
     res.status(500).json({ error: 'ガイドの更新に失敗しました' });
+  }
+});
+
+// ガイドデータを削除するエンドポイント
+router.delete('/delete/:id', (req, res) => {
+  try {
+    const id = req.params.id;
+    
+    // トラブルシューティングファイルかどうかをチェック
+    if (id.startsWith('ts_')) {
+      // トラブルシューティングファイルの場合
+      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+      const tsId = id.replace('ts_', ''); // プレフィックスを削除
+      
+      const filePath = path.join(troubleshootingDir, `${tsId}.json`);
+      
+      if (fs.existsSync(filePath)) {
+        // ファイルを削除
+        fs.unlinkSync(filePath);
+        console.log(`トラブルシューティングファイルを削除しました: ${filePath}`);
+      }
+      
+      // 対応するメタデータファイルも削除
+      const guideFileName = `ts_${tsId}_metadata.json`;
+      const guideFilePath = path.join(jsonDir, guideFileName);
+      
+      if (fs.existsSync(guideFilePath)) {
+        fs.unlinkSync(guideFilePath);
+        console.log(`メタデータファイルを削除しました: ${guideFilePath}`);
+      }
+    } else {
+      // 通常のガイドファイルの場合
+      const files = fs.readdirSync(jsonDir)
+        .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
+      
+      if (files.length === 0) {
+        return res.status(404).json({ error: 'ガイドが見つかりません' });
+      }
+      
+      const filePath = path.join(jsonDir, files[0]);
+      
+      if (fs.existsSync(filePath)) {
+        // ファイルを削除
+        fs.unlinkSync(filePath);
+        console.log(`ガイドファイルを削除しました: ${filePath}`);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'ガイドデータが削除されました',
+      id
+    });
+  } catch (error) {
+    console.error('ガイド削除エラー:', error);
+    res.status(500).json({ error: 'ガイドの削除に失敗しました' });
   }
 });
 
