@@ -465,6 +465,45 @@ router.post('/update/:id', (req, res) => {
   }
 });
 
+// ガイドデータを削除するエンドポイント
+router.delete('/delete/:id', (req, res) => {
+  try {
+    const id = req.params.id;
+    
+    // 対象ファイルを検索
+    const files = fs.readdirSync(jsonDir)
+      .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
+    
+    if (files.length === 0) {
+      return res.status(404).json({ error: 'ガイドが見つかりません' });
+    }
+    
+    const filePath = path.join(jsonDir, files[0]);
+    
+    // ファイルを削除
+    fs.unlinkSync(filePath);
+    
+    // 関連する画像ファイルも削除（あれば）
+    const imagePattern = new RegExp(`^${id}_.*`);
+    const imageFiles = fs.readdirSync(imageDir)
+      .filter(file => imagePattern.test(file));
+    
+    for (const imageFile of imageFiles) {
+      const imagePath = path.join(imageDir, imageFile);
+      fs.unlinkSync(imagePath);
+    }
+    
+    res.json({
+      success: true,
+      message: 'ガイドデータが削除されました',
+      id
+    });
+  } catch (error) {
+    console.error('ガイド削除エラー:', error);
+    res.status(500).json({ error: 'ガイドの削除に失敗しました' });
+  }
+});
+
 // チャットに応急処置ガイドを送信するエンドポイント
 router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   try {
