@@ -222,6 +222,10 @@ async function processPowerPointFile(filePath: string): Promise<any> {
       const jsonFilePath = path.join(jsonDir, `${fileId}_metadata.json`);
       fs.writeFileSync(jsonFilePath, JSON.stringify(result, null, 2));
       
+      // ナレッジベースディレクトリにも保存
+      const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
+      fs.writeFileSync(kbJsonFilePath, JSON.stringify(result, null, 2));
+      
       return {
         id: fileId,
         filePath: jsonFilePath,
@@ -255,6 +259,10 @@ async function processJsonFile(filePath: string): Promise<any> {
     fs.copyFileSync(filePath, jsonFilePath);
     
     // ナレッジベースディレクトリにも保存（画像パスはナレッジベースの相対パスを使用）
+    const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
+    fs.copyFileSync(filePath, kbJsonFilePath);
+    
+    // トラブルシューティングディレクトリにも保存
     const knowledgeBasePath = path.join('knowledge-base', 'troubleshooting', path.basename(filePath));
     fs.copyFileSync(filePath, knowledgeBasePath);
     
@@ -482,14 +490,14 @@ router.post('/update/:id', (req, res) => {
       return res.status(400).json({ error: 'データが提供されていません' });
     }
     
-    const files = fs.readdirSync(jsonDir)
+    const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
     
     if (files.length === 0) {
       return res.status(404).json({ error: 'ガイドが見つかりません' });
     }
     
-    const filePath = path.join(jsonDir, files[0]);
+    const filePath = path.join(kbJsonDir, files[0]);
     
     // 更新日時を現在の日時に設定
     if (data.metadata) {
@@ -517,7 +525,7 @@ router.delete('/delete/:id', (req, res) => {
     console.log(`削除リクエスト受信: ID=${id}`);
     
     // 対象ファイルを検索
-    const files = fs.readdirSync(jsonDir)
+    const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.startsWith(id) && file.endsWith('_metadata.json'));
     
     if (files.length === 0) {
@@ -531,7 +539,7 @@ router.delete('/delete/:id', (req, res) => {
       });
     }
     
-    const filePath = path.join(jsonDir, files[0]);
+    const filePath = path.join(kbJsonDir, files[0]);
     console.log(`削除対象ファイル: ${filePath}`);
     
     // ファイルを削除
@@ -617,14 +625,14 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
     const { guideId, chatId } = req.params;
     
     // ガイドデータを取得
-    const files = fs.readdirSync(jsonDir)
+    const files = fs.readdirSync(kbJsonDir)
       .filter(file => file.startsWith(guideId) && file.endsWith('_metadata.json'));
     
     if (files.length === 0) {
       return res.status(404).json({ error: 'ガイドが見つかりません' });
     }
     
-    const filePath = path.join(jsonDir, files[0]);
+    const filePath = path.join(kbJsonDir, files[0]);
     const content = fs.readFileSync(filePath, 'utf8');
     const guideData = JSON.parse(content);
     
