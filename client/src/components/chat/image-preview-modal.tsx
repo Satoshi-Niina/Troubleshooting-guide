@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// 画像パスを修正するヘルパー関数 - より単純化したバージョン
+// 画像パスを修正するヘルパー関数 - SVGのみを使用する
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
@@ -13,8 +13,13 @@ function fixImagePath(path: string | undefined): string {
     return path;
   }
   
-  // すでに knowledge-base パスを持っていれば変更しない
+  // すでに knowledge-base パスを持っていればそのまま返す
   if (path.includes('/knowledge-base/images/')) {
+    // もしPNGなどの場合は、代わりにSVGファイルを探す
+    if (!path.toLowerCase().endsWith('.svg')) {
+      // 拡張子をSVGに置き換えて返す
+      return path.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+    }
     return path;
   }
   
@@ -22,8 +27,10 @@ function fixImagePath(path: string | undefined): string {
   if (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
     const fileName = path.split('/').pop();
     if (fileName) {
-      console.log('プレビューモーダル: パス変換:', path, ' -> ', `/knowledge-base/images/${fileName}`);
-      return `/knowledge-base/images/${fileName}`;
+      // ファイル名からSVGバージョンを取得
+      const svgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+      console.log('プレビューモーダル: SVGパス変換:', path, ' -> ', `/knowledge-base/images/${svgFileName}`);
+      return `/knowledge-base/images/${svgFileName}`;
     }
   }
 
@@ -97,13 +104,8 @@ export default function ImagePreviewModal() {
     const newSlideUrl = allSlides[newIndex];
     setImageUrl(newSlideUrl);
     
-    // PNG代替を自動設定
-    if (newSlideUrl && newSlideUrl.toLowerCase().endsWith('.svg')) {
-      const pngFallback = newSlideUrl.replace(/\.svg$/i, '.png');
-      setPngFallbackUrl(pngFallback);
-    } else {
-      setPngFallbackUrl("");
-    }
+    // SVGのみを使用するため、PNG代替は不要
+    setPngFallbackUrl("");
   };
 
   useEffect(() => {
@@ -116,13 +118,8 @@ export default function ImagePreviewModal() {
           setImageUrl(customEvent.detail.url);
         }
         
-        // PNG代替URLがある場合は設定
-        if (customEvent.detail.pngFallbackUrl) {
-          setPngFallbackUrl(customEvent.detail.pngFallbackUrl);
-          console.log('PNG代替URL設定:', customEvent.detail.pngFallbackUrl);
-        } else {
-          setPngFallbackUrl("");
-        }
+        // SVGのみを使用するため、PNG代替URLは不要
+        setPngFallbackUrl("");
         
         // タイトルを設定
         if (customEvent.detail.title) {
@@ -239,9 +236,9 @@ export default function ImagePreviewModal() {
             </Button>
           )}
           
-          {/* メイン画像 - SVGを優先表示 */}
+          {/* メイン画像 - SVGのみ使用 */}
           <img 
-            src={fixImagePath(imageUrl || pngFallbackUrl || '')} 
+            src={fixImagePath(imageUrl || '')} 
             alt={currentSlideInfo?.タイトル || "拡大画像"} 
             className="max-w-full max-h-[70vh] object-contain rounded-lg border border-blue-500"
             loading="eager"

@@ -283,7 +283,6 @@ async function loadImageSearchData() {
       {
         id: "engine_001",
         file: "/knowledge-base/images/engine_001.svg",
-        pngFallback: "/knowledge-base/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -292,7 +291,6 @@ async function loadImageSearchData() {
       {
         id: "cooling_001",
         file: "/knowledge-base/images/cooling_001.svg",
-        pngFallback: "/knowledge-base/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -301,7 +299,6 @@ async function loadImageSearchData() {
       {
         id: "frame_001",
         file: "/knowledge-base/images/frame_001.svg",
-        pngFallback: "/knowledge-base/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -310,7 +307,6 @@ async function loadImageSearchData() {
       {
         id: "cabin_001",
         file: "/knowledge-base/images/cabin_001.svg",
-        pngFallback: "/knowledge-base/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],
@@ -561,38 +557,27 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       const formattedResults = searchResults.map(result => {
         const item = result.item;
         
-        // SVG/PNG画像パスの処理 - SVGとPNGの優先順位を変更
-        let svgUrl = '';
-        let pngUrl = '';
+        // SVGのみ使用する
+        let imageUrl = '';
         
-        // SVGとPNGのパスを識別
+        // SVGファイルパスを識別
         if (item.file) {
           const fileLower = item.file.toLowerCase();
           if (fileLower.endsWith('.svg')) {
-            svgUrl = item.file;
+            imageUrl = item.file;
           } else if (fileLower.endsWith('.png') || fileLower.endsWith('.jpg') || fileLower.endsWith('.jpeg')) {
-            pngUrl = item.file;
+            // PNGやJPGファイルがある場合は、同じファイル名のSVGを探す
+            imageUrl = item.file.replace(/\.(png|jpg|jpeg)$/i, '.svg');
           }
         }
         
-        // pngFallbackがある場合
-        if (item.pngFallback) {
-          pngUrl = item.pngFallback;
+        // SVGが指定されていない場合は元のファイルを使用（互換性のため）
+        if (!imageUrl) {
+          imageUrl = item.file || '';
         }
         
-        // SVGファイル名からPNGファイル名を生成する場合（拡張子置換）
-        if (svgUrl && !pngUrl && svgUrl.toLowerCase().endsWith('.svg')) {
-          pngUrl = svgUrl.replace(/\.svg$/i, '.png');
-        }
-        
-        // PNGファイル名からSVGファイル名を生成する場合（拡張子置換）
-        if (pngUrl && !svgUrl && (pngUrl.toLowerCase().endsWith('.png') || pngUrl.toLowerCase().endsWith('.jpg') || pngUrl.toLowerCase().endsWith('.jpeg'))) {
-          svgUrl = pngUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-        }
-        
-        // 優先順位: SVGを優先する（メインURLはSVG）
-        let imageUrl = svgUrl || pngUrl || '';
-        let fallbackUrl = pngUrl || ''; // フォールバックはPNG
+        // フォールバックは使用しない
+        let fallbackUrl = '';
         
         // パスが相対パスの場合、絶対パスに変換
         if (imageUrl && !imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
