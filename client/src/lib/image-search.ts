@@ -37,27 +37,17 @@ async function loadImageSearchData() {
       }
     }
     
-    // 選択したJSONファイルを読み込む
+    // knowledge-baseからJSONファイルを読み込む
     let metadata;
     try {
-      const response = await fetch(`/uploads/json/${metadataFile}?t=${timestamp}`);
+      const response = await fetch(`/knowledge-base/json/${metadataFile}?t=${timestamp}`);
       if (!response.ok) {
-        throw new Error(`メタデータJSONの読み込みに失敗: ${metadataFile}`);
+        throw new Error(`knowledge-baseからのメタデータJSONの読み込みに失敗: ${metadataFile}`);
       }
       metadata = await response.json();
     } catch (error) {
-      console.warn(`uploads/jsonからの読み込みに失敗: ${error}、knowledge-baseから読み込みを試行します`);
-      // knowledge-baseディレクトリから読み込みを試行
-      try {
-        const kbResponse = await fetch(`/knowledge-base/json/${metadataFile}?t=${timestamp}`);
-        if (!kbResponse.ok) {
-          throw new Error(`knowledge-baseからのメタデータJSONの読み込みに失敗: ${metadataFile}`);
-        }
-        metadata = await kbResponse.json();
-      } catch (kbError) {
-        console.error("両方のパスからの読み込みに失敗しました:", kbError);
-        throw kbError; // 上位のcatchで処理するためにエラーを再スロー
-      }
+      console.error("メタデータJSONの読み込みに失敗しました:", error);
+      throw error; // 上位のcatchで処理するためにエラーを再スロー
     }
     
     // 既存データをクリア
