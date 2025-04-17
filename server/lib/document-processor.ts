@@ -633,9 +633,9 @@ async function addEmbeddedImagesToSearchData(
       // PNGフォールバックはそのまま
       const pngFallbackPath = imagePath;
       
-      // knowledge-baseのパスを使うように更新
-      const knowledgeBasePrimaryPath = primaryImagePath.replace('/uploads/', '/knowledge-base/');
-      const knowledgeBasePngFallback = pngFallbackPath.replace('/uploads/', '/knowledge-base/');
+      // knowledge-baseのパスのみ使用（uploads参照から完全に移行）
+      const knowledgeBasePrimaryPath = `/knowledge-base/images/${path.basename(primaryImagePath)}`;
+      const knowledgeBasePngFallback = `/knowledge-base/images/${path.basename(pngFallbackPath)}`;
       
       // 画像検索アイテムを作成
       const newImageItem = {
