@@ -34,12 +34,12 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
       const file = e.dataTransfer.files[0];
       // 拡張子チェック
       const extension = file.name.toLowerCase().split('.').pop() || '';
-      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf'];
+      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf', 'json'];
       
       if (!allowedExtensions.includes(extension)) {
         toast({
           title: "未対応のファイル形式",
-          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、またはPDF(.pdf)ファイルのみアップロード可能です",
+          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、PDF(.pdf)、またはJSON(.json)ファイルのみアップロード可能です",
           variant: "destructive",
         });
         return;
@@ -61,12 +61,12 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
       const file = event.target.files[0];
       // 拡張子チェック
       const extension = file.name.toLowerCase().split('.').pop() || '';
-      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf'];
+      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf', 'json'];
       
       if (!allowedExtensions.includes(extension)) {
         toast({
           title: "未対応のファイル形式",
-          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、またはPDF(.pdf)ファイルのみアップロード可能です",
+          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、PDF(.pdf)、またはJSON(.json)ファイルのみアップロード可能です",
           variant: "destructive",
         });
         return;
@@ -156,7 +156,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     <Card className="w-full">
       <CardHeader>
         <CardTitle>応急復旧フローデータ編集</CardTitle>
-        <CardDescription>PowerPoint、Excel、またはPDFファイルから応急復旧データを生成します</CardDescription>
+        <CardDescription>PowerPoint、Excel、PDF、またはJSONファイルから応急復旧データを生成します</CardDescription>
       </CardHeader>
       <CardContent>
         {/* ファイル入力 (非表示) */}
@@ -164,7 +164,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".pptx,.ppt,.xlsx,.xls,.pdf"
+          accept=".pptx,.ppt,.xlsx,.xls,.pdf,.json"
           className="hidden"
         />
         
