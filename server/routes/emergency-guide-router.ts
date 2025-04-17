@@ -251,11 +251,7 @@ async function processJsonFile(filePath: string): Promise<any> {
     fs.copyFileSync(filePath, kbJsonFilePath);
     
     // トラブルシューティングディレクトリにも保存
-    const troubleshootingDir = path.join(knowledgeBaseDir, 'troubleshooting');
-    if (!fs.existsSync(troubleshootingDir)) {
-      fs.mkdirSync(troubleshootingDir, { recursive: true });
-    }
-    const knowledgeBasePath = path.join(troubleshootingDir, path.basename(filePath));
+    const knowledgeBasePath = path.join('knowledge-base', 'troubleshooting', path.basename(filePath));
     fs.copyFileSync(filePath, knowledgeBasePath);
     
     // タイトルなどの情報を取得
@@ -511,7 +507,7 @@ router.post('/update/:id', (req, res) => {
 });
 
 // ガイドデータを削除するエンドポイント
-router.delete('/delete/:id', (req: Request, res: Response) => {
+router.delete('/delete/:id', (req, res) => {
   try {
     const id = req.params.id;
     console.log(`応急処置ガイド削除リクエスト: ID=${id}`);
@@ -533,6 +529,7 @@ router.delete('/delete/:id', (req: Request, res: Response) => {
     const filePath = path.join(kbJsonDir, targetFile);
     
     // ファイルに関連する情報を保存
+    const fileName = targetFile;
     let title = `ファイル_${id}`;
     
     // JSONファイルの内容を読み取り、タイトルなどを取得
@@ -578,11 +575,8 @@ router.delete('/delete/:id', (req: Request, res: Response) => {
       message: `応急処置ガイド「${title}」を削除しました`
     });
   } catch (error) {
-    console.error('応急処置ガイド削除エラー:', error);
-    return res.status(500).json({ 
-      error: '応急処置ガイドの削除に失敗しました',
-      details: error instanceof Error ? error.message : String(error)
-    });
+    console.error('ガイド削除エラー:', error);
+    res.status(500).json({ error: 'ガイドの削除に失敗しました' });
   }
 });
 
@@ -645,6 +639,83 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   } catch (error) {
     console.error('ガイド送信エラー:', error);
     res.status(500).json({ error: '応急処置ガイドのチャットへの送信に失敗しました' });
+  }
+});
+
+// 応急処置ガイドの削除エンドポイント
+router.delete('/delete/:id', async (req: Request, res: Response) => {
+  try {
+    const guideId = req.params.id;
+    console.log(`応急処置ガイド削除リクエスト: ID=${guideId}`);
+    
+    // 知識ベースJson（メタデータ）ディレクトリから直接ファイルを検索
+    if (!fs.existsSync(kbJsonDir)) {
+      return res.status(404).json({ error: 'JSONディレクトリが見つかりません' });
+    }
+    
+    // 削除すべきJSONファイル名を探す
+    const jsonFiles = fs.readdirSync(kbJsonDir);
+    const targetFile = jsonFiles.find(file => file.startsWith(guideId));
+    
+    if (!targetFile) {
+      return res.status(404).json({ error: `指定されたガイド (ID: ${guideId}) が見つかりません` });
+    }
+    
+    // ファイルパス
+    const filePath = path.join(kbJsonDir, targetFile);
+    
+    // ファイルに関連する情報を保存
+    const fileName = targetFile;
+    let title = `ファイル_${guideId}`;
+    
+    // JSONファイルの内容を読み取り、タイトルなどを取得
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(content);
+      
+      if (data.metadata && data.metadata.タイトル) {
+        title = data.metadata.タイトル;
+      } else if (data.title) {
+        title = data.title;
+      }
+    } catch (readError) {
+      console.warn(`削除前のファイル内容読み取りに失敗: ${filePath}`, readError);
+    }
+    
+    // ファイルを削除
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`JSONファイルを削除しました: ${filePath}`);
+    }
+    
+    // 関連する画像ファイルを削除（オプション）
+    try {
+      if (fs.existsSync(kbImageDir)) {
+        const imageFiles = fs.readdirSync(kbImageDir);
+        const relatedImages = imageFiles.filter(img => img.startsWith(guideId));
+        
+        for (const imgFile of relatedImages) {
+          const imgPath = path.join(kbImageDir, imgFile);
+          fs.unlinkSync(imgPath);
+          console.log(`関連画像を削除しました: ${imgPath}`);
+        }
+      }
+    } catch (imgError) {
+      console.warn('関連画像の削除中にエラーが発生しました:', imgError);
+    }
+    
+    console.log(`応急処置ガイドを削除しました: ID=${guideId}, タイトル=${title}`);
+    
+    return res.json({
+      success: true,
+      message: `応急処置ガイド「${title}」を削除しました`
+    });
+  } catch (error) {
+    console.error('応急処置ガイド削除エラー:', error);
+    return res.status(500).json({ 
+      error: '応急処置ガイドの削除に失敗しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
