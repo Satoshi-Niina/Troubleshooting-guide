@@ -629,10 +629,23 @@ const EmergencyGuideEdit: React.FC = () => {
                                         console.log(`ID=${file.id}を削除しました。リスト更新を待機中...`);
                                         
                                         // より長い遅延を設定してサーバー側の処理完了を確実に待つ
-                                        setTimeout(() => {
+                                        setTimeout(async () => {
                                           console.log('サーバーからデータを再取得します...');
-                                          fetchGuideFiles();
-                                        }, 1500);
+                                          
+                                          // サーバークリアコマンドを呼び出し
+                                          try {
+                                            await fetch('/api/tech-support/clear-cache', {
+                                              method: 'POST'
+                                            });
+                                          } catch (e) {
+                                            console.error('キャッシュクリア失敗:', e);
+                                          }
+                                          
+                                          // より長い遅延で確実に最新データを取得
+                                          setTimeout(() => {
+                                            fetchGuideFiles();
+                                          }, 500);
+                                        }, 2000); // 2秒待機
                                       } catch (parseError) {
                                         console.error('JSONパースエラー:', parseError);
                                         // JSONパースエラーでも成功としてUIを更新
@@ -650,10 +663,23 @@ const EmergencyGuideEdit: React.FC = () => {
                                         console.log(`ID=${file.id}を削除しました（エラー処理後）。リスト更新を待機中...`);
                                         
                                         // より長い遅延を設定してサーバー側の処理完了を確実に待つ
-                                        setTimeout(() => {
+                                        setTimeout(async () => {
                                           console.log('サーバーからデータを再取得します...');
-                                          fetchGuideFiles();
-                                        }, 1500);
+                                          
+                                          // サーバークリアコマンドを呼び出し
+                                          try {
+                                            await fetch('/api/tech-support/clear-cache', {
+                                              method: 'POST'
+                                            });
+                                          } catch (e) {
+                                            console.error('キャッシュクリア失敗:', e);
+                                          }
+                                          
+                                          // より長い遅延で確実に最新データを取得
+                                          setTimeout(() => {
+                                            fetchGuideFiles();
+                                          }, 500);
+                                        }, 2000); // 2秒待機
                                       }
                                     } else {
                                       // エラーレスポンスの詳細を取得
