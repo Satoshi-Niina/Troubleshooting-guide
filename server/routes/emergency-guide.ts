@@ -38,14 +38,21 @@ function cleanupTempDirectory(dirPath: string): void {
 
 const router = Router();
 
-// アップロードディレクトリの設定
-const uploadsDir = path.resolve('./uploads');
-const pptDir = path.join(uploadsDir, 'ppt');
-const jsonDir = path.join(uploadsDir, 'json');
-const imageDir = path.join(uploadsDir, 'images');
+// ディレクトリ構造の設定
+const knowledgeBaseDir = path.resolve('./knowledge-base');
+const pptDir = path.join(knowledgeBaseDir, 'ppt');
+const jsonDir = path.join(knowledgeBaseDir, 'json');
+const imageDir = path.join(knowledgeBaseDir, 'images');
+const tempDir = path.join(knowledgeBaseDir, 'temp');
 
-// ディレクトリの存在確認と作成
-[uploadsDir, pptDir, jsonDir, imageDir].forEach(dir => {
+// 下位互換性のための旧ディレクトリ参照
+const uploadsDir = path.resolve('./uploads');
+const uploadsPptDir = path.join(uploadsDir, 'ppt');
+const uploadsJsonDir = path.join(uploadsDir, 'json');
+const uploadsImageDir = path.join(uploadsDir, 'images');
+
+// ディレクトリの存在確認と作成（主にknowledge-base）
+[knowledgeBaseDir, pptDir, jsonDir, imageDir, tempDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -94,11 +101,11 @@ async function processFile(filePath: string): Promise<any> {
     // PPTXファイルを解凍してXMLとして処理
     if (fileExtension.toLowerCase() === '.pptx') {
       const zip = new AdmZip(filePath);
-      const extractDir = path.join(uploadsDir, 'temp', fileId);
+      const extractDir = path.join(tempDir, fileId);
       
-      // 一時ディレクトリが存在しない場合は作成
-      if (!fs.existsSync(path.join(uploadsDir, 'temp'))) {
-        fs.mkdirSync(path.join(uploadsDir, 'temp'), { recursive: true });
+      // 一時ディレクトリが存在することを確認
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
       }
       
       if (!fs.existsSync(extractDir)) {
@@ -167,7 +174,7 @@ async function processFile(filePath: string): Promise<any> {
             fs.copyFileSync(sourcePath, targetPath);
             
             // 画像パスの作成（相対パス）
-            const relativePath = `/uploads/images/${targetFileName}`;
+            const relativePath = `/knowledge-base/images/${targetFileName}`;
             
             // 画像に関連するテキストを見つける（画像の近くのテキスト要素から）
             const imageText = texts.length > 0 ? texts[0] : '画像の説明がありません';
@@ -402,48 +409,8 @@ router.post('/process', upload.single('file'), async (req, res) => {
     
     const result = await processFile(filePath);
     
-    // knowledge-baseディレクトリにコピーを保存
-    try {
-      const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
-      const knowledgeBaseJsonDir = path.join(knowledgeBaseDir, 'json');
-      const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
-      
-      // ディレクトリが存在することを確認
-      if (!fs.existsSync(knowledgeBaseDir)) {
-        fs.mkdirSync(knowledgeBaseDir, { recursive: true });
-      }
-      if (!fs.existsSync(knowledgeBaseJsonDir)) {
-        fs.mkdirSync(knowledgeBaseJsonDir, { recursive: true });
-      }
-      if (!fs.existsSync(knowledgeBaseImagesDir)) {
-        fs.mkdirSync(knowledgeBaseImagesDir, { recursive: true });
-      }
-      
-      // JSONファイルをknowledge-baseにコピー
-      if (result && result.filePath && fs.existsSync(result.filePath)) {
-        const jsonFileName = path.basename(result.filePath);
-        const knowledgeBaseJsonPath = path.join(knowledgeBaseJsonDir, jsonFileName);
-        fs.copyFileSync(result.filePath, knowledgeBaseJsonPath);
-        console.log(`JSONファイルをknowledge-baseにコピーしました: ${knowledgeBaseJsonPath}`);
-      }
-      
-      // 関連画像ファイルもknowledge-baseにコピー
-      const uploadsImagesDir = path.join(uploadsDir, 'images');
-      if (fs.existsSync(uploadsImagesDir)) {
-        const imageFiles = fs.readdirSync(uploadsImagesDir)
-          .filter(file => file.startsWith(result.id) || file.includes(result.id));
-          
-        for (const imageFile of imageFiles) {
-          const srcPath = path.join(uploadsImagesDir, imageFile);
-          const destPath = path.join(knowledgeBaseImagesDir, imageFile);
-          fs.copyFileSync(srcPath, destPath);
-          console.log(`画像ファイルをknowledge-baseにコピーしました: ${destPath}`);
-        }
-      }
-    } catch (copyError) {
-      console.error(`knowledge-baseへのコピー中にエラーが発生しました: ${copyError}`);
-      // コピーエラーは無視して処理を続行
-    }
+    // knowledge-baseディレクトリにすでに直接保存されているため、コピー不要
+    console.log(`ファイルはknowledge-baseディレクトリに直接処理されました: ${result.filePath}`);
     
     // 元のアップロードファイルを削除（データ抽出とJSON生成が完了したため）
     try {
@@ -457,7 +424,6 @@ router.post('/process', upload.single('file'), async (req, res) => {
     }
     
     // 一時ディレクトリをクリーンアップ
-    const tempDir = path.join(uploadsDir, 'temp');
     if (fs.existsSync(tempDir)) {
       cleanupTempDirectory(tempDir);
     }
