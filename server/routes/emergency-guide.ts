@@ -402,6 +402,49 @@ router.post('/process', upload.single('file'), async (req, res) => {
     
     const result = await processFile(filePath);
     
+    // knowledge-baseディレクトリにコピーを保存
+    try {
+      const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
+      const knowledgeBaseJsonDir = path.join(knowledgeBaseDir, 'json');
+      const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
+      
+      // ディレクトリが存在することを確認
+      if (!fs.existsSync(knowledgeBaseDir)) {
+        fs.mkdirSync(knowledgeBaseDir, { recursive: true });
+      }
+      if (!fs.existsSync(knowledgeBaseJsonDir)) {
+        fs.mkdirSync(knowledgeBaseJsonDir, { recursive: true });
+      }
+      if (!fs.existsSync(knowledgeBaseImagesDir)) {
+        fs.mkdirSync(knowledgeBaseImagesDir, { recursive: true });
+      }
+      
+      // JSONファイルをknowledge-baseにコピー
+      if (result && result.filePath && fs.existsSync(result.filePath)) {
+        const jsonFileName = path.basename(result.filePath);
+        const knowledgeBaseJsonPath = path.join(knowledgeBaseJsonDir, jsonFileName);
+        fs.copyFileSync(result.filePath, knowledgeBaseJsonPath);
+        console.log(`JSONファイルをknowledge-baseにコピーしました: ${knowledgeBaseJsonPath}`);
+      }
+      
+      // 関連画像ファイルもknowledge-baseにコピー
+      const uploadsImagesDir = path.join(uploadsDir, 'images');
+      if (fs.existsSync(uploadsImagesDir)) {
+        const imageFiles = fs.readdirSync(uploadsImagesDir)
+          .filter(file => file.startsWith(result.id) || file.includes(result.id));
+          
+        for (const imageFile of imageFiles) {
+          const srcPath = path.join(uploadsImagesDir, imageFile);
+          const destPath = path.join(knowledgeBaseImagesDir, imageFile);
+          fs.copyFileSync(srcPath, destPath);
+          console.log(`画像ファイルをknowledge-baseにコピーしました: ${destPath}`);
+        }
+      }
+    } catch (copyError) {
+      console.error(`knowledge-baseへのコピー中にエラーが発生しました: ${copyError}`);
+      // コピーエラーは無視して処理を続行
+    }
+    
     // 元のアップロードファイルを削除（データ抽出とJSON生成が完了したため）
     try {
       if (fs.existsSync(filePath)) {

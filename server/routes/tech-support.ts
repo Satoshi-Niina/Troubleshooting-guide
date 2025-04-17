@@ -13,7 +13,7 @@ function ensureDirectoryExists(directory: string) {
   }
 }
 
-// 一時ファイルクリーンアップユーティリティ
+// ファイルクリーンアップユーティリティ
 function cleanupTempDirectory(dirPath: string): void {
   if (!fs.existsSync(dirPath)) return;
   
@@ -34,10 +34,111 @@ function cleanupTempDirectory(dirPath: string): void {
       }
     }
     
-    console.log(`一時ディレクトリをクリーンアップしました: ${dirPath}`);
+    console.log(`ディレクトリをクリーンアップしました: ${dirPath}`);
   } catch (error) {
-    console.error(`一時ディレクトリのクリーンアップに失敗しました: ${dirPath}`, error);
+    console.error(`ディレクトリのクリーンアップに失敗しました: ${dirPath}`, error);
     // クリーンアップに失敗しても処理は続行
+  }
+}
+
+// アップロードディレクトリのクリーンアップ（knowledge-baseのチェック付き）
+async function cleanupUploadsWithVerification(): Promise<void> {
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const subDirs = ['temp', 'images', 'json', 'ppt', 'data'];
+  
+  for (const subDir of subDirs) {
+    const dirPath = path.join(uploadsDir, subDir);
+    if (!fs.existsSync(dirPath)) continue;
+    
+    try {
+      const files = fs.readdirSync(dirPath);
+      
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stat = fs.statSync(filePath);
+        
+        if (stat.isDirectory()) {
+          // ディレクトリの場合は再帰的に処理
+          await verifyAndCleanupDirectory(filePath);
+        } else {
+          // ファイルの場合は検証して削除
+          await verifyAndCleanupFile(filePath, subDir);
+        }
+      }
+      
+      console.log(`アップロードディレクトリをクリーンアップしました: ${dirPath}`);
+    } catch (error) {
+      console.error(`アップロードディレクトリのクリーンアップ中にエラーが発生しました: ${dirPath}`, error);
+    }
+  }
+}
+
+// ファイルがknowledge-baseに存在するか確認してから削除
+async function verifyAndCleanupFile(filePath: string, subDir: string): Promise<void> {
+  try {
+    const fileName = path.basename(filePath);
+    const fileExt = path.extname(fileName);
+    const baseNameWithoutExt = path.basename(fileName, fileExt);
+    
+    // knowledge-baseの対応するディレクトリパス
+    let kbTargetDir = '';
+    if (subDir === 'images') {
+      kbTargetDir = path.join(process.cwd(), 'knowledge-base', 'images');
+    } else if (subDir === 'json') {
+      kbTargetDir = path.join(process.cwd(), 'knowledge-base', 'json');
+    } else if (subDir === 'data') {
+      kbTargetDir = path.join(process.cwd(), 'knowledge-base', 'data');
+    } else {
+      // pptやtempなどはknowledge-baseに対応しないので直接削除
+      fs.unlinkSync(filePath);
+      console.log(`一時ファイルを削除しました: ${filePath}`);
+      return;
+    }
+    
+    // knowledge-baseに対応するファイルが存在するか確認
+    const kbTargetPath = path.join(kbTargetDir, fileName);
+    if (fs.existsSync(kbTargetPath)) {
+      // knowledge-baseに存在する場合は安全に削除
+      fs.unlinkSync(filePath);
+      console.log(`uploads内のファイルを削除しました (knowledge-baseに存在確認済み): ${filePath}`);
+    } else {
+      console.log(`警告: knowledge-baseに対応するファイルが見つからないため、削除をスキップします: ${filePath}`);
+    }
+    
+  } catch (error) {
+    console.error(`ファイルの検証・クリーンアップに失敗しました: ${filePath}`, error);
+  }
+}
+
+// ディレクトリを再帰的に検証して削除
+async function verifyAndCleanupDirectory(dirPath: string): Promise<void> {
+  if (!fs.existsSync(dirPath)) return;
+  
+  try {
+    const files = fs.readdirSync(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stat = fs.statSync(filePath);
+      
+      if (stat.isDirectory()) {
+        await verifyAndCleanupDirectory(filePath);
+      } else {
+        // サブディレクトリ名を取得（例: uploads/images/subdir/file.png → images）
+        const relPath = path.relative(path.join(process.cwd(), 'uploads'), dirPath);
+        const topDir = relPath.split(path.sep)[0];
+        await verifyAndCleanupFile(filePath, topDir);
+      }
+    }
+    
+    // ディレクトリが空になったら削除
+    const remainingFiles = fs.readdirSync(dirPath);
+    if (remainingFiles.length === 0) {
+      fs.rmdirSync(dirPath);
+      console.log(`空のディレクトリを削除しました: ${dirPath}`);
+    }
+  } catch (error) {
+    console.error(`ディレクトリの検証・クリーンアップに失敗しました: ${dirPath}`, error);
   }
 }
 
@@ -678,6 +779,97 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     console.error("アップロードエラー:", error);
     return res.status(500).json({ 
       error: "ファイルのアップロードに失敗しました", 
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
+ * uploads内のファイルをクリーンアップするエンドポイント
+ * knowledge-baseに存在しないファイルは削除されない
+ */
+router.post('/cleanup-uploads', async (req, res) => {
+  try {
+    // クリーンアップ処理を実行
+    await cleanupUploadsWithVerification();
+    
+    return res.json({
+      success: true,
+      message: 'uploadsディレクトリのクリーンアップを実行しました'
+    });
+  } catch (error) {
+    console.error('クリーンアップエラー:', error);
+    return res.status(500).json({
+      error: 'クリーンアップ処理中にエラーが発生しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
+ * knowledge-baseとuploadsのデータを同期するエンドポイント
+ * knowledge-baseのファイルをuploadsにコピーする
+ */
+router.post('/sync-knowledge-base', async (req, res) => {
+  try {
+    // knowledge-baseのディレクトリパス
+    const knowledgeBaseDirs: Record<string, string> = {
+      images: path.join(process.cwd(), 'knowledge-base', 'images'),
+      json: path.join(process.cwd(), 'knowledge-base', 'json'),
+      data: path.join(process.cwd(), 'knowledge-base', 'data')
+    };
+    
+    // uploadsのディレクトリパス
+    const uploadsDirs: Record<string, string> = {
+      images: path.join(process.cwd(), 'uploads', 'images'),
+      json: path.join(process.cwd(), 'uploads', 'json'),
+      data: path.join(process.cwd(), 'uploads', 'data')
+    };
+    
+    // 各ディレクトリの同期を行う
+    const syncResults: Record<string, any> = {};
+    
+    for (const [dirType, kbDir] of Object.entries(knowledgeBaseDirs)) {
+      const uploadDir = uploadsDirs[dirType];
+      
+      // ディレクトリが存在しない場合は作成
+      ensureDirectoryExists(kbDir);
+      ensureDirectoryExists(uploadDir);
+      
+      // knowledge-baseディレクトリからファイルをuploadsにコピー
+      if (fs.existsSync(kbDir)) {
+        const files = fs.readdirSync(kbDir);
+        let copiedCount = 0;
+        
+        for (const file of files) {
+          const srcPath = path.join(kbDir, file);
+          const destPath = path.join(uploadDir, file);
+          
+          // ファイルのみをコピー（ディレクトリはスキップ）
+          if (fs.statSync(srcPath).isFile()) {
+            fs.copyFileSync(srcPath, destPath);
+            copiedCount++;
+          }
+        }
+        
+        syncResults[dirType] = {
+          from: kbDir,
+          to: uploadDir,
+          fileCount: files.length,
+          copiedCount
+        };
+      }
+    }
+    
+    return res.json({
+      success: true,
+      message: 'knowledge-baseとuploadsのデータを同期しました',
+      results: syncResults
+    });
+  } catch (error) {
+    console.error('同期エラー:', error);
+    return res.status(500).json({
+      error: 'knowledge-baseとuploadsの同期中にエラーが発生しました',
       details: error instanceof Error ? error.message : String(error)
     });
   }
