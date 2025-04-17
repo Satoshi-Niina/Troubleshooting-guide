@@ -648,9 +648,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           // PPTXの場合は画像も抽出済み
           metadata = { 
             type: 'pptx',
-            // スライド画像へのパスをメタデータに追加（一元化するためにuploads/imagesに統一）
+            // スライド画像へのパスをメタデータに追加（knowledge-baseディレクトリに一元化）
             slideImages: Array.from({length: 4}, (_, i) => 
-              `/uploads/images/${path.basename(filePath, path.extname(filePath))}_${(i+1).toString().padStart(3, '0')}.png`
+              `/knowledge-base/images/${path.basename(filePath, path.extname(filePath))}_${(i+1).toString().padStart(3, '0')}.png`
             )
           };
           break;
@@ -687,8 +687,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       const prefix = path.basename(filePath, path.extname(filePath)).substring(0, 2).toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
       const metadataFileName = `${prefix}_${timestamp}_metadata.json`;
       
-      // 2. 公開ディレクトリ内のJSONフォルダ確保
-      const jsonDir = path.join(process.cwd(), 'public', 'uploads', 'json');
+      // 2. knowledge-baseディレクトリ内のJSONフォルダ確保
+      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
       if (!fs.existsSync(jsonDir)) {
         fs.mkdirSync(jsonDir, { recursive: true });
       }
@@ -705,7 +705,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         details: extractedText.substring(0, 200) + "...", // 概要のみ格納
         image_path: metadata.type === 'pptx' ? metadata.slideImages[0] : null,
         all_slides: metadata.type === 'pptx' ? metadata.slideImages : null,
-        metadata_json: `/uploads/json/${metadataFileName}`,
+        metadata_json: `/knowledge-base/json/${metadataFileName}`,
         keywords: [fileExt.substring(1).toUpperCase(), "技術文書", "サポート", file.originalname]
       };
       
