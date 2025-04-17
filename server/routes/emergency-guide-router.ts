@@ -389,8 +389,8 @@ router.get('/list', (_req, res) => {
           return {
             id,
             filePath,
-            fileName: file,
-            title: data.metadata.タイトル,
+            fileName: data.metadata.タイトル || `ファイル_${id}`,
+            title: data.metadata.タイトル || `ファイル_${id}`,
             createdAt: data.metadata.作成日,
             slideCount: data.slides.length
           };
@@ -400,8 +400,8 @@ router.get('/list', (_req, res) => {
           return {
             id,
             filePath,
-            fileName: file,
-            title: data.title,
+            fileName: data.title || `フロー_${id}`,
+            title: data.title || `フロー_${id}`,
             createdAt: data.createdAt || new Date().toISOString(),
             slideCount: data.steps.length
           };
@@ -411,8 +411,8 @@ router.get('/list', (_req, res) => {
           return {
             id,
             filePath,
-            fileName: file,
-            title: path.basename(file, '_metadata.json'),
+            fileName: `ファイル_${id}`,
+            title: `ファイル_${id}`,
             createdAt: new Date().toISOString(),
             slideCount: 0
           };
@@ -424,8 +424,8 @@ router.get('/list', (_req, res) => {
         return {
           id,
           filePath: path.join(jsonDir, file),
-          fileName: file,
-          title: `エラー: ${path.basename(file, '_metadata.json')}`,
+          fileName: `エラーファイル_${id}`,
+          title: `エラーファイル_${id}`,
           createdAt: new Date().toISOString(),
           slideCount: 0
         };

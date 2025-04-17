@@ -584,15 +584,7 @@ const EmergencyGuideEdit: React.FC = () => {
                               <Pencil className="h-4 w-4 mr-1" />
                               編集
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800"
-                              onClick={() => handleGenerateFlow(file.id, file.title)}
-                            >
-                              <Sparkles className="h-4 w-4 mr-1" />
-                              フロー生成
-                            </Button>
+
                             <Button
                               variant="outline"
                               size="sm"
