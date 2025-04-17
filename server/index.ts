@@ -3,6 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { initializeKnowledgeBase } from "./lib/knowledge-base";
+import fs from "fs";
+import axios from "axios";
 
 const app = express();
 app.use(express.json());
@@ -12,22 +14,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/static', express.static(path.join(process.cwd(), 'public')));
 
 // 画像ファイルへのアクセスを一元化
-// uploads/imagesへのリクエストを直接処理
+// 両方のパスへのアクセスを直接処理
 app.use('/uploads/images', express.static(path.join(process.cwd(), 'public', 'uploads', 'images')));
-
-// knowledge-base/imagesへのリクエストをuploads/imagesにリダイレクト（パス統一）
-app.use('/knowledge-base/images', (req, res, next) => {
-  const fileName = req.path.split('/').pop();
-  if (fileName) {
-    // 同じファイル名をuploads/imagesから提供
-    res.redirect(`/uploads/images/${fileName}`);
-  } else {
-    next();
-  }
-});
+app.use('/knowledge-base/images', express.static(path.join(process.cwd(), 'knowledge-base', 'images')));
 
 // Serve knowledge-base/data directory for JSON data
 app.use('/knowledge-base/data', express.static(path.join(process.cwd(), 'knowledge-base', 'data')));
+app.use('/knowledge-base/json', express.static(path.join(process.cwd(), 'knowledge-base', 'json')));
 
 // Add a test route to serve our HTML test page
 app.get('/test', (req, res) => {

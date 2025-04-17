@@ -810,11 +810,12 @@ router.post('/cleanup-uploads', async (req, res) => {
 });
 
 /**
- * knowledge-baseとuploadsのデータを同期するエンドポイント
- * knowledge-baseのファイルをuploadsにコピーする
+ * knowledge-baseとuploadsのデータを双方向に同期するエンドポイント
  */
 router.post('/sync-knowledge-base', async (req, res) => {
   try {
+    const direction = req.query.direction || 'kb-to-uploads';
+    
     // knowledge-baseのディレクトリパス
     const knowledgeBaseDirs: Record<string, string> = {
       images: path.join(process.cwd(), 'knowledge-base', 'images'),
@@ -824,9 +825,9 @@ router.post('/sync-knowledge-base', async (req, res) => {
     
     // uploadsのディレクトリパス
     const uploadsDirs: Record<string, string> = {
-      images: path.join(process.cwd(), 'uploads', 'images'),
-      json: path.join(process.cwd(), 'uploads', 'json'),
-      data: path.join(process.cwd(), 'uploads', 'data')
+      images: path.join(process.cwd(), 'public', 'uploads', 'images'),
+      json: path.join(process.cwd(), 'public', 'uploads', 'json'),
+      data: path.join(process.cwd(), 'public', 'uploads', 'data')
     };
     
     // 各ディレクトリの同期を行う
@@ -839,40 +840,103 @@ router.post('/sync-knowledge-base', async (req, res) => {
       ensureDirectoryExists(kbDir);
       ensureDirectoryExists(uploadDir);
       
-      // knowledge-baseディレクトリからファイルをuploadsにコピー
-      if (fs.existsSync(kbDir)) {
-        const files = fs.readdirSync(kbDir);
-        let copiedCount = 0;
-        
-        for (const file of files) {
-          const srcPath = path.join(kbDir, file);
-          const destPath = path.join(uploadDir, file);
+      if (direction === 'uploads-to-kb') {
+        // uploads -> knowledge-baseの方向に同期
+        if (fs.existsSync(uploadDir)) {
+          const files = fs.readdirSync(uploadDir);
+          let copiedCount = 0;
           
-          // ファイルのみをコピー（ディレクトリはスキップ）
-          if (fs.statSync(srcPath).isFile()) {
-            fs.copyFileSync(srcPath, destPath);
-            copiedCount++;
+          for (const file of files) {
+            const srcPath = path.join(uploadDir, file);
+            const destPath = path.join(kbDir, file);
+            
+            // ファイルのみをコピー（ディレクトリはスキップ）
+            if (fs.statSync(srcPath).isFile()) {
+              fs.copyFileSync(srcPath, destPath);
+              copiedCount++;
+            }
           }
+          
+          syncResults[dirType] = {
+            from: uploadDir,
+            to: kbDir,
+            fileCount: files.length,
+            copiedCount
+          };
         }
-        
-        syncResults[dirType] = {
-          from: kbDir,
-          to: uploadDir,
-          fileCount: files.length,
-          copiedCount
-        };
+      } else {
+        // デフォルト: knowledge-base -> uploadsの方向に同期
+        if (fs.existsSync(kbDir)) {
+          const files = fs.readdirSync(kbDir);
+          let copiedCount = 0;
+          
+          for (const file of files) {
+            const srcPath = path.join(kbDir, file);
+            const destPath = path.join(uploadDir, file);
+            
+            // ファイルのみをコピー（ディレクトリはスキップ）
+            if (fs.statSync(srcPath).isFile()) {
+              fs.copyFileSync(srcPath, destPath);
+              copiedCount++;
+            }
+          }
+          
+          syncResults[dirType] = {
+            from: kbDir,
+            to: uploadDir,
+            fileCount: files.length,
+            copiedCount
+          };
+        }
       }
     }
     
     return res.json({
       success: true,
-      message: 'knowledge-baseとuploadsのデータを同期しました',
+      message: `データを同期しました (${direction === 'uploads-to-kb' ? 'uploads -> knowledge-base' : 'knowledge-base -> uploads'})`,
       results: syncResults
     });
   } catch (error) {
     console.error('同期エラー:', error);
     return res.status(500).json({
-      error: 'knowledge-baseとuploadsの同期中にエラーが発生しました',
+      error: 'データ同期中にエラーが発生しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
+ * knowledge-base内の全てのファイル一覧を取得するエンドポイント
+ */
+router.get('/knowledge-base-files', async (req, res) => {
+  try {
+    const knowledgeBaseDirs: Record<string, string> = {
+      images: path.join(process.cwd(), 'knowledge-base', 'images'),
+      json: path.join(process.cwd(), 'knowledge-base', 'json'),
+      data: path.join(process.cwd(), 'knowledge-base', 'data')
+    };
+    
+    const files: Record<string, string[]> = {};
+    
+    for (const [dirType, dir] of Object.entries(knowledgeBaseDirs)) {
+      if (fs.existsSync(dir)) {
+        files[dirType] = fs.readdirSync(dir).filter(file => {
+          const filePath = path.join(dir, file);
+          return fs.statSync(filePath).isFile();
+        });
+      } else {
+        files[dirType] = [];
+      }
+    }
+    
+    return res.json({
+      success: true,
+      files
+    });
+  } catch (error) {
+    console.error('ファイル一覧取得エラー:', error);
+    return res.status(500).json({
+      error: 'ファイル一覧の取得中にエラーが発生しました',
       details: error instanceof Error ? error.message : String(error)
     });
   }
