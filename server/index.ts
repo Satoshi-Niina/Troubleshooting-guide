@@ -65,6 +65,40 @@ app.use((req, res, next) => {
     console.log('知識ベースの初期化を開始...');
     initializeKnowledgeBase();
     console.log('知識ベースの初期化が完了しました');
+    
+    // ディレクトリの確認と作成
+    const dirs = [
+      'knowledge-base/images',
+      'knowledge-base/json',
+      'knowledge-base/data',
+      'public/uploads/images',
+      'public/uploads/json',
+      'public/uploads/data'
+    ];
+    
+    for (const dir of dirs) {
+      const dirPath = path.join(process.cwd(), dir);
+      if (!fs.existsSync(dirPath)) {
+        console.log(`ディレクトリを作成: ${dir}`);
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+    }
+    
+    // サーバー起動時にuploadsのデータをknowledge-baseにコピー
+    console.log('uploads -> knowledge-base への同期を開始...');
+    try {
+      // APIが起動した後に実行するために少し待機
+      setTimeout(async () => {
+        try {
+          const syncResult = await axios.post('http://localhost:5000/api/tech-support/sync-knowledge-base?direction=uploads-to-kb');
+          console.log('アップロードデータの同期結果:', syncResult.data);
+        } catch (syncErr) {
+          console.error('同期API呼び出しエラー:', syncErr.message);
+        }
+      }, 3000);
+    } catch (syncErr) {
+      console.error('同期処理中にエラーが発生しました:', syncErr);
+    }
   } catch (err) {
     console.error('知識ベースの初期化中にエラーが発生しました:', err);
   }
