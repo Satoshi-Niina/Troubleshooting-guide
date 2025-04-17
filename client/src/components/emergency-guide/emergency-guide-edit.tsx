@@ -46,7 +46,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Pencil, Save, X, Plus, Trash2, FileText, LifeBuoy } from 'lucide-react';
+import { Loader2, Pencil, Save, X, Plus, Trash2, FileText, LifeBuoy, Sparkles } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // APIからのガイドファイル型定義
@@ -459,6 +459,49 @@ const EmergencyGuideEdit: React.FC = () => {
       ...editedGuideData,
       slides: updatedSlides
     });
+  };
+  
+  // フロー生成を処理する関数
+  const handleGenerateFlow = async (guideId: string, guideTitle: string) => {
+    try {
+      toast({
+        title: 'フロー生成中',
+        description: `「${guideTitle}」からフローを生成しています...`,
+      });
+      
+      const response = await fetch(`/api/flow-generator/generate-from-guide/${guideId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('フロー生成に失敗しました');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: 'フロー生成完了',
+          description: `「${data.flowData.title}」フローが生成されました`,
+        });
+        
+        // フロー編集画面に遷移
+        const flowId = data.flowData.id;
+        window.location.href = `/troubleshooting?flowId=${flowId}`;
+      } else {
+        throw new Error(data.error || 'フロー生成に失敗しました');
+      }
+    } catch (error) {
+      console.error('フロー生成エラー:', error);
+      toast({
+        title: 'フロー生成エラー',
+        description: error instanceof Error ? error.message : '不明なエラーが発生しました',
+        variant: 'destructive',
+      });
+    }
   };
   
   // 初期データの読み込み
