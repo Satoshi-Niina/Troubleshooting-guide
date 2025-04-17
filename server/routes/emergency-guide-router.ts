@@ -456,6 +456,25 @@ router.get('/detail/:id', (req, res) => {
     const content = fs.readFileSync(filePath, 'utf8');
     const data = JSON.parse(content);
     
+    // アップロードパス(/uploads/)からナレッジベースパス(/knowledge-base/)への変換
+    // スライド内の画像パスを更新
+    if (data.slides && Array.isArray(data.slides)) {
+      data.slides.forEach(slide => {
+        if (slide.画像テキスト && Array.isArray(slide.画像テキスト)) {
+          slide.画像テキスト.forEach(imgText => {
+            if (imgText.画像パス && imgText.画像パス.startsWith('/uploads/')) {
+              // パスを/knowledge-baseに置き換え
+              imgText.画像パス = imgText.画像パス.replace('/uploads/', '/knowledge-base/');
+              console.log(`画像パスを更新: ${imgText.画像パス}`);
+            }
+          });
+        }
+      });
+    }
+    
+    // JSONファイル内のデータが修正されたらファイルも更新（オプション）
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    
     res.json({
       id,
       filePath,

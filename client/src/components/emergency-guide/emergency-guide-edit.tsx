@@ -589,16 +589,23 @@ const EmergencyGuideEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
-                              onClick={() => {
+                              onClick={async () => {
                                 // 削除確認ダイアログを表示
                                 if (confirm(`「${file.title}」を削除してもよろしいですか？\n削除すると元に戻せません。`)) {
                                   // 削除処理
-                                  fetch(`/api/emergency-guide/delete/${file.id}`, {
-                                    method: 'DELETE'
-                                  })
-                                  .then(response => {
+                                  try {
+                                    // 削除リクエストを送信
+                                    const response = await fetch(`/api/emergency-guide/delete/${file.id}`, {
+                                      method: 'DELETE'
+                                    });
+                                    
+                                    // レスポンスを確認
                                     if (response.ok) {
-                                      // 削除成功
+                                      // レスポンスデータを取得
+                                      const result = await response.json();
+                                      console.log('削除成功:', result);
+                                      
+                                      // 削除成功メッセージを表示
                                       toast({
                                         title: '削除完了',
                                         description: `「${file.title}」を削除しました`,
@@ -613,20 +620,21 @@ const EmergencyGuideEdit: React.FC = () => {
                                       setTimeout(() => {
                                         fetchGuideFiles();
                                       }, 500);
-                                      
-                                      return response.json();
                                     } else {
-                                      throw new Error('削除に失敗しました');
+                                      // エラーレスポンスの詳細を取得
+                                      const errorData = await response.json();
+                                      console.error('削除エラー (サーバー):', errorData);
+                                      throw new Error(errorData.error || '削除に失敗しました');
                                     }
-                                  })
-                                  .catch(error => {
+                                  } catch (error) {
+                                    // エラー処理
                                     console.error('削除エラー:', error);
                                     toast({
                                       title: 'エラー',
-                                      description: 'ファイルの削除に失敗しました',
+                                      description: error instanceof Error ? error.message : 'ファイルの削除に失敗しました',
                                       variant: 'destructive',
                                     });
-                                  });
+                                  }
                                 }
                               }}
                             >
