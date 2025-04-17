@@ -1,0 +1,73 @@
+{
+  "id": "engine_stop_sudden",
+  "title": "エンジンが急に停止した",
+  "description": "急停止時の原因確認と応急対応",
+  "trigger": [
+    "急停止",
+    "突然エンジン停止"
+  ],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "燃料カットソレノイド確認",
+      "message": "キーON時にソレノイドが動作しますか？",
+      "options": [
+        {
+          "text": "動作しない",
+          "next": "contact_support"
+        },
+        {
+          "text": "動作する",
+          "next": "step2_voltage"
+        }
+      ]
+    },
+    {
+      "id": "step2_voltage",
+      "title": "電圧確認",
+      "message": "バッテリー電圧は12V以上ありますか？",
+      "options": [
+        {
+          "text": "ない",
+          "next": "contact_support"
+        },
+        {
+          "text": "ある",
+          "next": "step3_restart"
+        }
+      ]
+    },
+    {
+      "id": "step3_restart",
+      "title": "再始動試行",
+      "message": "一度キーOFF→再度ONで始動を試してください。",
+      "options": [
+        {
+          "text": "始動できた",
+          "next": "end"
+        },
+        {
+          "text": "できない",
+          "next": "contact_support"
+        }
+      ]
+    },
+    {
+      "id": "contact_support",
+      "title": "技術支援に連絡",
+      "message": "原因特定できないため、支援に連絡してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "対処終了です。",
+      "options": []
+    }
+  ]
+}

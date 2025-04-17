@@ -1,0 +1,88 @@
+{
+  "id": "brake_weak",
+  "title": "ブレーキの利きが悪い",
+  "description": "制動力不足時の対処フロー",
+  "trigger": [
+    "ブレーキ弱い",
+    "制動力不足"
+  ],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "エアータンク圧確認",
+      "message": "エアータンクの圧力は0.5MPa以上ありますか？",
+      "options": [
+        {
+          "text": "ない",
+          "next": "contact_support"
+        },
+        {
+          "text": "ある",
+          "next": "step2_check_leak"
+        }
+      ]
+    },
+    {
+      "id": "step2_check_leak",
+      "title": "配管確認",
+      "message": "制動配管にエアー漏れはありませんか？",
+      "options": [
+        {
+          "text": "漏れあり",
+          "next": "contact_support"
+        },
+        {
+          "text": "漏れなし",
+          "next": "step3_valve"
+        }
+      ]
+    },
+    {
+      "id": "step3_valve",
+      "title": "減圧弁確認",
+      "message": "減圧弁が正しく作動していますか？",
+      "options": [
+        {
+          "text": "不良の可能性あり",
+          "next": "contact_support"
+        },
+        {
+          "text": "正常",
+          "next": "step4_check_brake"
+        }
+      ]
+    },
+    {
+      "id": "step4_check_brake",
+      "title": "ブレーキロッド調整",
+      "message": "ターンバックルでブレーキシリンダーストロークを調整できますか？",
+      "options": [
+        {
+          "text": "調整した",
+          "next": "end"
+        },
+        {
+          "text": "できない",
+          "next": "contact_support"
+        }
+      ]
+    },
+    {
+      "id": "contact_support",
+      "title": "技術支援に連絡",
+      "message": "整備が必要です。技術支援に連絡してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "対処完了です。",
+      "options": []
+    }
+  ]
+}

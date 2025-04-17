@@ -1,0 +1,89 @@
+{
+  "id": "brake_spring_lock",
+  "title": "駐車バネブレーキが解放しない",
+  "description": "駐車ブレーキが解除できない場合の応急対処",
+  "trigger": [
+    "バネブレーキ",
+    "駐車ブレーキ",
+    "ブレーキ解除不能"
+  ],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "エアー圧力確認",
+      "message": "元空気管の圧力が0.5MPa以上ありますか？",
+      "options": [
+        {
+          "text": "ない",
+          "next": "contact_support"
+        },
+        {
+          "text": "ある",
+          "next": "step2_valve"
+        }
+      ]
+    },
+    {
+      "id": "step2_valve",
+      "title": "解除用バルブ確認",
+      "message": "駐車ブレーキ解除バルブが開放位置になっていますか？",
+      "options": [
+        {
+          "text": "なっていないので開放した",
+          "next": "step3_confirm"
+        },
+        {
+          "text": "既に開放している",
+          "next": "step4_jack"
+        }
+      ]
+    },
+    {
+      "id": "step3_confirm",
+      "title": "解除確認",
+      "message": "ブレーキが解除されたか確認してください。",
+      "options": [
+        {
+          "text": "解除された",
+          "next": "end"
+        },
+        {
+          "text": "解除されない",
+          "next": "step4_jack"
+        }
+      ]
+    },
+    {
+      "id": "step4_jack",
+      "title": "ロッド操作",
+      "message": "ブレーキシリンダーのロッドを手動で押し戻してみてください。",
+      "options": [
+        {
+          "text": "解除された",
+          "next": "end"
+        },
+        {
+          "text": "解除されない",
+          "next": "contact_support"
+        }
+      ]
+    },
+    {
+      "id": "contact_support",
+      "title": "技術支援に連絡",
+      "message": "解除不可のため、技術支援へ連絡してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "対応を完了しました。",
+      "options": []
+    }
+  ]
+}

@@ -9,7 +9,7 @@ import { LoginCredentials } from '@shared/schema';
 export const login = async (credentials: LoginCredentials) => {
   try {
     // ハードコードされた認証情報 - テスト用
-    if (credentials.username === 'niina') {
+    if (credentials.username === 'takabeni1' || credentials.username === 'takabeni2') {
       // サーバーに送信
       const response = await apiRequest('POST', '/api/auth/login', credentials);
       if (!response.ok) {

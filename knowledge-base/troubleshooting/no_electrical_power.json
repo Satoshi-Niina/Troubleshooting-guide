@@ -1,0 +1,70 @@
+{
+  "id": "no_electrical_power",
+  "title": "キーONでも電装が作動しない",
+  "description": "イグニションON時に電気が入らない場合の確認フロー",
+  "trigger": [
+    "電気つかない",
+    "パネル無反応",
+    "イグニション無反応"
+  ],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "バッテリー確認",
+      "message": "バッテリー電圧は12V以上ありますか？",
+      "options": [
+        {
+          "text": "ない",
+          "next": "step2_replace_battery"
+        },
+        {
+          "text": "ある",
+          "next": "step3_fuse"
+        }
+      ]
+    },
+    {
+      "id": "step2_replace_battery",
+      "title": "バッテリー交換",
+      "message": "バッテリーを交換または充電して再度試してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "step3_fuse",
+      "title": "ヒューズ確認",
+      "message": "IG回路のヒューズが切れていないか確認してください。",
+      "options": [
+        {
+          "text": "切れていたので交換",
+          "next": "end"
+        },
+        {
+          "text": "異常なし",
+          "next": "contact_support"
+        }
+      ]
+    },
+    {
+      "id": "contact_support",
+      "title": "技術支援に連絡",
+      "message": "配線やリレー不良の可能性あり。技術支援に連絡してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "対応を完了しました。",
+      "options": []
+    }
+  ]
+}

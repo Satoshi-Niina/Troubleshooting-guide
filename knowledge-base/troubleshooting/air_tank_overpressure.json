@@ -1,0 +1,74 @@
+{
+  "id": "air_tank_overpressure",
+  "title": "エアータンクの圧力が高すぎる",
+  "description": "圧力が規定値以上になる際の対処フロー",
+  "trigger": [
+    "圧力上昇",
+    "エアー高圧",
+    "エアータンクオーバー"
+  ],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "減圧弁確認",
+      "message": "減圧弁が作動していますか？",
+      "options": [
+        {
+          "text": "作動していない",
+          "next": "step2_manual_release"
+        },
+        {
+          "text": "作動している",
+          "next": "step3_pressure_gauge"
+        }
+      ]
+    },
+    {
+      "id": "step2_manual_release",
+      "title": "手動排気",
+      "message": "補助タンク側の排気コックで圧力を一時的に抜いてください。",
+      "options": [
+        {
+          "text": "圧力が下がった",
+          "next": "end"
+        },
+        {
+          "text": "下がらない",
+          "next": "contact_support"
+        }
+      ]
+    },
+    {
+      "id": "step3_pressure_gauge",
+      "title": "圧力計再確認",
+      "message": "圧力計の表示が規定値を超えていますか？",
+      "options": [
+        {
+          "text": "超えている",
+          "next": "contact_support"
+        },
+        {
+          "text": "正常",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "contact_support",
+      "title": "技術支援に連絡",
+      "message": "減圧機構の不具合の可能性あり。技術支援へ連絡してください。",
+      "options": [
+        {
+          "text": "了解",
+          "next": "end"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "応急処置完了です。",
+      "options": []
+    }
+  ]
+}
