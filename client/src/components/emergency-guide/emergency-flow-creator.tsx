@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, X, Edit, File, FileText, Plus, Download, FolderOpen, Trash2 } from 'lucide-react';
+import { Upload, Save, X, Edit, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -307,6 +307,9 @@ const EmergencyFlowCreator: React.FC = () => {
           description: "応急処置フローが保存されました",
         });
         
+        // フローリストを更新
+        fetchFlowList();
+        
         // ファイル読込みタブに戻る
         setActiveTab('file');
       } else {
@@ -516,6 +519,57 @@ const EmergencyFlowCreator: React.FC = () => {
               {/* 補足情報やヒント */}
               <div className="mt-2 text-xs text-gray-500 italic">
                 読み込んだファイルはフローエディタで編集できます。JSONファイルを選択すると直接編集が可能です。
+              </div>
+              
+              {/* 保存済みフローリスト */}
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium">保存済みフロー一覧</h3>
+                  <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
+                    <RefreshCw className={`h-4 w-4 mr-1 ${isLoadingFlowList ? 'animate-spin' : ''}`} />
+                    更新
+                  </Button>
+                </div>
+                
+                {isLoadingFlowList ? (
+                  <div className="flex justify-center py-4">
+                    <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : flowList.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg border-gray-200">
+                    <p className="text-gray-500">保存されたフローがありません</p>
+                    <p className="text-xs text-gray-400 mt-1">新規フローを作成してみましょう</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {flowList.map((flow) => (
+                      <div 
+                        key={flow.id} 
+                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer flex justify-between"
+                      >
+                        <div className="flex-1" onClick={() => loadFlow(flow.id)}>
+                          <h4 className="text-md font-medium">{flow.title || 'タイトルなし'}</h4>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('ja-JP') : '日付なし'}
+                            {flow.nodeCount ? ` • ${flow.nodeCount}ノード` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <Button 
+                            variant="destructive" 
+                            size="icon" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCharacter(flow.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
             
