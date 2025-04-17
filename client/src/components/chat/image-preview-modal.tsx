@@ -51,14 +51,18 @@ interface ImageMetaData {
 }
 
 export default function ImagePreviewModal() {
+  // 状態変数
   const [isOpen, setIsOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [metadataUrl, setMetadataUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [pngFallbackUrl, setPngFallbackUrl] = useState<string>("");
+  const [metadataUrl, setMetadataUrl] = useState<string>("");
   const [allSlides, setAllSlides] = useState<string[]>([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [metadataJson, setMetadataJson] = useState<ImageMetaData | null>(null);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [title, setTitle] = useState<string>("画像プレビュー");
+  const [content, setContent] = useState<string>("");
   
   // メタデータを読み込む
   const loadMetadata = async (url: string) => {
@@ -89,7 +93,7 @@ export default function ImagePreviewModal() {
     
     setCurrentSlideIndex(newIndex);
     
-    // SVGの場合はPNG代替を自動的に使用
+    // 新スライドURLを設定
     const newSlideUrl = allSlides[newIndex];
     setImageUrl(newSlideUrl);
     
@@ -98,18 +102,12 @@ export default function ImagePreviewModal() {
       const pngFallback = newSlideUrl.replace(/\.svg$/i, '.png');
       setPngFallbackUrl(pngFallback);
     } else {
-      setPngFallbackUrl(null);
+      setPngFallbackUrl("");
     }
   };
 
-  // PNG代替URL用の状態変数
-  const [pngFallbackUrl, setPngFallbackUrl] = useState<string | null>(null);
-  // タイトルとコンテンツの状態変数を追加
-  const [title, setTitle] = useState<string>("画像プレビュー");
-  const [content, setContent] = useState<string | null>(null);
-
   useEffect(() => {
-    // Listen for preview-image event
+    // プレビュー画像イベントのリスナー
     const handlePreviewImage = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail) {
@@ -123,7 +121,7 @@ export default function ImagePreviewModal() {
           setPngFallbackUrl(customEvent.detail.pngFallbackUrl);
           console.log('PNG代替URL設定:', customEvent.detail.pngFallbackUrl);
         } else {
-          setPngFallbackUrl(null);
+          setPngFallbackUrl("");
         }
         
         // タイトルを設定
@@ -137,7 +135,7 @@ export default function ImagePreviewModal() {
         if (customEvent.detail.content) {
           setContent(customEvent.detail.content);
         } else {
-          setContent(null);
+          setContent("");
         }
         
         // メタデータJSONへのパスを設定
@@ -145,7 +143,7 @@ export default function ImagePreviewModal() {
           setMetadataUrl(customEvent.detail.metadata_json);
           loadMetadata(customEvent.detail.metadata_json);
         } else {
-          setMetadataUrl(null);
+          setMetadataUrl("");
           setMetadataJson(null);
         }
         
@@ -178,7 +176,7 @@ export default function ImagePreviewModal() {
     return () => {
       window.removeEventListener('preview-image', handlePreviewImage);
     };
-  }, []);
+  }, [showInfo]);
 
   // 現在のスライドに関連するスライド情報を取得
   const getCurrentSlideInfo = () => {
