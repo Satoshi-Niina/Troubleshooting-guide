@@ -69,11 +69,11 @@ async function processPowerPointFile(filePath: string): Promise<any> {
     // PPTXファイルを解凍してXMLとして処理
     if (fileExtension.toLowerCase() === '.pptx') {
       const zip = new AdmZip(filePath);
-      const extractDir = path.join(uploadsDir, 'temp', fileId);
+      const extractDir = path.join(kbTempDir, fileId);
       
       // 一時ディレクトリが存在しない場合は作成
-      if (!fs.existsSync(path.join(uploadsDir, 'temp'))) {
-        fs.mkdirSync(path.join(uploadsDir, 'temp'), { recursive: true });
+      if (!fs.existsSync(kbTempDir)) {
+        fs.mkdirSync(kbTempDir, { recursive: true });
       }
       
       if (!fs.existsSync(extractDir)) {
@@ -136,13 +136,13 @@ async function processPowerPointFile(filePath: string): Promise<any> {
           for (const mediaFile of mediaFiles) {
             const sourcePath = path.join(mediaDir, mediaFile);
             const targetFileName = `${fileId}_slide${slideNumber}_${mediaFile}`;
-            const targetPath = path.join(imageDir, targetFileName);
+            const targetPath = path.join(kbImageDir, targetFileName);
             
             // 画像をコピー
             fs.copyFileSync(sourcePath, targetPath);
             
             // 画像パスの作成（相対パス）
-            const relativePath = `/uploads/images/${targetFileName}`;
+            const relativePath = `/knowledge-base/images/${targetFileName}`;
             
             // 画像に関連するテキストを見つける（画像の近くのテキスト要素から）
             const imageText = texts.length > 0 ? texts[0] : '画像の説明がありません';
@@ -214,17 +214,13 @@ async function processPowerPointFile(filePath: string): Promise<any> {
         slides
       };
       
-      // JSONファイルに保存
-      const jsonFilePath = path.join(jsonDir, `${fileId}_metadata.json`);
-      fs.writeFileSync(jsonFilePath, JSON.stringify(result, null, 2));
-      
-      // ナレッジベースディレクトリにも保存
+      // JSONファイルを知識ベースディレクトリに保存
       const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
       fs.writeFileSync(kbJsonFilePath, JSON.stringify(result, null, 2));
       
       return {
         id: fileId,
-        filePath: jsonFilePath,
+        filePath: kbJsonFilePath,
         fileName: path.basename(filePath),
         title,
         createdAt: new Date().toISOString(),
@@ -250,11 +246,7 @@ async function processJsonFile(filePath: string): Promise<any> {
     // JSONデータを応急処置ガイド形式に変換
     // この場合は既に応急処置フロー形式のJSONと想定
     
-    // JSONファイルをコピー
-    const jsonFilePath = path.join(jsonDir, `${fileId}_metadata.json`);
-    fs.copyFileSync(filePath, jsonFilePath);
-    
-    // ナレッジベースディレクトリにも保存（画像パスはナレッジベースの相対パスを使用）
+    // 知識ベースディレクトリに保存（画像パスはナレッジベースの相対パスを使用）
     const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
     fs.copyFileSync(filePath, kbJsonFilePath);
     
@@ -268,7 +260,7 @@ async function processJsonFile(filePath: string): Promise<any> {
     
     return {
       id: fileId,
-      filePath: jsonFilePath,
+      filePath: kbJsonFilePath,
       fileName: path.basename(filePath),
       title,
       createdAt: new Date().toISOString(),
@@ -549,35 +541,10 @@ router.delete('/delete/:id', (req, res) => {
     // 削除した画像ファイルのカウント
     let deletedImageCount = 0;
     
-    // 関連する画像ファイルも削除（あれば）
-    // 画像ディレクトリが存在するか確認
-    if (fs.existsSync(imageDir)) {
-      try {
-        const imagePattern = new RegExp(`^${id}_.*`);
-        const imageFiles = fs.readdirSync(imageDir)
-          .filter(file => imagePattern.test(file));
-        
-        console.log(`関連画像ファイル数: ${imageFiles.length}`);
-        
-        for (const imageFile of imageFiles) {
-          const imagePath = path.join(imageDir, imageFile);
-          // ファイルが存在する場合のみ削除
-          if (fs.existsSync(imagePath)) {
-            try {
-              fs.unlinkSync(imagePath);
-              deletedImageCount++;
-              console.log(`削除した画像ファイル: ${imagePath}`);
-            } catch (err) {
-              console.error(`画像ファイル削除エラー: ${imagePath}`, err);
-            }
-          }
-        }
-      } catch (err) {
-        console.error(`画像ディレクトリ処理エラー: ${imageDir}`, err);
-      }
-    }
+    // uploads ディレクトリの使用は廃止しました
+    // 知識ベースディレクトリの画像のみ削除
     
-    // knowledge-baseディレクトリの画像も削除
+    // 知識ベースディレクトリの画像を削除
     const kbImageDir = path.join(process.cwd(), 'knowledge-base', 'images');
     if (fs.existsSync(kbImageDir)) {
       try {
