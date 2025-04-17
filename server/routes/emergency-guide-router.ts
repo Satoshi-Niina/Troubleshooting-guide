@@ -508,6 +508,7 @@ router.post('/update/:id', (req, res) => {
 router.delete('/delete/:id', (req, res) => {
   try {
     const id = req.params.id;
+    console.log(`削除リクエスト受信: ID=${id}`);
     
     // 対象ファイルを検索
     const files = fs.readdirSync(jsonDir)
@@ -515,45 +516,81 @@ router.delete('/delete/:id', (req, res) => {
     
     if (files.length === 0) {
       console.log(`削除対象が見つかりません: ${id}`);
-      return res.status(404).json({ error: 'ガイドが見つかりません' });
+      // 成功レスポンスを返す（すでに存在しないためファイルが削除されたことと同じ結果）
+      return res.json({
+        success: true,
+        message: 'ガイドデータは既に存在しません',
+        id,
+        status: 'not_found'
+      });
     }
     
     const filePath = path.join(jsonDir, files[0]);
     console.log(`削除対象ファイル: ${filePath}`);
     
     // ファイルを削除
-    fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`メタデータファイル削除成功: ${filePath}`);
+    } else {
+      console.log(`メタデータファイルが存在しません: ${filePath}`);
+    }
+    
+    // 削除した画像ファイルのカウント
+    let deletedImageCount = 0;
     
     // 関連する画像ファイルも削除（あれば）
     // 画像ディレクトリが存在するか確認
     if (fs.existsSync(imageDir)) {
-      const imagePattern = new RegExp(`^${id}_.*`);
-      const imageFiles = fs.readdirSync(imageDir)
-        .filter(file => imagePattern.test(file));
-      
-      for (const imageFile of imageFiles) {
-        const imagePath = path.join(imageDir, imageFile);
-        // ファイルが存在する場合のみ削除
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-          console.log(`削除した画像ファイル: ${imagePath}`);
+      try {
+        const imagePattern = new RegExp(`^${id}_.*`);
+        const imageFiles = fs.readdirSync(imageDir)
+          .filter(file => imagePattern.test(file));
+        
+        console.log(`関連画像ファイル数: ${imageFiles.length}`);
+        
+        for (const imageFile of imageFiles) {
+          const imagePath = path.join(imageDir, imageFile);
+          // ファイルが存在する場合のみ削除
+          if (fs.existsSync(imagePath)) {
+            try {
+              fs.unlinkSync(imagePath);
+              deletedImageCount++;
+              console.log(`削除した画像ファイル: ${imagePath}`);
+            } catch (err) {
+              console.error(`画像ファイル削除エラー: ${imagePath}`, err);
+            }
+          }
         }
+      } catch (err) {
+        console.error(`画像ディレクトリ処理エラー: ${imageDir}`, err);
       }
     }
     
     // knowledge-baseディレクトリの画像も削除
     const kbImageDir = path.join(process.cwd(), 'knowledge-base', 'images');
     if (fs.existsSync(kbImageDir)) {
-      const kbImagePattern = new RegExp(`^${id}_.*`);
-      const kbImageFiles = fs.readdirSync(kbImageDir)
-        .filter(file => kbImagePattern.test(file));
-      
-      for (const imageFile of kbImageFiles) {
-        const imagePath = path.join(kbImageDir, imageFile);
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-          console.log(`削除したknowledge-base画像ファイル: ${imagePath}`);
+      try {
+        const kbImagePattern = new RegExp(`^${id}_.*`);
+        const kbImageFiles = fs.readdirSync(kbImageDir)
+          .filter(file => kbImagePattern.test(file));
+        
+        console.log(`関連knowledge-base画像ファイル数: ${kbImageFiles.length}`);
+        
+        for (const imageFile of kbImageFiles) {
+          const imagePath = path.join(kbImageDir, imageFile);
+          if (fs.existsSync(imagePath)) {
+            try {
+              fs.unlinkSync(imagePath);
+              deletedImageCount++;
+              console.log(`削除したknowledge-base画像ファイル: ${imagePath}`);
+            } catch (err) {
+              console.error(`knowledge-base画像ファイル削除エラー: ${imagePath}`, err);
+            }
+          }
         }
+      } catch (err) {
+        console.error(`knowledge-base画像ディレクトリ処理エラー: ${kbImageDir}`, err);
       }
     }
     

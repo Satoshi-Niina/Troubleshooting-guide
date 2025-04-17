@@ -603,8 +603,17 @@ const EmergencyGuideEdit: React.FC = () => {
                                         title: '削除完了',
                                         description: `「${file.title}」を削除しました`,
                                       });
-                                      // 一覧を再取得して最新状態を反映
-                                      fetchGuideFiles();
+                                      
+                                      // 一覧から該当項目を削除（クライアント側で即時反映）
+                                      setGuideFiles(prevFiles => 
+                                        prevFiles.filter(f => f.id !== file.id)
+                                      );
+                                      
+                                      // 少し遅延させてから一覧を再取得（サーバー側の反映を待つ）
+                                      setTimeout(() => {
+                                        fetchGuideFiles();
+                                      }, 500);
+                                      
                                       return response.json();
                                     } else {
                                       throw new Error('削除に失敗しました');
