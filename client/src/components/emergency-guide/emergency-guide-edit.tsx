@@ -107,6 +107,11 @@ const EmergencyGuideEdit: React.FC = () => {
   const [editedGuideData, setEditedGuideData] = useState<any>(null);
   const [showEditCard, setShowEditCard] = useState(false); // 編集カードを表示するかどうかのフラグ
   
+  // 削除確認ダイアログの状態
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<GuideFile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // 接続番号の状態
   const [connectionNumbers, setConnectionNumbers] = useState<ConnectionNumber[]>([]);
   const [showConnectionDialog, setShowConnectionDialog] = useState(false);
@@ -508,6 +513,81 @@ const EmergencyGuideEdit: React.FC = () => {
     }
   };
   
+  // ガイド削除処理
+  const handleDeleteGuide = async () => {
+    if (!fileToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // 削除開始メッセージを表示
+      toast({
+        title: '削除中',
+        description: `「${fileToDelete.title}」を削除しています...`,
+      });
+      
+      // 削除リクエストを送信
+      const response = await fetch(`/api/emergency-guide/delete/${fileToDelete.id}`, {
+        method: 'DELETE'
+      });
+      
+      // レスポンスを確認
+      if (response.ok) {
+        // 削除成功メッセージを表示
+        toast({
+          title: '削除完了',
+          description: `「${fileToDelete.title}」を削除しました`,
+        });
+        
+        // 一覧から該当項目を削除（クライアント側で即時反映）
+        setGuideFiles(prevFiles => 
+          prevFiles.filter(f => f.id !== fileToDelete.id)
+        );
+        
+        // サーバー側の処理完了を待つため十分な遅延を設定
+        console.log(`ID=${fileToDelete.id}を削除しました。リスト更新を待機中...`);
+        
+        // サーバーキャッシュをクリア
+        try {
+          console.log('サーバーキャッシュをクリア中...');
+          await fetch('/api/tech-support/clear-cache', {
+            method: 'POST',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          console.log('サーバーキャッシュクリア完了');
+        } catch (e) {
+          console.error('キャッシュクリア失敗:', e);
+        }
+        
+        // より長い遅延を設定してサーバー側の処理完了を確実に待つ (2.5秒)
+        setTimeout(() => {
+          console.log('サーバーからデータを再取得します...');
+          fetchGuideFiles();
+        }, 2500);
+      } else {
+        // エラーレスポンスの詳細を取得
+        const errorData = await response.json();
+        console.error('削除エラー (サーバー):', errorData);
+        throw new Error(errorData.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      // エラー処理
+      console.error('削除エラー:', error);
+      toast({
+        title: 'エラー',
+        description: error instanceof Error ? error.message : 'ファイルの削除に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setFileToDelete(null);
+    }
+  };
+  
   // 初期データの読み込み
   useEffect(() => {
     fetchGuideFiles();
@@ -540,6 +620,18 @@ const EmergencyGuideEdit: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex flex-col gap-6">
         {/* ヘッダー - ページ上部に既にタイトルがあるので削除 */}
+        
+        {/* 削除確認ダイアログ */}
+        <WarningDialog
+          open={showDeleteDialog}
+          title="ファイル削除の確認"
+          message={fileToDelete ? `「${fileToDelete.title}」を削除してもよろしいですか？\n削除すると元に戻せません。` : ''}
+          onCancel={() => {
+            setShowDeleteDialog(false);
+            setFileToDelete(null);
+          }}
+          onConfirm={handleDeleteGuide}
+        />
         
         {/* ガイドファイル一覧 */}
         <Card>
@@ -593,120 +685,10 @@ const EmergencyGuideEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
-                              onClick={async () => {
-                                // 削除ハンドラー
-                                const handleDeleteGuide = async () => {
-                                  // 削除処理
-                                  try {
-                                    // 削除開始メッセージを表示
-                                    toast({
-                                      title: '削除中',
-                                      description: `「${file.title}」を削除しています...`,
-                                    });
-                                    
-                                    // 削除リクエストを送信
-                                    const response = await fetch(`/api/emergency-guide/delete/${file.id}`, {
-                                      method: 'DELETE'
-                                    });
-                                    
-                                    // レスポンスを確認
-                                    if (response.ok) {
-                                      try {
-                                        // レスポンスデータを取得（JSONでない場合に備えて例外処理を追加）
-                                        const contentType = response.headers.get('content-type');
-                                        let result;
-                                        if (contentType && contentType.includes('application/json')) {
-                                          result = await response.json();
-                                          console.log('削除成功:', result);
-                                        } else {
-                                          console.log('削除成功: JSONではないレスポンス');
-                                        }
-                                        
-                                        // 削除成功メッセージを表示
-                                        toast({
-                                          title: '削除完了',
-                                          description: `「${file.title}」を削除しました`,
-                                        });
-                                        
-                                        // 一覧から該当項目を削除（クライアント側で即時反映）
-                                        setGuideFiles(prevFiles => 
-                                          prevFiles.filter(f => f.id !== file.id)
-                                        );
-                                        
-                                        // サーバー側の処理完了を待つため十分な遅延を設定
-                                        console.log(`ID=${file.id}を削除しました。リスト更新を待機中...`);
-                                        
-                                        // サーバーキャッシュをクリア
-                                        try {
-                                          console.log('サーバーキャッシュをクリア中...');
-                                          await fetch('/api/tech-support/clear-cache', {
-                                            method: 'POST',
-                                            headers: {
-                                              'Cache-Control': 'no-cache',
-                                              'Pragma': 'no-cache'
-                                            }
-                                          });
-                                          console.log('サーバーキャッシュクリア完了');
-                                        } catch (e) {
-                                          console.error('キャッシュクリア失敗:', e);
-                                        }
-                                        
-                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ (2.5秒)
-                                        setTimeout(async () => {
-                                          console.log('サーバーからデータを再取得します...');
-                                          fetchGuideFiles();
-                                        }, 2500);
-                                      } catch (parseError) {
-                                        console.error('JSONパースエラー:', parseError);
-                                        // JSONパースエラーでも成功としてUIを更新
-                                        toast({
-                                          title: '削除完了',
-                                          description: `「${file.title}」を削除しました`,
-                                        });
-                                        
-                                        // 一覧から該当項目を削除（クライアント側で即時反映）
-                                        setGuideFiles(prevFiles => 
-                                          prevFiles.filter(f => f.id !== file.id)
-                                        );
-                                        
-                                        // サーバー側の処理完了を待つため十分な遅延を設定
-                                        console.log(`ID=${file.id}を削除しました（エラー処理後）。リスト更新を待機中...`);
-                                        
-                                        // より長い遅延を設定してサーバー側の処理完了を確実に待つ
-                                        setTimeout(async () => {
-                                          console.log('サーバーからデータを再取得します...');
-                                          
-                                          // サーバークリアコマンドを呼び出し
-                                          try {
-                                            await fetch('/api/tech-support/clear-cache', {
-                                              method: 'POST'
-                                            });
-                                          } catch (e) {
-                                            console.error('キャッシュクリア失敗:', e);
-                                          }
-                                          
-                                          // より長い遅延で確実に最新データを取得
-                                          setTimeout(() => {
-                                            fetchGuideFiles();
-                                          }, 500);
-                                        }, 2000); // 2秒待機
-                                      }
-                                    } else {
-                                      // エラーレスポンスの詳細を取得
-                                      const errorData = await response.json();
-                                      console.error('削除エラー (サーバー):', errorData);
-                                      throw new Error(errorData.error || '削除に失敗しました');
-                                    }
-                                  } catch (error) {
-                                    // エラー処理
-                                    console.error('削除エラー:', error);
-                                    toast({
-                                      title: 'エラー',
-                                      description: error instanceof Error ? error.message : 'ファイルの削除に失敗しました',
-                                      variant: 'destructive',
-                                    });
-                                  }
-                                }
+                              onClick={() => {
+                                // 削除確認ダイアログを表示するためのデータをセット
+                                setFileToDelete(file);
+                                setShowDeleteDialog(true);
                               }}
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
@@ -972,46 +954,6 @@ const EmergencyGuideEdit: React.FC = () => {
                         </TableBody>
                       </Table>
                     )}
-                    
-                    {/* 接続番号追加ダイアログ */}
-                    <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>新しい接続番号を追加</DialogTitle>
-                          <DialogDescription>
-                            追加する接続番号の情報を入力してください
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="connection-label">ラベル (場所)</Label>
-                            <Input
-                              id="connection-label"
-                              value={newConnection.label}
-                              onChange={(e) => setNewConnection({ ...newConnection, label: e.target.value })}
-                              placeholder="例: スライド1の本文"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="connection-value">接続番号</Label>
-                            <Input
-                              id="connection-value"
-                              value={newConnection.value}
-                              onChange={(e) => setNewConnection({ ...newConnection, value: e.target.value })}
-                              placeholder="例: 123"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setShowConnectionDialog(false)}>
-                            キャンセル
-                          </Button>
-                          <Button onClick={addConnectionNumber}>
-                            追加
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -1019,145 +961,49 @@ const EmergencyGuideEdit: React.FC = () => {
           </Card>
         )}
         
-        {/* ガイド詳細表示シート */}
-        <Sheet open={showGuideDetailDialog} onOpenChange={setShowGuideDetailDialog}>
-          <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
-            <SheetHeader className="mb-5">
-              <SheetTitle>応急復旧データ詳細</SheetTitle>
-              <SheetDescription>
-                {guideData ? `${guideData.data.metadata.タイトル} (${formatDate(guideData.data.metadata.作成日)})` : '読み込み中...'}
-              </SheetDescription>
-            </SheetHeader>
-            
-            {guideData && (
-              <Tabs defaultValue="metadata" className="w-full">
-                <TabsList className="grid grid-cols-3 mb-4">
-                  <TabsTrigger value="metadata">メタデータ</TabsTrigger>
-                  <TabsTrigger value="slides">スライド内容</TabsTrigger>
-                  <TabsTrigger value="connections">接続番号</TabsTrigger>
-                </TabsList>
-                
-                {/* メタデータタブ */}
-                <TabsContent value="metadata">
-                  <div className="space-y-4">
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="title">タイトル</Label>
-                        <div className="p-2 border rounded-md bg-gray-50">{guideData?.data.metadata.タイトル}</div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="author">作成者</Label>
-                        <div className="p-2 border rounded-md bg-gray-50">{guideData?.data.metadata.作成者}</div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="description">説明</Label>
-                        <div className="p-2 border rounded-md bg-gray-50 min-h-[100px] whitespace-pre-wrap">
-                          {guideData?.data.metadata.説明}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                {/* スライド内容タブ */}
-                <TabsContent value="slides">
-                  <div className="space-y-8">
-                    {guideData?.data.slides.map((slide: any, slideIndex: number) => (
-                      <Card key={slideIndex} className="border-indigo-200">
-                        <CardHeader className="bg-indigo-50 rounded-t-lg">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg">
-                              スライド {slide.スライド番号}: {slide.タイトル}
-                            </CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                          <div className="grid gap-2">
-                            <Label>本文</Label>
-                            {slide.本文.map((text: string, textIndex: number) => (
-                              <div 
-                                key={textIndex}
-                                className="p-2 border rounded-md bg-gray-50 mb-2 whitespace-pre-wrap"
-                              >
-                                {text}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label>ノート</Label>
-                            <div className="p-2 border rounded-md bg-gray-50 whitespace-pre-wrap">
-                              {slide.ノート}
-                            </div>
-                          </div>
-                          
-                          {slide.画像テキスト && slide.画像テキスト.length > 0 && (
-                            <div className="grid gap-2">
-                              <Label>画像</Label>
-                              <div className="grid grid-cols-2 gap-4">
-                                {slide.画像テキスト.map((imgText: any, imgIndex: number) => (
-                                  <div key={imgIndex} className="border rounded-lg p-2">
-                                    <img 
-                                      src={imgText.画像パス} 
-                                      alt={`スライド${slide.スライド番号}の画像${imgIndex + 1}`}
-                                      className="w-full h-auto mb-2 rounded"
-                                    />
-                                    <p className="text-sm text-gray-600">{imgText.テキスト}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                {/* 接続番号タブ */}
-                <TabsContent value="connections">
-                  <div className="space-y-4">                    
-                    {connectionNumbers.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                        <p>接続番号が見つかりませんでした</p>
-                        <p className="text-sm mt-2">テキスト内の「接続番号: 数字」パターンを検索します</p>
-                      </div>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>場所</TableHead>
-                            <TableHead>接続番号</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {connectionNumbers.map((conn) => (
-                            <TableRow key={conn.id}>
-                              <TableCell>{conn.label}</TableCell>
-                              <TableCell>
-                                <Badge>{conn.value}</Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            )}
-            
-            <SheetFooter className="mt-6">
-              <Button variant="outline" onClick={() => setShowGuideDetailDialog(false)}>
-                閉じる
+        {/* 接続番号追加ダイアログ */}
+        <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>接続番号を追加</DialogTitle>
+              <DialogDescription>
+                新しい接続番号とその説明ラベルを入力してください
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="conn-label">説明ラベル</Label>
+                <Input
+                  id="conn-label"
+                  placeholder="例: ルーター背面の番号"
+                  value={newConnection.label}
+                  onChange={(e) => setNewConnection({ ...newConnection, label: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="conn-value">接続番号</Label>
+                <Input
+                  id="conn-value"
+                  placeholder="例: 0120123456"
+                  value={newConnection.value}
+                  onChange={(e) => setNewConnection({ ...newConnection, value: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConnectionDialog(false)}>
+                キャンセル
               </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-
+              <Button onClick={addConnectionNumber}>
+                追加
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* 保存確認ダイアログ */}
         <Dialog open={showSaveConfirmDialog} onOpenChange={setShowSaveConfirmDialog}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>変更内容の確認</DialogTitle>
               <DialogDescription>
@@ -1165,29 +1011,17 @@ const EmergencyGuideEdit: React.FC = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              <div className="space-y-2">
+              <ul className="list-disc pl-5 space-y-2">
                 {saveChanges.added > 0 && (
-                  <div className="flex items-center text-green-600">
-                    <Plus className="h-4 w-4 mr-2" />
-                    <span>新規追加項目: {saveChanges.added}件</span>
-                  </div>
+                  <li>新しい項目追加: {saveChanges.added}件</li>
                 )}
                 {saveChanges.modified > 0 && (
-                  <div className="flex items-center text-blue-600">
-                    <Pencil className="h-4 w-4 mr-2" />
-                    <span>更新項目: {saveChanges.modified}件</span>
-                  </div>
+                  <li>項目の変更: {saveChanges.modified}件</li>
                 )}
                 {saveChanges.deleted > 0 && (
-                  <div className="flex items-center text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    <span>削除項目: {saveChanges.deleted}件</span>
-                  </div>
+                  <li>項目の削除: {saveChanges.deleted}件</li>
                 )}
-              </div>
-              <p className="mt-4 text-sm text-gray-600">
-                保存すると既存のデータは上書きされます。削除した項目は完全に削除され、新規追加した項目がこのフローに追加されます。
-              </p>
+              </ul>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowSaveConfirmDialog(false)}>
@@ -1200,10 +1034,7 @@ const EmergencyGuideEdit: React.FC = () => {
                     保存中...
                   </>
                 ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-1" />
-                    変更を保存
-                  </>
+                  "保存"
                 )}
               </Button>
             </DialogFooter>
