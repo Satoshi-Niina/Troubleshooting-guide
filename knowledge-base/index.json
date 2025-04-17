@@ -1,3 +1,20 @@
 {
-  "documents": []
+  "documents": [
+    {
+      "id": "doc_1744853473706_826",
+      "title": "保守用車ナレッジ_1744853473363.txt",
+      "path": "/home/runner/workspace/knowledge-base/doc_1744853473706_826/保守用車ナレッジ_1744853473363.txt",
+      "type": "text",
+      "chunkCount": 83,
+      "addedAt": "2025-04-17T01:31:23.291Z"
+    },
+    {
+      "id": "doc_1744853532561_174",
+      "title": "MC応急処置サンプル_1744853495965.pptx",
+      "path": "/home/runner/workspace/knowledge-base/doc_1744853532561_174/MC応急処置サンプル_1744853495965.pptx",
+      "type": "powerpoint",
+      "chunkCount": 6,
+      "addedAt": "2025-04-17T01:32:14.566Z"
+    }
+  ]
 }
