@@ -177,13 +177,13 @@ const EmergencyFlowCreator: React.FC = () => {
   };
   
   return (
-    <Card className="w-full">
+    <Card className="w-full max-h-full overflow-auto">
       <CardHeader>
         <CardTitle>応急処置フロー生成</CardTitle>
         <CardDescription>ファイルアップロードまたはUIで応急処置フローを作成します</CardDescription>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="overflow-auto">
         <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="file">
@@ -330,7 +330,7 @@ const EmergencyFlowCreator: React.FC = () => {
           </TabsContent>
           
           {/* フロー編集タブコンテンツ */}
-          <TabsContent value="edit">
+          <TabsContent value="edit" className="overflow-auto max-h-[70vh]">
             <div className="mb-4 flex flex-col space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">既存のフローを編集</h3>

@@ -19,12 +19,12 @@ const EmergencyGuidePage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 h-full">
       <Helmet>
         <title>応急処置フロー生成 | 保守用車支援システム</title>
       </Helmet>
 
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-blue-800 mb-2">
           応急処置フロー生成
         </h1>
@@ -36,7 +36,7 @@ const EmergencyGuidePage: React.FC = () => {
       <Tabs
         defaultValue={activeTab}
         onValueChange={setActiveTab}
-        className="w-full"
+        className="w-full h-[calc(100vh-200px)]"
       >
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
@@ -44,15 +44,15 @@ const EmergencyGuidePage: React.FC = () => {
           <TabsTrigger value="edit">フロー編集</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upload" className="space-y-4">
+        <TabsContent value="upload" className="space-y-4 h-full overflow-auto">
           <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
         </TabsContent>
         
-        <TabsContent value="flow" className="space-y-4">
+        <TabsContent value="flow" className="space-y-4 h-full overflow-auto">
           <EmergencyFlowCreator />
         </TabsContent>
 
-        <TabsContent value="edit" className="space-y-4">
+        <TabsContent value="edit" className="space-y-4 h-full overflow-auto">
           <EmergencyGuideEdit />
         </TabsContent>
       </Tabs>
