@@ -337,7 +337,7 @@ router.post('/process', upload.single('file'), async (req, res) => {
           }
         }).then(async response => {
           if (response.ok) {
-            const generationResult = await response.json();
+            const generationResult = await response.json() as { flowData: { id: string } };
             console.log(`フロー生成成功: ${generationResult.flowData.id}`);
           } else {
             console.error('フロー生成エラー:', await response.text());
@@ -592,7 +592,7 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
       throw new Error('チャットへのメッセージ送信に失敗しました');
     }
     
-    const result = await response.json();
+    const result = await response.json() as { id: string };
     
     res.json({
       success: true,
