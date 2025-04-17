@@ -158,8 +158,8 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>応急復旧フローデータ編集</CardTitle>
-        <CardDescription>PowerPoint、Excel、PDF、またはJSONファイルから応急復旧データを生成します</CardDescription>
+        <CardTitle>応急処置フロー生成</CardTitle>
+        <CardDescription>PowerPoint、Excel、PDF、またはJSONファイルから応急処置フローを生成します</CardDescription>
       </CardHeader>
       <CardContent>
         {/* ファイル入力 (非表示) */}
