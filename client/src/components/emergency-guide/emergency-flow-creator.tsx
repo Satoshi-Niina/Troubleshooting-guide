@@ -178,25 +178,20 @@ const EmergencyFlowCreator: React.FC = () => {
   
   return (
     <Card className="w-full max-h-full overflow-auto">
-      <CardHeader>
-        <CardTitle>応急処置フロー生成</CardTitle>
-        <CardDescription>ファイルアップロードまたはUIで応急処置フローを作成します</CardDescription>
+      <CardHeader className="pb-2">
+        <CardDescription>ファイルをドラッグ＆ドロップするか、フローを新規作成します</CardDescription>
       </CardHeader>
       
       <CardContent className="overflow-auto">
         <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="file">
               <FolderOpen className="mr-2 h-4 w-4" />
-              ファイル読込み
+              既存ファイルの編集
             </TabsTrigger>
             <TabsTrigger value="create">
               <Plus className="mr-2 h-4 w-4" />
               新規フロー作成
-            </TabsTrigger>
-            <TabsTrigger value="edit">
-              <Edit className="mr-2 h-4 w-4" />
-              フロー編集
             </TabsTrigger>
           </TabsList>
           
@@ -327,129 +322,6 @@ const EmergencyFlowCreator: React.FC = () => {
               onCancel={handleCancelFlow}
               initialData={flowData}
             />
-          </TabsContent>
-          
-          {/* フロー編集タブコンテンツ */}
-          <TabsContent value="edit" className="overflow-auto max-h-[70vh]">
-            <div className="mb-4 flex flex-col space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">既存のフローを編集</h3>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => {
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = '.json';
-                    fileInput.onchange = async (e) => {
-                      const target = e.target as HTMLInputElement;
-                      if (target.files && target.files.length > 0) {
-                        const file = target.files[0];
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          try {
-                            const jsonData = JSON.parse(event.target?.result as string);
-                            setFlowData(jsonData);
-                            setActiveTab('create');
-                            toast({
-                              title: "読み込み成功",
-                              description: "フローデータを読み込みました。エディタで編集できます。",
-                            });
-                          } catch (error) {
-                            toast({
-                              title: "エラー",
-                              description: "JSONファイルの解析に失敗しました",
-                              variant: "destructive",
-                            });
-                          }
-                        };
-                        reader.readAsText(file);
-                      }
-                    };
-                    fileInput.click();
-                  }}>
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    JSONファイルを読み込む
-                  </Button>
-                </div>
-              </div>
-
-              {/* 既存フロー一覧 */}
-              <div className="border rounded-md p-4 bg-gray-50">
-                <div className="mb-4">
-                  <Label htmlFor="flow-search" className="text-sm font-medium">フロー検索</Label>
-                  <Input
-                    id="flow-search"
-                    placeholder="フロー名を入力して検索..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div 
-                    className="flex justify-between items-center p-3 border rounded-md bg-white hover:bg-blue-50 cursor-pointer"
-                    onClick={() => {
-                      // サンプルデータを読み込む例
-                      fetch('/api/emergency-flow/list')
-                        .then(response => response.json())
-                        .then(data => {
-                          if (data && data.length > 0) {
-                            // 最初のフローデータを選択
-                            return fetch(`/api/emergency-flow/detail/${data[0].id}`);
-                          }
-                          throw new Error('フローデータがありません');
-                        })
-                        .then(response => response.json())
-                        .then(flowData => {
-                          setFlowData(flowData);
-                          setActiveTab('create');
-                          toast({
-                            title: "読み込み成功",
-                            description: "フローデータを読み込みました。エディタで編集できます。",
-                          });
-                        })
-                        .catch(error => {
-                          toast({
-                            title: "エラー",
-                            description: error.message || "フローデータの読み込みに失敗しました",
-                            variant: "destructive",
-                          });
-                        });
-                    }}
-                  >
-                    <div>
-                      <h4 className="font-medium">エンジントラブルシューティング</h4>
-                      <p className="text-sm text-gray-500">最終更新: 2025/04/17</p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div 
-                    className="flex justify-between items-center p-3 border rounded-md bg-white hover:bg-blue-50 cursor-pointer"
-                  >
-                    <div>
-                      <h4 className="font-medium">ブレーキ不具合応急処置</h4>
-                      <p className="text-sm text-gray-500">最終更新: 2025/04/16</p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div 
-                    className="flex justify-between items-center p-3 border rounded-md bg-white hover:bg-blue-50 cursor-pointer"
-                  >
-                    <div>
-                      <h4 className="font-medium">電装系故障対応</h4>
-                      <p className="text-sm text-gray-500">最終更新: 2025/04/15</p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </CardContent>
