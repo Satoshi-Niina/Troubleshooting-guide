@@ -2,16 +2,16 @@
   "id": "engine_trouble",
   "title": "エンジントラブルシューティング",
   "description": "エンジン関連の問題に対するトラブルシューティングガイド",
-  "trigger": ["エンジン", "始動", "停止", "出力低下"],
+  "triggerKeywords": ["エンジン", "始動", "停止", "出力低下"],
   "steps": [
     {
       "id": "start",
       "title": "始動確認",
       "message": "エンジンが始動しない症状ですか？",
       "options": [
-        { "text": "はい、まったく始動しない", "next": "check_battery" },
-        { "text": "始動するが不安定", "next": "check_fuel" },
-        { "text": "始動後すぐに停止する", "next": "check_fuel" }
+        { "text": "はい、まったく始動しない", "nextStep": "check_battery" },
+        { "text": "始動するが不安定", "nextStep": "check_fuel" },
+        { "text": "始動後すぐに停止する", "nextStep": "check_fuel" }
       ],
       "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
@@ -20,8 +20,8 @@
       "title": "バッテリー確認",
       "message": "バッテリー電圧を確認してください。12V以上ありますか？",
       "options": [
-        { "text": "24V以上ある", "next": "check_starter" },
-        { "text": "24V未満", "next": "replace_battery" }
+        { "text": "24V以上ある", "nextStep": "check_starter" },
+        { "text": "24V未満", "nextStep": "replace_battery" }
       ],
       "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
@@ -29,7 +29,7 @@
       "id": "replace_battery",
       "title": "バッテリー交換",
       "message": "バッテリーの充電または交換が必要です。充電後に再度お試しください。",
-      "options": [{ "text": "バッテリーを充電/交換した", "next": "start" }],
+      "options": [{ "text": "バッテリーを充電/交換した", "nextStep": "start" }],
       "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
@@ -37,53 +37,60 @@
       "title": "スターターモーター確認",
       "message": "スターターモーターが回転していますか？",
       "options": [
-        { "text": "スターターは回転している", "next": "check_fuel" },
-        { "text": "スターターが回転しない", "next": "replace_starter" }
-      ]
+        { "text": "スターターは回転している", "nextStep": "check_fuel" },
+        { "text": "スターターが回転しない", "nextStep": "replace_starter" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "replace_starter",
       "title": "スターター修理",
       "message": "スターターモーターの修理または交換が必要です。整備担当者に連絡してください。",
-      "options": [{ "text": "整備担当者に連絡した", "next": "end" }]
+      "options": [{ "text": "整備担当者に連絡した", "nextStep": "end" }],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "check_fuel",
       "title": "燃料確認",
       "message": "燃料計を確認してください。十分な燃料がありますか？",
       "options": [
-        { "text": "燃料は十分ある", "next": "check_filter" },
-        { "text": "燃料が少ない", "next": "add_fuel" }
-      ]
+        { "text": "燃料は十分ある", "nextStep": "check_filter" },
+        { "text": "燃料が少ない", "nextStep": "add_fuel" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "add_fuel",
       "title": "給油",
       "message": "給油後に再度エンジン始動を試みてください。",
       "options": [
-        { "text": "給油後も症状が改善しない", "next": "check_filter" }
-      ]
+        { "text": "給油後も症状が改善しない", "nextStep": "check_filter" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "check_filter",
       "title": "フィルター確認",
       "message": "燃料フィルターが詰まっている可能性があります。点検してください。",
       "options": [
-        { "text": "フィルターを点検/交換した", "next": "end" },
-        { "text": "問題が解決しない", "next": "contact_support" }
-      ]
+        { "text": "フィルターを点検/交換した", "nextStep": "end" },
+        { "text": "問題が解決しない", "nextStep": "contact_support" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "contact_support",
       "title": "サポート連絡",
       "message": "技術サポートに連絡してください。症状と実施した対処法を伝えてください。",
-      "options": [{ "text": "わかりました", "next": "end" }]
+      "options": [{ "text": "わかりました", "nextStep": "end" }],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     },
     {
       "id": "end",
       "title": "終了",
       "message": "トラブルシューティングが完了しました。問題が解決しない場合は技術サポートにお問い合わせください。",
-      "options": []
+      "options": [],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
     }
   ]
 }

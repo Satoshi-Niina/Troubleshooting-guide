@@ -38,15 +38,15 @@ const storage = multer.diskStorage({
   }
 });
 
-// ファイルフィルター（PPTXのみ許可）
+// ファイルフィルター（PPTX、PDFとJSONを許可）
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedExtensions = ['.pptx', '.ppt'];
+  const allowedExtensions = ['.pptx', '.ppt', '.pdf', '.xlsx', '.xls', '.json'];
   const ext = path.extname(file.originalname).toLowerCase();
   
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('サポートされていないファイル形式です。PowerPointファイル (.pptx, .ppt) のみアップロードできます。'));
+    cb(new Error('サポートされていないファイル形式です。PowerPoint (.pptx, .ppt)、Excel (.xlsx, .xls)、PDF (.pdf)、またはJSON (.json) ファイルのみアップロードできます。'));
   }
 };
 
@@ -234,6 +234,43 @@ async function processPowerPointFile(filePath: string): Promise<any> {
   }
 }
 
+// JSONファイルを処理する関数
+async function processJsonFile(filePath: string): Promise<any> {
+  try {
+    const fileId = `guide_${Date.now()}`;
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const jsonData = JSON.parse(fileContent);
+    
+    // JSONデータを応急処置ガイド形式に変換
+    // この場合は既に応急処置フロー形式のJSONと想定
+    
+    // JSONファイルをコピー
+    const jsonFilePath = path.join(jsonDir, `${fileId}_metadata.json`);
+    fs.copyFileSync(filePath, jsonFilePath);
+    
+    // ナレッジベースディレクトリにも保存（画像パスはナレッジベースの相対パスを使用）
+    const knowledgeBasePath = path.join('knowledge-base', 'troubleshooting', path.basename(filePath));
+    fs.copyFileSync(filePath, knowledgeBasePath);
+    
+    // タイトルなどの情報を取得
+    const title = jsonData.title || path.basename(filePath, '.json');
+    const slideCount = jsonData.steps ? jsonData.steps.length : 0;
+    
+    return {
+      id: fileId,
+      filePath: jsonFilePath,
+      fileName: path.basename(filePath),
+      title,
+      createdAt: new Date().toISOString(),
+      slideCount,
+      data: jsonData
+    };
+  } catch (error) {
+    console.error('JSONファイル処理エラー:', error);
+    throw error;
+  }
+}
+
 // ファイルアップロードと処理のエンドポイント
 router.post('/process', upload.single('file'), async (req, res) => {
   try {
@@ -242,9 +279,37 @@ router.post('/process', upload.single('file'), async (req, res) => {
     }
     
     const filePath = req.file.path;
-    log(`PowerPointファイル処理: ${filePath}`);
+    const fileExtension = path.extname(filePath).toLowerCase();
     
-    const result = await processPowerPointFile(filePath);
+    let result;
+    
+    // ファイル形式に応じた処理
+    if (fileExtension === '.json') {
+      log(`JSONファイル処理: ${filePath}`);
+      result = await processJsonFile(filePath);
+    } else if (['.pptx', '.ppt'].includes(fileExtension)) {
+      log(`PowerPointファイル処理: ${filePath}`);
+      result = await processPowerPointFile(filePath);
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'サポートされていないファイル形式です。現在の処理はPowerPointとJSONのみサポートしています。' 
+      });
+    }
+    
+    // JSONに保存されている画像パスがナレッジベース形式に変換されていることを確認
+    if (fileExtension === '.json') {
+      // ナレッジベースディレクトリのパスを確保
+      const knowledgeBaseDir = path.join('knowledge-base');
+      if (!fs.existsSync(knowledgeBaseDir)) {
+        fs.mkdirSync(knowledgeBaseDir, { recursive: true });
+      }
+      
+      const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
+      if (!fs.existsSync(knowledgeBaseImagesDir)) {
+        fs.mkdirSync(knowledgeBaseImagesDir, { recursive: true });
+      }
+    }
     
     return res.json({
       success: true,
@@ -272,20 +337,60 @@ router.get('/list', (_req, res) => {
       .filter(file => file.endsWith('_metadata.json'));
     
     const guides = files.map(file => {
-      const filePath = path.join(jsonDir, file);
-      const content = fs.readFileSync(filePath, 'utf8');
-      const data = JSON.parse(content);
-      
-      const id = file.split('_')[0] + '_' + file.split('_')[1];
-      
-      return {
-        id,
-        filePath,
-        fileName: file,
-        title: data.metadata.タイトル,
-        createdAt: data.metadata.作成日,
-        slideCount: data.slides.length
-      };
+      try {
+        const filePath = path.join(jsonDir, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const data = JSON.parse(content);
+        
+        const id = file.split('_')[0] + '_' + file.split('_')[1];
+        
+        // JSONデータの形式に応じて処理
+        // 通常のPowerPoint由来の形式
+        if (data.metadata && data.slides) {
+          return {
+            id,
+            filePath,
+            fileName: file,
+            title: data.metadata.タイトル,
+            createdAt: data.metadata.作成日,
+            slideCount: data.slides.length
+          };
+        } 
+        // JSON由来の応急処置フロー形式
+        else if (data.title && data.steps) {
+          return {
+            id,
+            filePath,
+            fileName: file,
+            title: data.title,
+            createdAt: data.createdAt || new Date().toISOString(),
+            slideCount: data.steps.length
+          };
+        } 
+        // その他の形式の場合はファイル名をタイトルとして使用
+        else {
+          return {
+            id,
+            filePath,
+            fileName: file,
+            title: path.basename(file, '_metadata.json'),
+            createdAt: new Date().toISOString(),
+            slideCount: 0
+          };
+        }
+      } catch (err) {
+        console.error(`ファイル処理エラー: ${file}`, err);
+        // エラーの場合は最低限の情報を返す
+        const id = file.split('_')[0] + '_' + file.split('_')[1];
+        return {
+          id,
+          filePath: path.join(jsonDir, file),
+          fileName: file,
+          title: `エラー: ${path.basename(file, '_metadata.json')}`,
+          createdAt: new Date().toISOString(),
+          slideCount: 0
+        };
+      }
     });
     
     res.json(guides);
@@ -377,6 +482,22 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
     const content = fs.readFileSync(filePath, 'utf8');
     const guideData = JSON.parse(content);
     
+    // JSONデータの形式に応じてメッセージ内容を作成
+    let messageContent = '';
+    
+    // PowerPoint由来の形式の場合
+    if (guideData.metadata && guideData.slides) {
+      messageContent = `応急処置ガイド「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`;
+    } 
+    // JSON由来の応急処置フロー形式の場合
+    else if (guideData.title && guideData.description) {
+      messageContent = `応急処置ガイド「${guideData.title}」が共有されました。\n\n${guideData.description}`;
+    }
+    // その他の形式の場合
+    else {
+      messageContent = `応急処置ガイド「${path.basename(filePath, '_metadata.json')}」が共有されました。`;
+    }
+    
     // チャットにメッセージを送信するAPIを呼び出す
     const response = await fetch(`http://localhost:${process.env.PORT || 3000}/api/chats/${chatId}/messages/system`, {
       method: 'POST',
@@ -384,7 +505,7 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        content: `応急処置ガイド「${guideData.metadata.タイトル}」が共有されました。\n\n${guideData.metadata.説明}`,
+        content: messageContent,
         isUserMessage: false
       })
     });

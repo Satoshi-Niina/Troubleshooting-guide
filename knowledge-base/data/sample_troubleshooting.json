@@ -1,0 +1,75 @@
+{
+  "id": "sample_troubleshooting",
+  "title": "サンプルトラブルシューティングフロー",
+  "description": "アップロードテスト用のサンプルトラブルシューティングフロー",
+  "triggerKeywords": ["サンプル", "テスト", "アップロード"],
+  "steps": [
+    {
+      "id": "start",
+      "title": "問題の特定",
+      "message": "どのような問題が発生していますか？",
+      "options": [
+        { "text": "問題A", "nextStep": "problem_a" },
+        { "text": "問題B", "nextStep": "problem_b" },
+        { "text": "その他", "nextStep": "other_problem" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "problem_a",
+      "title": "問題Aの対処",
+      "message": "問題Aに対する対処法はこちらです。手順に従って実施してください。",
+      "options": [
+        { "text": "対処済み", "nextStep": "resolved" },
+        { "text": "解決しない", "nextStep": "contact_support" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "problem_b",
+      "title": "問題Bの対処",
+      "message": "問題Bに対する対処法はこちらです。手順に従って実施してください。",
+      "options": [
+        { "text": "対処済み", "nextStep": "resolved" },
+        { "text": "解決しない", "nextStep": "contact_support" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "other_problem",
+      "title": "その他の問題",
+      "message": "詳細な情報が必要です。技術サポートへの連絡をお勧めします。",
+      "options": [
+        { "text": "技術サポートへ連絡", "nextStep": "contact_support" },
+        { "text": "再度確認する", "nextStep": "start" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "resolved",
+      "title": "解決完了",
+      "message": "問題が解決しました。他に問題がありますか？",
+      "options": [
+        { "text": "はい、別の問題がある", "nextStep": "start" },
+        { "text": "いいえ、すべて解決", "nextStep": "end" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "contact_support",
+      "title": "サポート連絡",
+      "message": "技術サポートに連絡してください。以下の連絡先にお問い合わせください：support@example.com",
+      "options": [
+        { "text": "了解しました", "nextStep": "end" }
+      ],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "message": "トラブルシューティングを終了します。ご利用ありがとうございました。",
+      "options": [],
+      "imageUrl": "/knowledge-base/images/engine_001.svg"
+    }
+  ]
+}
