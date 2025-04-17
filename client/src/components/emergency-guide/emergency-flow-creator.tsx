@@ -260,7 +260,7 @@ const EmergencyFlowCreator: React.FC = () => {
                 ) : uploadSuccess ? (
                   <>完了</>
                 ) : (
-                  <>アップロード</>
+                  <>読込み</>
                 )}
               </Button>
             </div>

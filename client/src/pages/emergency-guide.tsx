@@ -19,12 +19,12 @@ const EmergencyGuidePage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 h-full">
+    <div className="w-full h-screen overflow-hidden p-4">
       <Helmet>
         <title>応急処置フロー生成 | 保守用車支援システム</title>
       </Helmet>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-blue-800 mb-2">
           応急処置フロー生成
         </h1>
@@ -36,7 +36,7 @@ const EmergencyGuidePage: React.FC = () => {
       <Tabs
         defaultValue={activeTab}
         onValueChange={setActiveTab}
-        className="w-full h-[calc(100vh-200px)]"
+        className="w-full h-[calc(100vh-120px)]"
       >
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>

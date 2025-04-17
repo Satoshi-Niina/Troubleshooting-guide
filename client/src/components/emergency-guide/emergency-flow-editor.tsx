@@ -174,6 +174,7 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   // フロータイトルと説明
   const [flowTitle, setFlowTitle] = useState<string>(initialData?.title || '新規応急処置フロー');
   const [flowDescription, setFlowDescription] = useState<string>(initialData?.description || '');
+  const [fileName, setFileName] = useState<string>(initialData?.fileName || '');
   
   // ノードドラッグ参照
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -408,6 +409,7 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
           </div>
           <CardDescription>
             ドラッグ＆ドロップでフローチャートを作成できます。ノードをクリックして詳細を編集してください。
+            {fileName && <div className="mt-2 text-sm font-medium text-blue-600">読込中のファイル: {fileName}</div>}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row h-[70vh]">
