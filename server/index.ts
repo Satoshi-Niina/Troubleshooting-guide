@@ -92,8 +92,8 @@ app.use((req, res, next) => {
         try {
           const syncResult = await axios.post('http://localhost:5000/api/tech-support/sync-knowledge-base?direction=uploads-to-kb');
           console.log('アップロードデータの同期結果:', syncResult.data);
-        } catch (syncErr) {
-          console.error('同期API呼び出しエラー:', syncErr.message);
+        } catch (syncErr: any) {
+          console.error('同期API呼び出しエラー:', syncErr?.message || '不明なエラー');
         }
       }, 3000);
     } catch (syncErr) {

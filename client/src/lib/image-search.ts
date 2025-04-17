@@ -571,20 +571,49 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       const formattedResults = searchResults.map(result => {
         const item = result.item;
         
-        // SVG/PNG画像パスの処理
-        let imageUrl = item.file || '';
-        let pngFallbackUrl = item.pngFallback || '';
+        // SVG/PNG画像パスの処理 - SVGとPNGの優先順位を変更
+        let svgUrl = '';
+        let pngUrl = '';
         
-        // スラッシュの処理 (パスの正規化)
+        // SVGとPNGのパスを識別
+        if (item.file) {
+          const fileLower = item.file.toLowerCase();
+          if (fileLower.endsWith('.svg')) {
+            svgUrl = item.file;
+          } else if (fileLower.endsWith('.png') || fileLower.endsWith('.jpg') || fileLower.endsWith('.jpeg')) {
+            pngUrl = item.file;
+          }
+        }
+        
+        // pngFallbackがある場合
+        if (item.pngFallback) {
+          pngUrl = item.pngFallback;
+        }
+        
+        // SVGファイル名からPNGファイル名を生成する場合（拡張子置換）
+        if (svgUrl && !pngUrl && svgUrl.toLowerCase().endsWith('.svg')) {
+          pngUrl = svgUrl.replace(/\.svg$/i, '.png');
+        }
+        
+        // PNGファイル名からSVGファイル名を生成する場合（拡張子置換）
+        if (pngUrl && !svgUrl && (pngUrl.toLowerCase().endsWith('.png') || pngUrl.toLowerCase().endsWith('.jpg') || pngUrl.toLowerCase().endsWith('.jpeg'))) {
+          svgUrl = pngUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+        }
+        
+        // 優先順位: SVGを優先する（メインURLはSVG）
+        let imageUrl = svgUrl || pngUrl || '';
+        let fallbackUrl = pngUrl || ''; // フォールバックはPNG
+        
+        // パスが相対パスの場合、絶対パスに変換
         if (imageUrl && !imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
           imageUrl = '/' + imageUrl;
         }
         
-        if (pngFallbackUrl && !pngFallbackUrl.startsWith('/') && !pngFallbackUrl.startsWith('http')) {
-          pngFallbackUrl = '/' + pngFallbackUrl;
+        if (fallbackUrl && !fallbackUrl.startsWith('/') && !fallbackUrl.startsWith('http')) {
+          fallbackUrl = '/' + fallbackUrl;
         }
         
-        // 画像の種類を決定
+        // 画像の種類を決定（SVGを優先）
         const imageType = imageUrl.toLowerCase().endsWith('.svg') ? 'svg-image' : 'image';
         
         // メタデータをJSON文字列に変換
@@ -603,8 +632,8 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
           id: item.id,
           title: item.title,
           type: imageType,
-          url: imageUrl,
-          pngFallbackUrl: pngFallbackUrl || undefined,
+          url: imageUrl,                   // SVGを優先
+          pngFallbackUrl: fallbackUrl,     // フォールバックとしてPNGを使用
           content: '', // テキスト表示を無効化
           relevance: (1 - (result.score || 0)) * 100, // スコアをパーセンテージの関連度に変換
           metadata_json: metadataStr, // JSONとして処理できるようにメタデータを文字列化

@@ -241,9 +241,9 @@ export default function ImagePreviewModal() {
             </Button>
           )}
           
-          {/* メイン画像 - 最初からPNG代替を使用してチラつきを防止 */}
+          {/* メイン画像 - SVGを優先表示 */}
           <img 
-            src={fixImagePath(pngFallbackUrl || imageUrl)} 
+            src={fixImagePath(imageUrl || pngFallbackUrl || '')} 
             alt={currentSlideInfo?.タイトル || "拡大画像"} 
             className="max-w-full max-h-[70vh] object-contain rounded-lg border border-blue-500"
             loading="eager"
@@ -359,7 +359,7 @@ export default function ImagePreviewModal() {
                 }}
               >
                 <img 
-                  src={fixImagePath(slide.toLowerCase().endsWith('.svg') ? slide.replace(/\.svg$/i, '.png') : slide)} 
+                  src={fixImagePath(slide)} 
                   alt={`スライド ${index + 1}`}
                   className="h-16 w-24 object-cover"
                   loading="eager"
