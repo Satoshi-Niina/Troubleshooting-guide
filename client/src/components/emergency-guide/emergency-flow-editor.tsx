@@ -361,51 +361,48 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     <div className="flex flex-col h-full">
       <Card className="flex-1">
         <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <CardTitle>応急処置フロー作成</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => {
-                // 現在のフローデータをJSON文字列に変換
-                const flowData = {
-                  id: flowId,
-                  title: flowTitle,
-                  description: flowDescription,
-                  nodes: nodes,
-                  edges: edges,
-                  edgeLabels: edges.reduce((labels, edge) => {
-                    if (edge.label) {
-                      return { ...labels, [edge.id]: edge.label };
-                    }
-                    return labels;
-                  }, {}),
-                };
-                
-                // Blobを作成してダウンロード
-                const jsonStr = JSON.stringify(flowData, null, 2);
-                const blob = new Blob([jsonStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                // ダウンロードリンクを作成して自動クリック
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${flowTitle.replace(/\s+/g, '_')}_${Date.now()}.json`;
-                document.body.appendChild(a);
-                a.click();
-                
-                // クリーンアップ
-                URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-                toast({
-                  title: "JSONファイルをダウンロードしました",
-                  description: "フローデータをJSONファイルとして保存しました",
-                });
-              }}>
-                <Download className="mr-1 h-4 w-4" />JSONダウンロード
-              </Button>
-              <Button variant="outline" size="sm" onClick={onCancel}><X className="mr-1 h-4 w-4" />キャンセル</Button>
-              <Button size="sm" onClick={handleSave}><Save className="mr-1 h-4 w-4" />保存</Button>
-            </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              // 現在のフローデータをJSON文字列に変換
+              const flowData = {
+                id: flowId,
+                title: flowTitle,
+                description: flowDescription,
+                nodes: nodes,
+                edges: edges,
+                edgeLabels: edges.reduce((labels, edge) => {
+                  if (edge.label) {
+                    return { ...labels, [edge.id]: edge.label };
+                  }
+                  return labels;
+                }, {}),
+              };
+              
+              // Blobを作成してダウンロード
+              const jsonStr = JSON.stringify(flowData, null, 2);
+              const blob = new Blob([jsonStr], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              
+              // ダウンロードリンクを作成して自動クリック
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${flowTitle.replace(/\s+/g, '_')}_${Date.now()}.json`;
+              document.body.appendChild(a);
+              a.click();
+              
+              // クリーンアップ
+              URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              
+              toast({
+                title: "JSONファイルをダウンロードしました",
+                description: "フローデータをJSONファイルとして保存しました",
+              });
+            }}>
+              <Download className="mr-1 h-4 w-4" />JSONダウンロード
+            </Button>
+            <Button variant="outline" size="sm" onClick={onCancel}><X className="mr-1 h-4 w-4" />キャンセル</Button>
+            <Button size="sm" onClick={handleSave}><Save className="mr-1 h-4 w-4" />保存</Button>
           </div>
           <CardDescription>
             ドラッグ＆ドロップでフローチャートを作成できます。ノードをクリックして詳細を編集してください。

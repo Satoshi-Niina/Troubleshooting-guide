@@ -240,7 +240,7 @@ const EmergencyFlowCreator: React.FC = () => {
   return (
     <Card className="w-full max-h-full overflow-auto">
       <CardHeader className="pb-2">
-        <CardDescription>ファイルをドラッグ＆ドロップするか、フローを新規作成します</CardDescription>
+        <CardDescription>応急処置データ管理：新規作成・キャラクターデザイン・テキストフロー編集</CardDescription>
       </CardHeader>
       
       <CardContent className="overflow-auto">
@@ -263,7 +263,7 @@ const EmergencyFlowCreator: React.FC = () => {
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept=".pptx,.ppt,.xlsx,.xls,.pdf,.json"
+              accept=".json"
               className="hidden"
             />
             
@@ -290,10 +290,10 @@ const EmergencyFlowCreator: React.FC = () => {
                 <div>
                   <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
                   <p className="text-sm text-gray-600">
-                    クリックまたはファイルをドラッグ&ドロップしてください
+                    JSONファイルをクリックまたはドラッグ&ドロップしてください
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    PowerPoint, Excel, PDF, JSONファイルに対応
+                    読み込んだデータをReact Flowで編集できます
                   </p>
                 </div>
               )}
