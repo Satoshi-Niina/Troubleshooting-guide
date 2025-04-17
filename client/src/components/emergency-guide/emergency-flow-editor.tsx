@@ -71,19 +71,29 @@ const StepNode = memo(({ data }: NodeProps) => {
 
 const DecisionNode = memo(({ data }: NodeProps) => {
   return (
-    <div className="px-4 py-2 shadow-md rounded-md bg-yellow-100 border border-yellow-500 min-w-[150px]" style={{ 
+    <div className="shadow-md bg-yellow-100 border border-yellow-500" style={{ 
+      width: '140px',
+      height: '140px',
       transform: 'rotate(45deg)',
       transformOrigin: 'center',
-      width: '120px',
-      height: '120px',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      // ◇形を作るための調整
+      borderRadius: '5px',
+      position: 'relative'
     }}>
-      <div style={{ transform: 'rotate(-45deg)' }} className="text-center">
+      <div style={{ 
+        transform: 'rotate(-45deg)',
+        width: '130px',
+        padding: '0 10px',
+        position: 'absolute'
+      }} className="text-center">
         <div className="font-bold text-yellow-800">{data.label || '判断'}</div>
         {data.message && (
-          <div className="mt-2 text-sm text-gray-700">{data.message}</div>
+          <div className="mt-2 text-xs text-gray-700" style={{ maxHeight: '60px', overflow: 'hidden' }}>
+            {data.message}
+          </div>
         )}
       </div>
       
