@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+  <rect width="800" height="600" fill="#f0f0f0" />
+  <rect x="50" y="50" width="700" height="500" fill="#ffffff" stroke="#0066cc" stroke-width="2" />
+  <text x="400" y="100" font-family="Arial" font-size="32" text-anchor="middle" fill="#0066cc">車体フレーム構造</text>
+  
+  <!-- フレーム概要図 -->
+  <g transform="translate(150, 150)">
+    <!-- 車体外形 -->
+    <rect x="0" y="0" width="500" height="200" fill="none" stroke="#333333" stroke-width="3" rx="10" ry="10" />
+    
+    <!-- メインサイドメンバー（左右） -->
+    <rect x="20" y="40" width="460" height="20" fill="#666666" stroke="#333333" stroke-width="1" />
+    <rect x="20" y="140" width="460" height="20" fill="#666666" stroke="#333333" stroke-width="1" />
+    <text x="250" y="30" font-family="Arial" font-size="14" text-anchor="middle" fill="#333333">サイドメンバー</text>
+    
+    <!-- クロスメンバー（前部） -->
+    <rect x="40" y="40" width="20" height="120" fill="#888888" stroke="#333333" stroke-width="1" />
+    <text x="50" y="20" font-family="Arial" font-size="14" text-anchor="middle" fill="#333333">前部</text>
+    
+    <!-- クロスメンバー（中央） -->
+    <rect x="240" y="40" width="20" height="120" fill="#888888" stroke="#333333" stroke-width="1" />
+    <text x="250" y="180" font-family="Arial" font-size="14" text-anchor="middle" fill="#333333">中央クロスメンバー</text>
+    
+    <!-- クロスメンバー（後部） -->
+    <rect x="440" y="40" width="20" height="120" fill="#888888" stroke="#333333" stroke-width="1" />
+    <text x="450" y="20" font-family="Arial" font-size="14" text-anchor="middle" fill="#333333">後部</text>
+    
+    <!-- エンジンマウント -->
+    <circle cx="150" cy="100" r="15" fill="#cc0000" stroke="#333333" stroke-width="1" />
+    <text x="150" y="85" font-family="Arial" font-size="12" text-anchor="middle" fill="#333333">エンジン</text>
+    <text x="150" y="135" font-family="Arial" font-size="12" text-anchor="middle" fill="#333333">マウント</text>
+    
+    <!-- 運転キャビンマウント -->
+    <circle cx="350" cy="100" r="15" fill="#0066cc" stroke="#333333" stroke-width="1" />
+    <text x="350" y="85" font-family="Arial" font-size="12" text-anchor="middle" fill="#333333">キャビン</text>
+    <text x="350" y="135" font-family="Arial" font-size="12" text-anchor="middle" fill="#333333">マウント</text>
+  </g>
+  
+  <!-- 説明文 -->
+  <text x="400" y="450" font-family="Arial" font-size="16" text-anchor="middle" fill="#333333">
+    保守用車の車体フレーム構造図。サイドメンバーとクロスメンバーの配置を表示。
+  </text>
+  <text x="400" y="480" font-family="Arial" font-size="14" text-anchor="middle" fill="#333333">
+    フレームは高張力鋼を使用し、悪路走行にも耐える強度を確保しています。
+  </text>
+</svg>

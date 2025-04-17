@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <title>保守用車エンジン構造図</title>
+  <defs>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#CCCCCC;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#EEEEEE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#AAAAAA;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="coolant" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#88CCFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3399FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="oil" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFCC88;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF9933;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset result="offOut" in="SourceAlpha" dx="3" dy="3" />
+      <feGaussianBlur result="blurOut" in="offOut" stdDeviation="5" />
+      <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+    </filter>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="800" height="600" fill="#f7f7f7" />
+  
+  <!-- エンジンブロック -->
+  <rect x="200" y="150" width="400" height="300" rx="5" ry="5" fill="url(#metal)" stroke="#666" stroke-width="3" filter="url(#shadow)" />
+  
+  <!-- シリンダー -->
+  <g id="cylinders">
+    <circle cx="250" cy="200" r="40" fill="#444" stroke="#333" stroke-width="2" />
+    <circle cx="350" cy="200" r="40" fill="#444" stroke="#333" stroke-width="2" />
+    <circle cx="450" cy="200" r="40" fill="#444" stroke="#333" stroke-width="2" />
+    <circle cx="550" cy="200" r="40" fill="#444" stroke="#333" stroke-width="2" />
+    
+    <!-- ピストン -->
+    <circle cx="250" cy="200" r="35" fill="#777" stroke="#666" stroke-width="1" />
+    <circle cx="350" cy="200" r="35" fill="#777" stroke="#666" stroke-width="1" />
+    <circle cx="450" cy="200" r="35" fill="#777" stroke="#666" stroke-width="1" />
+    <circle cx="550" cy="200" r="35" fill="#777" stroke="#666" stroke-width="1" />
+  </g>
+  
+  <!-- クランクシャフト -->
+  <rect x="170" y="300" width="460" height="20" rx="5" ry="5" fill="#555" stroke="#333" stroke-width="2" />
+  
+  <!-- コネクティングロッド -->
+  <g id="rods">
+    <line x1="250" y1="235" x2="270" y2="300" stroke="#666" stroke-width="6" />
+    <line x1="350" y1="235" x2="330" y2="300" stroke="#666" stroke-width="6" />
+    <line x1="450" y1="235" x2="470" y2="300" stroke="#666" stroke-width="6" />
+    <line x1="550" y1="235" x2="530" y2="300" stroke="#666" stroke-width="6" />
+  </g>
+  
+  <!-- 冷却系統 -->
+  <path d="M600 180 Q630 150, 650 180 Q670 210, 690 180 L690 300 Q670 330, 650 300 Q630 270, 610 300 L610 180" fill="url(#coolant)" stroke="#3399FF" stroke-width="2" opacity="0.8" />
+  
+  <!-- 潤滑系統 -->
+  <rect x="200" y="450" width="400" height="50" rx="5" ry="5" fill="url(#oil)" stroke="#FF9933" stroke-width="2" />
+  <path d="M230 450 L230 350 L280 350 L280 450" fill="url(#oil)" stroke="#FF9933" stroke-width="2" opacity="0.7" />
+  <path d="M520 450 L520 350 L570 350 L570 450" fill="url(#oil)" stroke="#FF9933" stroke-width="2" opacity="0.7" />
+  
+  <!-- ラベル -->
+  <g font-family="Arial" font-size="16" fill="#333">
+    <text x="400" y="140" text-anchor="middle" font-weight="bold">保守用車ディーゼルエンジン構造図</text>
+    <text x="250" y="180" text-anchor="middle">シリンダー</text>
+    <text x="400" y="320" text-anchor="middle">クランクシャフト</text>
+    <text x="650" y="240" text-anchor="middle">冷却系統</text>
+    <text x="400" y="480" text-anchor="middle">潤滑系統</text>
+    <text x="600" y="400" text-anchor="middle" font-size="12">水温計</text>
+    <text x="310" y="400" text-anchor="middle" font-size="12">オイルフィルター</text>
+  </g>
+  
+  <!-- 水温計 -->
+  <circle cx="600" cy="350" r="15" fill="#FFFFFF" stroke="#333" stroke-width="2" />
+  <path d="M600 335 L600 365" stroke="#FF3333" stroke-width="2" />
+  <path d="M585 350 L615 350" stroke="#333" stroke-width="1" />
+  
+  <!-- オイルフィルター -->
+  <rect x="270" y="370" width="80" height="40" rx="5" ry="5" fill="#DDDDDD" stroke="#333" stroke-width="2" />
+  <line x1="280" y1="380" x2="340" y2="380" stroke="#333" stroke-width="1" />
+  <line x1="280" y1="390" x2="340" y2="390" stroke="#333" stroke-width="1" />
+  <line x1="280" y1="400" x2="340" y2="400" stroke="#333" stroke-width="1" />
+</svg>
