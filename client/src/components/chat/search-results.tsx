@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
 import { cancelSearch } from "@/lib/image-search";
 
-// 画像パスを修正するヘルパー関数 - すべて/uploads/imagesパスに統一
+// 画像パスを修正するヘルパー関数 - パスを適切に変換
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
@@ -13,12 +13,14 @@ function fixImagePath(path: string | undefined): string {
     return path;
   }
   
-  // knowledge-base/images/ パスを /uploads/images/ に統一
+  // knowledge-base/images/ パスはそのまま維持
   if (path.includes('/knowledge-base/images/')) {
-    const fileName = path.split('/').pop();
-    if (fileName) {
-      return `/uploads/images/${fileName}`;
-    }
+    return path;
+  }
+  
+  // /images/ から始まる場合は /knowledge-base/images/ に変換
+  if (path.startsWith('/images/')) {
+    return path.replace('/images/', '/knowledge-base/images/');
   }
   
   // /uploads/ から始まるがサブフォルダが不明確な場合

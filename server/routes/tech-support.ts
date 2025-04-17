@@ -290,8 +290,8 @@ router.post('/init-image-search-data', async (req, res) => {
     const initialData = [
       {
         id: "engine_001",
-        file: "/images/engine_001.svg",
-        pngFallback: "/images/engine_001.png",
+        file: "/knowledge-base/images/engine_001.svg",
+        pngFallback: "/knowledge-base/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -299,8 +299,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cooling_001",
-        file: "/images/cooling_001.svg",
-        pngFallback: "/images/cooling_001.png",
+        file: "/knowledge-base/images/cooling_001.svg",
+        pngFallback: "/knowledge-base/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -308,8 +308,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "frame_001",
-        file: "/images/frame_001.svg",
-        pngFallback: "/images/frame_001.png",
+        file: "/knowledge-base/images/frame_001.svg",
+        pngFallback: "/knowledge-base/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -317,8 +317,8 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cabin_001",
-        file: "/images/cabin_001.svg",
-        pngFallback: "/images/cabin_001.png",
+        file: "/knowledge-base/images/cabin_001.svg",
+        pngFallback: "/knowledge-base/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],
