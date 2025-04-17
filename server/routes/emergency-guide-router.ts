@@ -552,7 +552,7 @@ router.delete('/delete/:id', (req, res) => {
       console.log(`JSONファイルを削除しました: ${filePath}`);
     }
     
-    // 関連する画像ファイルを削除（オプション）
+    // 関連する画像ファイルを削除
     try {
       if (fs.existsSync(kbImageDir)) {
         const imageFiles = fs.readdirSync(kbImageDir);
@@ -639,83 +639,6 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   } catch (error) {
     console.error('ガイド送信エラー:', error);
     res.status(500).json({ error: '応急処置ガイドのチャットへの送信に失敗しました' });
-  }
-});
-
-// 応急処置ガイドの削除エンドポイント
-router.delete('/delete/:id', async (req: Request, res: Response) => {
-  try {
-    const guideId = req.params.id;
-    console.log(`応急処置ガイド削除リクエスト: ID=${guideId}`);
-    
-    // 知識ベースJson（メタデータ）ディレクトリから直接ファイルを検索
-    if (!fs.existsSync(kbJsonDir)) {
-      return res.status(404).json({ error: 'JSONディレクトリが見つかりません' });
-    }
-    
-    // 削除すべきJSONファイル名を探す
-    const jsonFiles = fs.readdirSync(kbJsonDir);
-    const targetFile = jsonFiles.find(file => file.startsWith(guideId));
-    
-    if (!targetFile) {
-      return res.status(404).json({ error: `指定されたガイド (ID: ${guideId}) が見つかりません` });
-    }
-    
-    // ファイルパス
-    const filePath = path.join(kbJsonDir, targetFile);
-    
-    // ファイルに関連する情報を保存
-    const fileName = targetFile;
-    let title = `ファイル_${guideId}`;
-    
-    // JSONファイルの内容を読み取り、タイトルなどを取得
-    try {
-      const content = fs.readFileSync(filePath, 'utf8');
-      const data = JSON.parse(content);
-      
-      if (data.metadata && data.metadata.タイトル) {
-        title = data.metadata.タイトル;
-      } else if (data.title) {
-        title = data.title;
-      }
-    } catch (readError) {
-      console.warn(`削除前のファイル内容読み取りに失敗: ${filePath}`, readError);
-    }
-    
-    // ファイルを削除
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`JSONファイルを削除しました: ${filePath}`);
-    }
-    
-    // 関連する画像ファイルを削除（オプション）
-    try {
-      if (fs.existsSync(kbImageDir)) {
-        const imageFiles = fs.readdirSync(kbImageDir);
-        const relatedImages = imageFiles.filter(img => img.startsWith(guideId));
-        
-        for (const imgFile of relatedImages) {
-          const imgPath = path.join(kbImageDir, imgFile);
-          fs.unlinkSync(imgPath);
-          console.log(`関連画像を削除しました: ${imgPath}`);
-        }
-      }
-    } catch (imgError) {
-      console.warn('関連画像の削除中にエラーが発生しました:', imgError);
-    }
-    
-    console.log(`応急処置ガイドを削除しました: ID=${guideId}, タイトル=${title}`);
-    
-    return res.json({
-      success: true,
-      message: `応急処置ガイド「${title}」を削除しました`
-    });
-  } catch (error) {
-    console.error('応急処置ガイド削除エラー:', error);
-    return res.status(500).json({ 
-      error: '応急処置ガイドの削除に失敗しました',
-      details: error instanceof Error ? error.message : String(error)
-    });
   }
 });
 
