@@ -164,8 +164,18 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   }, [toast, onComplete]);
 
   // オプション選択時の処理
-  const handleOptionSelect = (next: string) => {
-    goToNextStep(next);
+  const handleOptionSelect = (option: { next?: string, nextStep?: string }) => {
+    // nextStepを優先的に使用し、なければnextを使用
+    const nextStepId = option.nextStep || option.next;
+    if (!nextStepId) {
+      toast({
+        title: 'エラー',
+        description: '次のステップが指定されていません',
+        variant: 'destructive',
+      });
+      return;
+    }
+    goToNextStep(nextStepId);
   };
 
   // 次へボタンクリック時の処理
@@ -178,9 +188,10 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       return;
     }
     
-    // 次のステップIDがある場合はそのステップへ
-    if (currentStep.next) {
-      goToNextStep(currentStep.next);
+    // 次のステップIDがある場合はそのステップへ（nextStepを優先）
+    const nextStepId = currentStep.nextStep || currentStep.next;
+    if (nextStepId) {
+      goToNextStep(nextStepId);
     }
   };
 
@@ -349,7 +360,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 key={index}
                 variant="outline"
                 className="w-full text-left justify-start h-auto py-2 mb-2"
-                onClick={() => handleOptionSelect(option.next)}
+                onClick={() => handleOptionSelect(option)}
               >
                 {option.label || option.text}
               </Button>
@@ -399,7 +410,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
               </Button>
             )}
             
-            {(currentStep.next || currentStep.end) && (
+            {(currentStep.next || currentStep.nextStep || currentStep.end) && (
               <Button
                 onClick={handleNextStep}
                 disabled={currentStep.checklist && !isChecklistComplete()}
