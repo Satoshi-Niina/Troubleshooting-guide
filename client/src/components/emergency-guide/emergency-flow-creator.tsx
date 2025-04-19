@@ -315,8 +315,8 @@ const EmergencyFlowCreator: React.FC = () => {
         // フローリストを更新
         fetchFlowList();
         
-        // ファイル読込みタブに戻る
-        setActiveTab('file');
+        // ファイル編集タブに戻る
+        setCharacterDesignTab('file');
       } else {
         throw new Error(result.error || 'フローの保存に失敗しました');
       }
@@ -332,7 +332,7 @@ const EmergencyFlowCreator: React.FC = () => {
   
   // フロー作成キャンセルハンドラー
   const handleCancelFlow = () => {
-    setActiveTab('file');
+    setCharacterDesignTab('file');
   };
   
   // 新規フロー作成ハンドラー
@@ -340,7 +340,6 @@ const EmergencyFlowCreator: React.FC = () => {
     // 空のフローデータで初期化
     setFlowData(null);
     setUploadedFileName('');
-    setActiveTab('create');
     setCharacterDesignTab('new');
   };
   
