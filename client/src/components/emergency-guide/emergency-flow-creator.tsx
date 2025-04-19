@@ -200,8 +200,9 @@ const EmergencyFlowCreator: React.FC = () => {
             setUploadedFileName(selectedFile.name);
             setFlowData(jsonData);
             
-            // 読み込み成功したらエディタに切り替え
+            // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
             setActiveTab('create');
+            setCharacterDesignTab('new');
             setUploadSuccess(true);
             toast({
               title: "JSONファイル読込み成功",
@@ -339,6 +340,7 @@ const EmergencyFlowCreator: React.FC = () => {
     setFlowData(null);
     setUploadedFileName('');
     setActiveTab('create');
+    setCharacterDesignTab('new');
   };
   
   // キャラクター削除確認ダイアログを表示
@@ -366,8 +368,9 @@ const EmergencyFlowCreator: React.FC = () => {
         setUploadedFileName(flow.fileName || `${flow.title}.json`);
       }
       
-      // エディタタブに切り替え
+      // キャラクターデザインタブの「新規作成」に切り替え
       setActiveTab('create');
+      setCharacterDesignTab('new');
       
       toast({
         title: "フロー読込み",
@@ -569,14 +572,96 @@ const EmergencyFlowCreator: React.FC = () => {
             
             {/* キャラクターデザインタブコンテンツ */}
             <TabsContent value="create" className="h-full">
-              <EmergencyFlowEditor 
-                onSave={handleSaveFlow}
-                onCancel={handleCancelFlow}
-                initialData={{
-                  ...flowData,
-                  fileName: uploadedFileName || (flowData?.fileName || '')
-                }}
-              />
+              {/* キャラクターデザインのサブタブ */}
+              <Tabs value={characterDesignTab} onValueChange={setCharacterDesignTab} className="mt-2 mb-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="new">新規作成</TabsTrigger>
+                  <TabsTrigger value="file">ファイルから生成</TabsTrigger>
+                </TabsList>
+                
+                {/* 新規作成タブ - 既存のエディタをそのまま使用 */}
+                <TabsContent value="new" className="h-full mt-4">
+                  <EmergencyFlowEditor 
+                    onSave={handleSaveFlow}
+                    onCancel={handleCancelFlow}
+                    initialData={{
+                      ...flowData,
+                      fileName: uploadedFileName || (flowData?.fileName || '')
+                    }}
+                  />
+                </TabsContent>
+                
+                {/* ファイルから生成タブ */}
+                <TabsContent value="file" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors border-gray-300 hover:border-indigo-400 hover:bg-indigo-50"
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.click();
+                        }
+                      }}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">
+                        JSONファイルをクリックまたはドラッグ&ドロップしてください
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        既存のJSONデータからキャラクターを生成・編集できます
+                      </p>
+                    </div>
+                    
+                    {/* 保存済みフローリスト */}
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-medium">保存済みキャラクター一覧</h3>
+                        <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          更新
+                        </Button>
+                      </div>
+                      
+                      {isLoadingFlowList ? (
+                        <div className="py-4 text-center text-gray-500">読込中...</div>
+                      ) : flowList.length === 0 ? (
+                        <div className="py-4 text-center text-gray-500">保存済みのキャラクターはありません</div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {flowList.map(flow => (
+                            <Card key={flow.id} className="overflow-hidden">
+                              <CardHeader className="p-4 pb-2">
+                                <CardTitle className="text-md">{flow.title}</CardTitle>
+                                <CardDescription className="text-xs">
+                                  作成日: {new Date(flow.createdAt).toLocaleString()}
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="p-4 pt-2">
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => loadFlow(flow.id)}
+                                  >
+                                    編集
+                                  </Button>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => handleDeleteCharacter(flow.id)}
+                                  >
+                                    削除
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
             
             {/* テキスト編集タブコンテンツ */}
