@@ -102,12 +102,35 @@ const EmergencyFlowCreator: React.FC = () => {
             
             // データに nodes や edges がない場合は空の配列を設定
             // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            let nodes = jsonData.nodes || [];
+            let edges = jsonData.edges || [];
+            
+            // ノードのtypeフィールドが存在するか確認し、存在しない場合は設定する
+            nodes = nodes.map((node: any) => {
+              // nodeにtypeフィールドがない場合は追加
+              if (!node.type && node.id) {
+                // idからノードタイプを推測（キャラクターの種類を判別）
+                if (node.id === 'start') {
+                  return { ...node, type: 'start' };
+                } else if (node.id.includes('end')) {
+                  return { ...node, type: 'end' };
+                } else if (node.id.includes('decision')) {
+                  return { ...node, type: 'decision' };
+                } else {
+                  return { ...node, type: 'step' };
+                }
+              }
+              return node;
+            });
+            
+            // 更新されたデータをセット
             const enhancedData = {
               ...jsonData,
-              nodes: jsonData.nodes || [],
-              edges: jsonData.edges || []
+              nodes: nodes,
+              edges: edges
             };
             
+            console.log("更新されたフローデータ:", enhancedData);
             setFlowData(enhancedData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
@@ -117,6 +140,7 @@ const EmergencyFlowCreator: React.FC = () => {
               description: "フローデータをエディタで編集できます",
             });
           } catch (error) {
+            console.error("JSONパースエラー:", error);
             toast({
               title: "エラー",
               description: "JSONファイルの解析に失敗しました",
@@ -153,12 +177,35 @@ const EmergencyFlowCreator: React.FC = () => {
             
             // データに nodes や edges がない場合は空の配列を設定
             // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            let nodes = jsonData.nodes || [];
+            let edges = jsonData.edges || [];
+            
+            // ノードのtypeフィールドが存在するか確認し、存在しない場合は設定する
+            nodes = nodes.map((node: any) => {
+              // nodeにtypeフィールドがない場合は追加
+              if (!node.type && node.id) {
+                // idからノードタイプを推測（キャラクターの種類を判別）
+                if (node.id === 'start') {
+                  return { ...node, type: 'start' };
+                } else if (node.id.includes('end')) {
+                  return { ...node, type: 'end' };
+                } else if (node.id.includes('decision')) {
+                  return { ...node, type: 'decision' };
+                } else {
+                  return { ...node, type: 'step' };
+                }
+              }
+              return node;
+            });
+            
+            // 更新されたデータをセット
             const enhancedData = {
               ...jsonData,
-              nodes: jsonData.nodes || [],
-              edges: jsonData.edges || []
+              nodes: nodes,
+              edges: edges
             };
             
+            console.log("ドラッグ&ドロップで読み込んだフローデータ:", enhancedData);
             setFlowData(enhancedData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
@@ -168,6 +215,7 @@ const EmergencyFlowCreator: React.FC = () => {
               description: "フローデータをエディタで編集できます",
             });
           } catch (error) {
+            console.error("JSONパースエラー:", error);
             toast({
               title: "エラー",
               description: "JSONファイルの解析に失敗しました",
@@ -219,12 +267,35 @@ const EmergencyFlowCreator: React.FC = () => {
             
             // データに nodes や edges がない場合は空の配列を設定
             // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            let nodes = jsonData.nodes || [];
+            let edges = jsonData.edges || [];
+            
+            // ノードのtypeフィールドが存在するか確認し、存在しない場合は設定する
+            nodes = nodes.map((node: any) => {
+              // nodeにtypeフィールドがない場合は追加
+              if (!node.type && node.id) {
+                // idからノードタイプを推測（キャラクターの種類を判別）
+                if (node.id === 'start') {
+                  return { ...node, type: 'start' };
+                } else if (node.id.includes('end')) {
+                  return { ...node, type: 'end' };
+                } else if (node.id.includes('decision')) {
+                  return { ...node, type: 'decision' };
+                } else {
+                  return { ...node, type: 'step' };
+                }
+              }
+              return node;
+            });
+            
+            // 更新されたデータをセット
             const enhancedData = {
               ...jsonData,
-              nodes: jsonData.nodes || [],
-              edges: jsonData.edges || []
+              nodes: nodes,
+              edges: edges
             };
             
+            console.log("アップロードで読み込んだフローデータ:", enhancedData);
             setFlowData(enhancedData);
             
             // 読み込み成功したら、キャラクター編集用に「新規作成」タブに切り替え
@@ -396,14 +467,36 @@ const EmergencyFlowCreator: React.FC = () => {
       const data = await response.json();
       
       // フローデータを設定
-      // データに nodes や edges がない場合は、空の配列を追加
-      // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+      // データに nodes や edges がない場合は、空の配列を設定
+      let nodes = data.data.nodes || [];
+      let edges = data.data.edges || [];
+      
+      // ノードのtypeフィールドが存在するか確認し、存在しない場合は設定する
+      nodes = nodes.map((node: any) => {
+        // nodeにtypeフィールドがない場合は追加
+        if (!node.type && node.id) {
+          // idからノードタイプを推測（キャラクターの種類を判別）
+          if (node.id === 'start') {
+            return { ...node, type: 'start' };
+          } else if (node.id.includes('end')) {
+            return { ...node, type: 'end' };
+          } else if (node.id.includes('decision')) {
+            return { ...node, type: 'decision' };
+          } else {
+            return { ...node, type: 'step' };
+          }
+        }
+        return node;
+      });
+      
+      // 更新されたデータをセット
       const enhancedData = {
         ...data.data,
-        nodes: data.data.nodes || [],
-        edges: data.data.edges || []
+        nodes: nodes,
+        edges: edges
       };
       
+      console.log("APIから読み込んだフローデータ:", enhancedData);
       setFlowData(enhancedData);
       
       // ファイル名を設定（フロー名から）
