@@ -426,373 +426,140 @@ const EmergencyFlowCreator: React.FC = () => {
     <>
       <Card className="w-full h-screen max-h-[calc(100vh-120px)] overflow-auto">
         <CardHeader className="pb-2 sticky top-0 bg-white z-10">
-          <CardDescription>応急処置データ管理：新規作成・キャラクターデザイン・テキストフロー編集</CardDescription>
+          <CardDescription>応急処置データ管理</CardDescription>
         </CardHeader>
         
         <CardContent className="overflow-y-auto pb-24">
-          <Tabs defaultValue="file" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="file">
-                <FolderOpen className="mr-2 h-4 w-4" />
+          <Tabs defaultValue="new" value={characterDesignTab} onValueChange={setCharacterDesignTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="new">
+                <Plus className="mr-2 h-4 w-4" />
                 新規作成
               </TabsTrigger>
-              <TabsTrigger value="create">
-                <Plus className="mr-2 h-4 w-4" />
-                キャラクターデザイン
-              </TabsTrigger>
-              <TabsTrigger value="text">
-                <FileText className="mr-2 h-4 w-4" />
-                テキスト編集
+              <TabsTrigger value="file">
+                <FolderOpen className="mr-2 h-4 w-4" />
+                ファイルから生成
               </TabsTrigger>
             </TabsList>
             
-            {/* ファイル読込みタブコンテンツ */}
-            <TabsContent value="file">
-              {/* ファイル入力 (非表示) */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".json"
-                className="hidden"
+            {/* ファイル入力 (非表示) */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".json"
+              className="hidden"
+            />
+
+            {/* 新規作成タブ */}
+            <TabsContent value="new" className="h-full">
+              <EmergencyFlowEditor 
+                onSave={handleSaveFlow}
+                onCancel={handleCancelFlow}
+                initialData={{
+                  ...flowData,
+                  fileName: uploadedFileName || (flowData?.fileName || '')
+                }}
               />
-              
-              {/* ドラッグ&ドロップエリア */}
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors ${
-                  selectedFile
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-                }`}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={handleFileClick}
-              >
-                {selectedFile ? (
-                  <div>
-                    <FileText className="mx-auto h-12 w-12 text-indigo-600 mb-2" />
-                    <p className="text-sm text-gray-800 font-medium">{selectedFile.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
-                      JSONファイルをクリックまたはドラッグ&ドロップしてください
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      読み込んだデータをReact Flowで編集できます
-                    </p>
-                  </div>
-                )}
-              </div>
-              
-              {/* 進行状況 */}
-              {isUploading && (
-                <div className="mb-4">
-                  <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-center mt-1 text-gray-500">
-                    {uploadProgress < 100 ? '処理中...' : '完了!'}
+            </TabsContent>
+            
+            {/* ファイルから生成タブ */}
+            <TabsContent value="file" className="h-full">
+              <div className="space-y-4">
+                <div className="border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors border-gray-300 hover:border-indigo-400 hover:bg-indigo-50"
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">
+                    JSONファイルをクリックまたはドラッグ&ドロップしてください
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    既存のJSONデータからキャラクターを生成・編集できます
                   </p>
                 </div>
-              )}
-              
-              {/* アップロードボタン */}
-              <div className="flex justify-end mb-6">
-                <Button
-                  onClick={handleUpload}
-                  disabled={!selectedFile || isUploading}
-                  className="w-full sm:w-auto"
-                >
-                  {isUploading ? (
-                    <>処理中...</>
-                  ) : uploadSuccess ? (
-                    <>完了</>
-                  ) : (
-                    <>読込み</>
-                  )}
-                </Button>
-              </div>
-              
-              {/* 新規フロー作成ボタン */}
-              <div className="mt-6 mb-2">
-                <Button
-                  onClick={handleCreateNewFlow}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  新規フローを作成する
-                </Button>
-              </div>
-              
-              {/* 補足情報やヒント */}
-              <div className="mt-2 text-xs text-gray-500 italic">
-                読み込んだファイルはフローエディタで編集できます。JSONファイルを選択すると直接編集が可能です。
-              </div>
-              
-              {/* 保存済みフローリスト */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-medium">保存済みフロー一覧</h3>
-                  <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
-                    <RefreshCw className={`h-4 w-4 mr-1 ${isLoadingFlowList ? 'animate-spin' : ''}`} />
-                    更新
-                  </Button>
-                </div>
                 
-                {isLoadingFlowList ? (
-                  <div className="flex justify-center py-4">
-                    <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-                  </div>
-                ) : flowList.length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg border-gray-200">
-                    <p className="text-gray-500">保存されたフローがありません</p>
-                    <p className="text-xs text-gray-400 mt-1">新規フローを作成してみましょう</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3">
-                    {flowList.map((flow) => (
-                      <div 
-                        key={flow.id} 
-                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => loadFlow(flow.id)}
-                      >
-                        <h4 className="text-md font-medium">{flow.title || 'タイトルなし'}</h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {flow.createdAt ? new Date(flow.createdAt).toLocaleDateString('ja-JP') : '日付なし'}
-                          {flow.nodeCount ? ` • ${flow.nodeCount}ノード` : ''}
-                        </p>
-                      </div>
-                    ))}
+                {/* 進行状況 */}
+                {isUploading && (
+                  <div className="mb-4">
+                    <Progress value={uploadProgress} className="h-2" />
+                    <p className="text-xs text-center mt-1 text-gray-500">
+                      {uploadProgress < 100 ? '処理中...' : '完了!'}
+                    </p>
                   </div>
                 )}
-              </div>
-            </TabsContent>
-            
-            {/* キャラクターデザインタブコンテンツ */}
-            <TabsContent value="create" className="h-full">
-              {/* キャラクターデザインのサブタブ */}
-              <Tabs value={characterDesignTab} onValueChange={setCharacterDesignTab} className="mt-2 mb-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="new">新規作成</TabsTrigger>
-                  <TabsTrigger value="file">ファイルから生成</TabsTrigger>
-                </TabsList>
                 
-                {/* 新規作成タブ - 既存のエディタをそのまま使用 */}
-                <TabsContent value="new" className="h-full mt-4">
-                  <EmergencyFlowEditor 
-                    onSave={handleSaveFlow}
-                    onCancel={handleCancelFlow}
-                    initialData={{
-                      ...flowData,
-                      fileName: uploadedFileName || (flowData?.fileName || '')
-                    }}
-                  />
-                </TabsContent>
-                
-                {/* ファイルから生成タブ */}
-                <TabsContent value="file" className="mt-4">
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors border-gray-300 hover:border-indigo-400 hover:bg-indigo-50"
-                      onClick={() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.click();
-                        }
-                      }}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                    >
-                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600">
-                        JSONファイルをクリックまたはドラッグ&ドロップしてください
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        既存のJSONデータからキャラクターを生成・編集できます
-                      </p>
-                    </div>
-                    
-                    {/* 保存済みフローリスト */}
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-medium">保存済みキャラクター一覧</h3>
-                        <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          更新
-                        </Button>
-                      </div>
-                      
-                      {isLoadingFlowList ? (
-                        <div className="py-4 text-center text-gray-500">読込中...</div>
-                      ) : flowList.length === 0 ? (
-                        <div className="py-4 text-center text-gray-500">保存済みのキャラクターはありません</div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {flowList.map(flow => (
-                            <Card key={flow.id} className="overflow-hidden">
-                              <CardHeader className="p-4 pb-2">
-                                <CardTitle className="text-md">{flow.title}</CardTitle>
-                                <CardDescription className="text-xs">
-                                  作成日: {new Date(flow.createdAt).toLocaleString()}
-                                </CardDescription>
-                              </CardHeader>
-                              <CardContent className="p-4 pt-2">
-                                <div className="flex justify-end gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => loadFlow(flow.id)}
-                                  >
-                                    編集
-                                  </Button>
-                                  <Button 
-                                    variant="destructive" 
-                                    size="sm"
-                                    onClick={() => handleDeleteCharacter(flow.id)}
-                                  >
-                                    削除
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </TabsContent>
-            
-            {/* テキスト編集タブコンテンツ */}
-            <TabsContent value="text" className="h-full">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">テキスト編集</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      onClick={() => setActiveTab('create')}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      ビジュアル編集に切替
-                    </Button>
+                {/* アップロードボタン */}
+                {selectedFile && (
+                  <div className="flex justify-end mb-6">
                     <Button
-                      onClick={handleSaveFlow}
-                      variant="default"
-                      size="sm"
+                      onClick={handleUpload}
+                      disabled={!selectedFile || isUploading}
+                      className="w-full sm:w-auto"
                     >
-                      <Save className="mr-2 h-4 w-4" />
-                      保存
+                      {isUploading ? (
+                        <>処理中...</>
+                      ) : uploadSuccess ? (
+                        <>完了</>
+                      ) : (
+                        <>読込み</>
+                      )}
                     </Button>
                   </div>
-                </div>
-                
-                {flowData ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="flowTitle">タイトル</Label>
-                        <Input 
-                          id="flowTitle" 
-                          value={flowData.title || ''}
-                          onChange={(e) => setFlowData({...flowData, title: e.target.value})}
-                          placeholder="タイトルを入力"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="flowAuthor">作成者</Label>
-                        <Input 
-                          id="flowAuthor" 
-                          value={flowData.author || ''}
-                          onChange={(e) => setFlowData({...flowData, author: e.target.value})}
-                          placeholder="作成者を入力"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="flowDescription">説明</Label>
-                      <textarea
-                        id="flowDescription"
-                        className="w-full min-h-[100px] p-2 border rounded-md"
-                        value={flowData.description || ''}
-                        onChange={(e) => setFlowData({...flowData, description: e.target.value})}
-                        placeholder="フローの説明を入力"
-                      />
-                    </div>
-                    
-                    {flowData.nodes && (
-                      <div>
-                        <Label className="mb-2 block">ノード ({flowData.nodes.length}件)</Label>
-                        <div className="border rounded-md overflow-hidden">
-                          <div className="grid grid-cols-12 bg-gray-100 p-2 text-xs font-medium text-gray-600">
-                            <div className="col-span-1">ID</div>
-                            <div className="col-span-2">タイプ</div>
-                            <div className="col-span-4">内容</div>
-                            <div className="col-span-5">接続先</div>
-                          </div>
-                          <div className="max-h-[400px] overflow-y-auto">
-                            {flowData.nodes.map((node: any, index: number) => (
-                              <div key={node.id} className="grid grid-cols-12 p-2 text-sm border-t">
-                                <div className="col-span-1 text-gray-500">{node.id}</div>
-                                <div className="col-span-2">
-                                  <span className={`px-2 py-1 rounded-full text-xs ${
-                                    node.type === 'start' ? 'bg-green-100 text-green-800' :
-                                    node.type === 'step' ? 'bg-blue-100 text-blue-800' :
-                                    node.type === 'decision' ? 'bg-amber-100 text-amber-800' :
-                                    node.type === 'end' ? 'bg-red-100 text-red-800' : 'bg-gray-100'
-                                  }`}>
-                                    {node.type === 'start' ? 'スタート' :
-                                     node.type === 'step' ? 'ステップ' :
-                                     node.type === 'decision' ? '判断' :
-                                     node.type === 'end' ? '終了' : node.type}
-                                  </span>
-                                </div>
-                                <div className="col-span-4 break-words">
-                                  {node.data?.label || '内容なし'}
-                                </div>
-                                <div className="col-span-5">
-                                  {flowData.edges?.filter((edge: any) => edge.source === node.id).map((edge: any, idx: number) => (
-                                    <span key={idx} className="inline-block mr-2 mb-1 px-2 py-1 bg-gray-100 rounded-md text-xs">
-                                      {edge.sourceHandle && '条件: ' + edge.sourceHandle + ' → '}
-                                      {edge.target}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <Label htmlFor="jsonContent">JSONコード</Label>
-                      <textarea
-                        id="jsonContent"
-                        className="w-full min-h-[200px] p-2 font-mono text-xs border rounded-md"
-                        value={JSON.stringify(flowData, null, 2)}
-                        onChange={(e) => {
-                          try {
-                            const newData = JSON.parse(e.target.value);
-                            setFlowData(newData);
-                          } catch (error) {
-                            // パースエラーは無視
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg border-gray-200">
-                    <p className="text-gray-500">フローデータがありません</p>
-                    <p className="text-xs text-gray-400 mt-1">「新規作成」タブでフローを作成するか、既存のフローを読み込んでください</p>
-                  </div>
                 )}
+                
+                {/* 保存済みキャラクター一覧 */}
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium">保存済みキャラクター一覧</h3>
+                    <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      更新
+                    </Button>
+                  </div>
+                  
+                  {isLoadingFlowList ? (
+                    <div className="py-4 text-center text-gray-500">読込中...</div>
+                  ) : flowList.length === 0 ? (
+                    <div className="py-4 text-center text-gray-500">保存済みのキャラクターはありません</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {flowList.map(flow => (
+                        <Card key={flow.id} className="overflow-hidden">
+                          <CardHeader className="p-4 pb-2">
+                            <CardTitle className="text-md">{flow.title}</CardTitle>
+                            <CardDescription className="text-xs">
+                              作成日: {new Date(flow.createdAt).toLocaleString()}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-2">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => loadFlow(flow.id)}
+                              >
+                                編集
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteCharacter(flow.id)}
+                              >
+                                削除
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
           </Tabs>
