@@ -202,8 +202,7 @@ const EmergencyFlowCreator: React.FC = () => {
             setUploadedFileName(selectedFile.name);
             setFlowData(jsonData);
             
-            // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
-            setActiveTab('create');
+            // 読み込み成功したら、キャラクター編集用に「新規作成」タブに切り替え
             setCharacterDesignTab('new');
             setUploadSuccess(true);
             toast({
@@ -370,8 +369,7 @@ const EmergencyFlowCreator: React.FC = () => {
         setUploadedFileName(flow.fileName || `${flow.title}.json`);
       }
       
-      // キャラクターデザインタブの「新規作成」に切り替え
-      setActiveTab('create');
+      // データを読み込み、現在のタブを維持したまま編集できるようにする
       setCharacterDesignTab('new');
       
       toast({
@@ -438,7 +436,7 @@ const EmergencyFlowCreator: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="file">
                 <FolderOpen className="mr-2 h-4 w-4" />
-                ファイルから生成
+                ファイル編集
               </TabsTrigger>
             </TabsList>
             
@@ -463,7 +461,7 @@ const EmergencyFlowCreator: React.FC = () => {
               />
             </TabsContent>
             
-            {/* ファイルから生成タブ */}
+            {/* ファイル編集タブ */}
             <TabsContent value="file" className="h-full">
               <div className="space-y-4">
                 <div className="border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors border-gray-300 hover:border-indigo-400 hover:bg-indigo-50"
