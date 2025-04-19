@@ -71,109 +71,123 @@ const StepNode = memo(({ data }: NodeProps) => {
 
 const DecisionNode = memo(({ data }: NodeProps) => {
   return (
-    <div className="shadow-md bg-yellow-100 border border-yellow-500" style={{ 
-      width: '160px',
-      height: '160px',
-      // 正方形を45度回転させて明確なひし形を表現
-      transform: 'rotate(45deg)',
-      transformOrigin: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: '4px',
-      position: 'relative'
-    }}>
-      <div style={{ 
-        transform: 'rotate(-45deg)',
+    <div className="relative">
+      {/* ダイヤモンド形状の背景要素（回転なし） */}
+      <div className="absolute" style={{ 
+        top: '-80px',  // 上に80px移動
+        left: '-80px', // 左に80px移動
+        width: '160px',
+        height: '160px',
+        transform: 'rotate(45deg)',
+        backgroundColor: '#FFF9C4',
+        border: '1px solid #FBC02D',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        zIndex: 1
+      }}></div>
+      
+      {/* コンテンツコンテナ */}
+      <div className="relative z-10" style={{
         width: '140px',
-        padding: '0 10px',
-        position: 'absolute',
-        textAlign: 'center'
+        height: '140px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        pointerEvents: 'none'  // ハンドルのクリックを可能にするため
       }}>
-        <div className="font-bold text-yellow-800">{data.label || '判断'}</div>
-        {data.message && (
-          <div className="mt-2 text-xs text-gray-700" style={{ maxHeight: '60px', overflow: 'hidden' }}>
-            {data.message}
-          </div>
-        )}
+        <div style={{
+          width: '120px',
+          padding: '0 5px',
+          textAlign: 'center'
+        }}>
+          <div className="font-bold text-yellow-800">{data.label || '判断'}</div>
+          {data.message && (
+            <div className="mt-2 text-xs text-gray-700" style={{ maxHeight: '60px', overflow: 'hidden' }}>
+              {data.message}
+            </div>
+          )}
+        </div>
       </div>
       
-      {/* 4頂点すべてにハンドルを配置
-          transform: translateX/Yを使用して正確に各頂点に配置 */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{ 
-          background: '#555', 
-          transform: 'rotate(-45deg) translateY(-10px)',
-          zIndex: 10 
-        }}
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ 
-          background: '#555', 
-          transform: 'rotate(-45deg) translateX(10px)',
-          zIndex: 10
-        }}
-        id="yes"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ 
-          background: '#555', 
-          transform: 'rotate(-45deg) translateY(10px)',
-          zIndex: 10
-        }}
-        id="no"
-        isConnectable={true}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        style={{ 
-          background: '#555', 
-          transform: 'rotate(-45deg) translateX(-10px)',
-          zIndex: 10
-        }}
-        id="other"
-        isConnectable={true}
-      />
+      {/* 頂点に配置したハンドル（回転なし） */}
+      {/* 上頂点（入力用） */}
+      <div className="absolute w-4 h-4" style={{ top: '-84px', left: '68px' }}>
+        <Handle
+          type="target"
+          position={Position.Top}
+          style={{ 
+            top: '0px',
+            left: '8px',
+            width: '12px',
+            height: '12px',
+            background: '#555',
+            zIndex: 20
+          }}
+          isConnectable={true}
+        />
+      </div>
       
-      {/* ハンドルのラベル */}
-      <div style={{ 
-        position: 'absolute', 
-        top: '-10px', 
-        right: '-35px', 
-        transform: 'rotate(-45deg)',
-        fontSize: '10px',
-        color: '#666'
-      }}>
-        はい
+      {/* 右頂点（Yes用出力） */}
+      <div className="absolute w-4 h-4" style={{ top: '68px', left: '140px' }}>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="yes"
+          style={{ 
+            top: '8px',
+            left: '16px',
+            width: '12px',
+            height: '12px',
+            background: '#4CAF50',
+            zIndex: 20
+          }}
+          isConnectable={true}
+        />
+        <div className="absolute whitespace-nowrap text-xs" style={{ left: '30px', top: '6px' }}>
+          はい
+        </div>
       </div>
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '-10px', 
-        right: '-35px', 
-        transform: 'rotate(-45deg)',
-        fontSize: '10px',
-        color: '#666'
-      }}>
-        いいえ
+      
+      {/* 下頂点（No用出力） */}
+      <div className="absolute w-4 h-4" style={{ top: '140px', left: '68px' }}>
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="no"
+          style={{ 
+            top: '16px',
+            left: '8px',
+            width: '12px',
+            height: '12px',
+            background: '#F44336',
+            zIndex: 20
+          }}
+          isConnectable={true}
+        />
+        <div className="absolute whitespace-nowrap text-xs" style={{ left: '8px', top: '28px' }}>
+          いいえ
+        </div>
       </div>
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '-10px', 
-        left: '-35px', 
-        transform: 'rotate(-45deg)',
-        fontSize: '10px',
-        color: '#666'
-      }}>
-        その他
+      
+      {/* 左頂点（その他用出力） */}
+      <div className="absolute w-4 h-4" style={{ top: '68px', left: '-4px' }}>
+        <Handle
+          type="source"
+          position={Position.Left}
+          id="other"
+          style={{ 
+            top: '8px',
+            left: '0px',
+            width: '12px',
+            height: '12px',
+            background: '#FF9800',
+            zIndex: 20
+          }}
+          isConnectable={true}
+        />
+        <div className="absolute whitespace-nowrap text-xs" style={{ right: '30px', top: '6px' }}>
+          その他
+        </div>
       </div>
     </div>
   );

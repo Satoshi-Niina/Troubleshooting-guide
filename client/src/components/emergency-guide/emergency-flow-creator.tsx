@@ -431,6 +431,185 @@ const EmergencyFlowCreator: React.FC = () => {
     setCharacterDesignTab('file');
   };
   
+  /**
+   * トラブルシューティングデータからノードとエッジを生成する関数
+   * @param troubleshootingData トラブルシューティングデータ
+   * @returns 生成されたノードとエッジ
+   */
+  const generateNodesFromTroubleshooting = (troubleshootingData: any) => {
+    const generatedNodes: any[] = [];
+    const generatedEdges: any[] = [];
+    let nodeXPosition = 250;
+    let nodeYPosition = 50;
+    const yIncrementStep = 150;
+    const xOffset = 250;
+    
+    // スタートノードの追加（常に必要）
+    generatedNodes.push({
+      id: 'start',
+      type: 'start',
+      position: { x: nodeXPosition, y: nodeYPosition },
+      data: { label: '開始' }
+    });
+    
+    nodeYPosition += yIncrementStep;
+    
+    // ステップノードマップ（id -> ノードインデックス）
+    const stepNodeMap: {[key: string]: number} = {};
+    
+    // 各ステップをノードに変換
+    if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
+      troubleshootingData.steps.forEach((step: any, index: number) => {
+        // ステップノードのタイプを判定
+        let nodeType = 'step';
+        // idにendが含まれるか、オプションがない場合は終了ノード
+        if (step.id === 'end' || step.id.includes('end') || !step.options || step.options.length === 0) {
+          nodeType = 'end';
+        }
+        // オプションが複数ある場合は判断ノード
+        else if (step.options && step.options.length > 1) {
+          nodeType = 'decision';
+        }
+        
+        // ノードの作成
+        const node = {
+          id: step.id,
+          type: nodeType,
+          position: { x: nodeXPosition, y: nodeYPosition },
+          data: { 
+            label: step.title || `ステップ ${index + 1}`, 
+            message: step.message || ''
+          }
+        };
+        
+        // ノードの追加
+        generatedNodes.push(node);
+        // ノードのインデックスを記録
+        stepNodeMap[step.id] = generatedNodes.length - 1;
+        
+        // 前のノードとの接続（最初のステップのみスタートノードと接続）
+        if (index === 0) {
+          generatedEdges.push({
+            id: `edge-start-${step.id}`,
+            source: 'start',
+            target: step.id,
+            animated: true,
+            type: 'smoothstep'
+          });
+        }
+        
+        // Y座標を更新
+        nodeYPosition += yIncrementStep;
+      });
+      
+      // 各ステップのオプションからエッジを作成
+      troubleshootingData.steps.forEach((step: any) => {
+        if (step.options && step.options.length > 0) {
+          // 判断ノードの場合、各選択肢に対してエッジを作成
+          if (step.options.length > 1) {
+            step.options.forEach((option: any, optIndex: number) => {
+              if (option.next && stepNodeMap[option.next] !== undefined) {
+                let sourceHandle = null;
+                let edgeLabel = option.text || '';
+                
+                // 選択肢のポジションに応じてハンドルIDを設定
+                if (optIndex === 0) {
+                  sourceHandle = 'yes'; // 最初の選択肢は「はい」ハンドル
+                } else if (optIndex === 1) {
+                  sourceHandle = 'no'; // 2番目の選択肢は「いいえ」ハンドル
+                } else {
+                  sourceHandle = 'other'; // 3番目以降の選択肢は「その他」ハンドル
+                }
+                
+                generatedEdges.push({
+                  id: `edge-${step.id}-${option.next}-${optIndex}`,
+                  source: step.id,
+                  target: option.next,
+                  sourceHandle: sourceHandle,
+                  animated: true,
+                  type: 'smoothstep',
+                  label: edgeLabel,
+                  labelStyle: { fontSize: 12, fill: '#333' },
+                  labelBgStyle: { fill: 'rgba(255, 255, 255, 0.8)' }
+                });
+              }
+            });
+          } 
+          // 通常のステップノードの場合、最初のオプションのみ接続
+          else if (step.options[0] && step.options[0].next) {
+            generatedEdges.push({
+              id: `edge-${step.id}-${step.options[0].next}`,
+              source: step.id,
+              target: step.options[0].next,
+              animated: true,
+              type: 'smoothstep'
+            });
+          }
+        }
+      });
+      
+      // 位置の調整（ノードが重ならないように）
+      const adjustNodePositions = () => {
+        // ノードの階層レベルを計算
+        const nodeLevels: {[key: string]: number} = {};
+        const calculateNodeLevel = (nodeId: string, level: number = 0, visited: Set<string> = new Set()) => {
+          if (visited.has(nodeId)) return;
+          visited.add(nodeId);
+          
+          nodeLevels[nodeId] = Math.max(level, nodeLevels[nodeId] || 0);
+          
+          // このノードから出ているエッジを探す
+          const outgoingEdges = generatedEdges.filter(edge => edge.source === nodeId);
+          outgoingEdges.forEach(edge => {
+            calculateNodeLevel(edge.target, level + 1, visited);
+          });
+        };
+        
+        // スタートノードから計算を開始
+        calculateNodeLevel('start');
+        
+        // レベルに基づいてY座標を調整
+        generatedNodes.forEach(node => {
+          const level = nodeLevels[node.id] || 0;
+          node.position.y = level * yIncrementStep + 50;
+        });
+        
+        // 同じレベルのノードのX座標を調整（左右に分散）
+        const levelNodes: {[key: number]: string[]} = {};
+        Object.entries(nodeLevels).forEach(([nodeId, level]) => {
+          if (!levelNodes[level]) levelNodes[level] = [];
+          levelNodes[level].push(nodeId);
+        });
+        
+        // 各レベルのノードを横に分散
+        Object.entries(levelNodes).forEach(([levelStr, nodeIds]) => {
+          const level = parseInt(levelStr);
+          const nodesCount = nodeIds.length;
+          
+          if (nodesCount > 1) {
+            const totalWidth = (nodesCount - 1) * xOffset;
+            const startX = nodeXPosition - totalWidth / 2;
+            
+            nodeIds.forEach((nodeId, idx) => {
+              const node = generatedNodes.find(n => n.id === nodeId);
+              if (node) {
+                node.position.x = startX + idx * xOffset;
+              }
+            });
+          }
+        });
+      };
+      
+      // ノード位置の調整を実行
+      adjustNodePositions();
+    }
+    
+    console.log("生成されたノード:", generatedNodes);
+    console.log("生成されたエッジ:", generatedEdges);
+    
+    return { generatedNodes, generatedEdges };
+  };
+  
   // 新規フロー作成ハンドラー
   const handleCreateNewFlow = () => {
     // 空のフローデータで初期化
@@ -455,21 +634,31 @@ const EmergencyFlowCreator: React.FC = () => {
     setShowConfirmDelete(true);
   };
   
-  // 特定のフローを読み込む
-  const loadFlow = async (id: string) => {
-    try {
-      const response = await fetch(`/api/emergency-guide/detail/${id}`);
+  /**
+   * JSON形式のフローデータを処理して、ノードとエッジ情報を適切に処理する共通関数
+   * @param jsonData JSON形式のフローデータ
+   * @returns 処理済みのフローデータ
+   */
+  const processFlowData = (jsonData: any) => {
+    // フローデータを設定
+    let enhancedData;
+    
+    // stepsフィールドがある場合は、トラブルシューティングデータからノードを生成
+    if (jsonData.steps && jsonData.steps.length > 0) {
+      // トラブルシューティングデータからノードとエッジを生成
+      const { generatedNodes, generatedEdges } = generateNodesFromTroubleshooting(jsonData);
       
-      if (!response.ok) {
-        throw new Error('フローデータの取得に失敗しました');
-      }
+      enhancedData = {
+        ...jsonData,
+        nodes: generatedNodes,
+        edges: generatedEdges
+      };
       
-      const data = await response.json();
-      
-      // フローデータを設定
-      // データに nodes や edges がない場合は、空の配列を設定
-      let nodes = data.data.nodes || [];
-      let edges = data.data.edges || [];
+      console.log("トラブルシューティングデータからノードを生成:", enhancedData);
+    } else {
+      // 従来の処理: データに nodes や edges がない場合は、空の配列を設定
+      let nodes = jsonData.nodes || [];
+      let edges = jsonData.edges || [];
       
       // ノードのtypeフィールドが存在するか確認し、存在しない場合は設定する
       nodes = nodes.map((node: any) => {
@@ -489,12 +678,31 @@ const EmergencyFlowCreator: React.FC = () => {
         return node;
       });
       
-      // 更新されたデータをセット
-      const enhancedData = {
-        ...data.data,
+      enhancedData = {
+        ...jsonData,
         nodes: nodes,
         edges: edges
       };
+      
+      console.log("既存のノードを処理:", enhancedData);
+    }
+    
+    return enhancedData;
+  };
+  
+  // 特定のフローを読み込む
+  const loadFlow = async (id: string) => {
+    try {
+      const response = await fetch(`/api/emergency-guide/detail/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('フローデータの取得に失敗しました');
+      }
+      
+      const data = await response.json();
+      
+      // フローデータを処理
+      const enhancedData = processFlowData(data.data);
       
       console.log("APIから読み込んだフローデータ:", enhancedData);
       setFlowData(enhancedData);
