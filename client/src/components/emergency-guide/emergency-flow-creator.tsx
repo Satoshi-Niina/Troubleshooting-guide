@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, X, Edit, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw } from 'lucide-react';
+import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -725,61 +726,35 @@ const EmergencyFlowCreator: React.FC = () => {
             {/* ファイル編集タブ */}
             <TabsContent value="file" className="h-full">
               <div className="space-y-4">
-                <div className="border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors border-gray-300 hover:border-indigo-400 hover:bg-indigo-50"
-                  onClick={() => {
-                    if (fileInputRef.current) {
-                      fileInputRef.current.click();
-                    }
-                  }}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                >
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    JSONファイルをクリックまたはドラッグ&ドロップしてください
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    既存のJSONデータからキャラクターを生成・編集できます
-                  </p>
+                {/* 開発中の通知 */}
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-6 w-6 text-yellow-500 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">
+                        この機能は現在作成中です
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        ファイル編集機能は準備中です。現在は保存済みキャラクターの管理のみ利用可能です。
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* 進行状況 */}
-                {isUploading && (
-                  <div className="mb-4">
-                    <Progress value={uploadProgress} className="h-2" />
-                    <p className="text-xs text-center mt-1 text-gray-500">
-                      {uploadProgress < 100 ? '処理中...' : '完了!'}
-                    </p>
-                  </div>
-                )}
-                
-                {/* アップロードボタン */}
-                {selectedFile && (
-                  <div className="flex justify-end mb-6">
-                    <Button
-                      onClick={handleUpload}
-                      disabled={!selectedFile || isUploading}
-                      className="w-full sm:w-auto"
-                    >
-                      {isUploading ? (
-                        <>処理中...</>
-                      ) : uploadSuccess ? (
-                        <>完了</>
-                      ) : (
-                        <>読込み</>
-                      )}
-                    </Button>
-                  </div>
-                )}
                 
                 {/* 保存済みキャラクター一覧 */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium">保存済みキャラクター一覧</h3>
-                    <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      更新
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        更新
+                      </Button>
+                      <Button variant="default" size="sm" onClick={handleCreateNewFlow}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        新規作成
+                      </Button>
+                    </div>
                   </div>
                   
                   {isLoadingFlowList ? (
@@ -797,21 +772,33 @@ const EmergencyFlowCreator: React.FC = () => {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="p-4 pt-2">
-                            <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => loadFlow(flow.id)}
-                              >
-                                編集
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => handleDeleteCharacter(flow.id)}
-                              >
-                                削除
-                              </Button>
+                            <div className="flex justify-between gap-2">
+                              <div>
+                                <Badge variant="outline" className="mr-2">
+                                  {flow.fileName ? flow.fileName.split('.')[0] : 'デフォルト'}
+                                </Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    loadFlow(flow.id);
+                                    setCharacterDesignTab('new'); // 読み込み後、新規作成タブに切り替え
+                                  }}
+                                >
+                                  <Edit3 className="mr-2 h-3 w-3" />
+                                  編集
+                                </Button>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => handleDeleteCharacter(flow.id)}
+                                >
+                                  <Trash2 className="mr-2 h-3 w-3" />
+                                  削除
+                                </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
