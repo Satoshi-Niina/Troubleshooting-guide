@@ -101,8 +101,9 @@ const EmergencyFlowCreator: React.FC = () => {
             setUploadedFileName(file.name);
             setFlowData(jsonData);
             
-            // 読み込み成功したらエディタに切り替え
+            // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
             setActiveTab('create');
+            setCharacterDesignTab('new');
             toast({
               title: "JSONファイル読み込み",
               description: "フローデータをエディタで編集できます",
@@ -143,8 +144,9 @@ const EmergencyFlowCreator: React.FC = () => {
             setUploadedFileName(file.name);
             setFlowData(jsonData);
             
-            // 読み込み成功したらエディタに切り替え
+            // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
             setActiveTab('create');
+            setCharacterDesignTab('new');
             toast({
               title: "JSONファイル読み込み",
               description: "フローデータをエディタで編集できます",
