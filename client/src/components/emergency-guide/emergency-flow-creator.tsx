@@ -23,7 +23,7 @@ import EmergencyFlowEditor from './emergency-flow-editor';
 const EmergencyFlowCreator: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<string>('file');
+  // activeTabは使用しなくなったため削除
   
   // キャラクターデザインタブ内のサブタブ
   const [characterDesignTab, setCharacterDesignTab] = useState<string>('new');
@@ -102,7 +102,6 @@ const EmergencyFlowCreator: React.FC = () => {
             setFlowData(jsonData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
-            setActiveTab('create');
             setCharacterDesignTab('new');
             toast({
               title: "JSONファイル読み込み",
@@ -145,7 +144,6 @@ const EmergencyFlowCreator: React.FC = () => {
             setFlowData(jsonData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
-            setActiveTab('create');
             setCharacterDesignTab('new');
             toast({
               title: "JSONファイル読み込み",
