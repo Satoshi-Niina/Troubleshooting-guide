@@ -74,13 +74,13 @@ const DecisionNode = memo(({ data }: NodeProps) => {
     <div className="shadow-md bg-yellow-100 border border-yellow-500" style={{ 
       width: '140px',
       height: '140px',
+      // ◇形ではなく□に変更し、より明確なひし形を表現
       transform: 'rotate(45deg)',
       transformOrigin: 'center',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      // ◇形を作るための調整
-      borderRadius: '5px',
+      borderRadius: '8px',
       position: 'relative'
     }}>
       <div style={{ 
@@ -97,7 +97,7 @@ const DecisionNode = memo(({ data }: NodeProps) => {
         )}
       </div>
       
-      {/* 入力と複数の出力ハンドル */}
+      {/* 4頂点すべてにハンドルを配置 */}
       <Handle
         type="target"
         position={Position.Top}
@@ -116,6 +116,13 @@ const DecisionNode = memo(({ data }: NodeProps) => {
         position={Position.Bottom}
         style={{ background: '#555', transform: 'rotate(-45deg)' }}
         id="no"
+        isConnectable={true}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        id="other"
         isConnectable={true}
       />
     </div>
@@ -190,11 +197,13 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     let label = '';
     
     if (sourceNode?.type === 'decision') {
-      // sourceHandleがyesかnoかで判定
+      // sourceHandleがyesかnoかotherかで判定
       if (connection.sourceHandle === 'yes') {
         label = 'はい';
       } else if (connection.sourceHandle === 'no') {
         label = 'いいえ';
+      } else if (connection.sourceHandle === 'other') {
+        label = 'その他';
       }
     }
     

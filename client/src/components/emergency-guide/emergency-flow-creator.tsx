@@ -99,12 +99,21 @@ const EmergencyFlowCreator: React.FC = () => {
             // ファイル名情報を追加
             jsonData.fileName = file.name;
             setUploadedFileName(file.name);
-            setFlowData(jsonData);
+            
+            // データに nodes や edges がない場合は空の配列を設定
+            // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            const enhancedData = {
+              ...jsonData,
+              nodes: jsonData.nodes || [],
+              edges: jsonData.edges || []
+            };
+            
+            setFlowData(enhancedData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
             setCharacterDesignTab('new');
             toast({
-              title: "JSONファイル読み込み",
+              title: "JSONファイル読み込み完了",
               description: "フローデータをエディタで編集できます",
             });
           } catch (error) {
@@ -141,12 +150,21 @@ const EmergencyFlowCreator: React.FC = () => {
             // ファイル名情報を追加
             jsonData.fileName = file.name;
             setUploadedFileName(file.name);
-            setFlowData(jsonData);
+            
+            // データに nodes や edges がない場合は空の配列を設定
+            // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            const enhancedData = {
+              ...jsonData,
+              nodes: jsonData.nodes || [],
+              edges: jsonData.edges || []
+            };
+            
+            setFlowData(enhancedData);
             
             // 読み込み成功したらキャラクターデザインタブの「新規作成」に切り替え
             setCharacterDesignTab('new');
             toast({
-              title: "JSONファイル読み込み",
+              title: "JSONファイル読み込み完了",
               description: "フローデータをエディタで編集できます",
             });
           } catch (error) {
@@ -357,8 +375,17 @@ const EmergencyFlowCreator: React.FC = () => {
       }
       
       const data = await response.json();
+      
       // フローデータを設定
-      setFlowData(data.data);
+      // データに nodes や edges がない場合は、空の配列を追加
+      // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+      const enhancedData = {
+        ...data.data,
+        nodes: data.data.nodes || [],
+        edges: data.data.edges || []
+      };
+      
+      setFlowData(enhancedData);
       
       // ファイル名を設定（フロー名から）
       const flow = flowList.find(f => f.id === id);
@@ -366,11 +393,11 @@ const EmergencyFlowCreator: React.FC = () => {
         setUploadedFileName(flow.fileName || `${flow.title}.json`);
       }
       
-      // データを読み込み、現在のタブを維持したまま編集できるようにする
+      // データを読み込み、「新規作成」タブに切り替えてキャラクターを編集できるようにする
       setCharacterDesignTab('new');
       
       toast({
-        title: "フロー読込み",
+        title: "フロー読込み完了",
         description: "フローデータをエディタで編集できます",
       });
     } catch (error) {
