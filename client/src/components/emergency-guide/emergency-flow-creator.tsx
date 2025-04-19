@@ -363,7 +363,17 @@ const EmergencyFlowCreator: React.FC = () => {
   // 新規フロー作成ハンドラー
   const handleCreateNewFlow = () => {
     // 空のフローデータで初期化
-    setFlowData(null);
+    setFlowData({
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }
+      ],
+      edges: []
+    });
     setUploadedFileName('');
     setCharacterDesignTab('new');
   };

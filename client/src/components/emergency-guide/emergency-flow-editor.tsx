@@ -72,23 +72,24 @@ const StepNode = memo(({ data }: NodeProps) => {
 const DecisionNode = memo(({ data }: NodeProps) => {
   return (
     <div className="shadow-md bg-yellow-100 border border-yellow-500" style={{ 
-      width: '140px',
-      height: '140px',
-      // ◇形ではなく□に変更し、より明確なひし形を表現
+      width: '160px',
+      height: '160px',
+      // 正方形を45度回転させて明確なひし形を表現
       transform: 'rotate(45deg)',
       transformOrigin: 'center',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: '8px',
+      borderRadius: '4px',
       position: 'relative'
     }}>
       <div style={{ 
         transform: 'rotate(-45deg)',
-        width: '130px',
+        width: '140px',
         padding: '0 10px',
-        position: 'absolute'
-      }} className="text-center">
+        position: 'absolute',
+        textAlign: 'center'
+      }}>
         <div className="font-bold text-yellow-800">{data.label || '判断'}</div>
         {data.message && (
           <div className="mt-2 text-xs text-gray-700" style={{ maxHeight: '60px', overflow: 'hidden' }}>
@@ -97,34 +98,83 @@ const DecisionNode = memo(({ data }: NodeProps) => {
         )}
       </div>
       
-      {/* 4頂点すべてにハンドルを配置 */}
+      {/* 4頂点すべてにハンドルを配置
+          transform: translateX/Yを使用して正確に各頂点に配置 */}
       <Handle
         type="target"
         position={Position.Top}
-        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        style={{ 
+          background: '#555', 
+          transform: 'rotate(-45deg) translateY(-10px)',
+          zIndex: 10 
+        }}
         isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        style={{ 
+          background: '#555', 
+          transform: 'rotate(-45deg) translateX(10px)',
+          zIndex: 10
+        }}
         id="yes"
         isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        style={{ 
+          background: '#555', 
+          transform: 'rotate(-45deg) translateY(10px)',
+          zIndex: 10
+        }}
         id="no"
         isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Left}
-        style={{ background: '#555', transform: 'rotate(-45deg)' }}
+        style={{ 
+          background: '#555', 
+          transform: 'rotate(-45deg) translateX(-10px)',
+          zIndex: 10
+        }}
         id="other"
         isConnectable={true}
       />
+      
+      {/* ハンドルのラベル */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '-10px', 
+        right: '-35px', 
+        transform: 'rotate(-45deg)',
+        fontSize: '10px',
+        color: '#666'
+      }}>
+        はい
+      </div>
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '-10px', 
+        right: '-35px', 
+        transform: 'rotate(-45deg)',
+        fontSize: '10px',
+        color: '#666'
+      }}>
+        いいえ
+      </div>
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '-10px', 
+        left: '-35px', 
+        transform: 'rotate(-45deg)',
+        fontSize: '10px',
+        color: '#666'
+      }}>
+        その他
+      </div>
     </div>
   );
 });
@@ -174,8 +224,18 @@ interface EmergencyFlowEditorProps {
 
 const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel, initialData }) => {
   const { toast } = useToast();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialData?.nodes || initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialData?.edges || initialEdges);
+  // 初期データがあればそれを使用し、なければデフォルトのinitialNodesを使用
+  const nodesToUse = Array.isArray(initialData?.nodes) && initialData.nodes.length > 0 
+    ? initialData.nodes 
+    : initialNodes;
+  
+  // 初期データがあればそれを使用し、なければデフォルトのinitialEdgesを使用
+  const edgesToUse = Array.isArray(initialData?.edges) && initialData.edges.length > 0
+    ? initialData.edges
+    : initialEdges;
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState(nodesToUse);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(edgesToUse);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   
   // フロータイトルと説明
