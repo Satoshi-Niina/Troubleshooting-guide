@@ -25,6 +25,9 @@ const EmergencyFlowCreator: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<string>('file');
   
+  // キャラクターデザインタブ内のサブタブ
+  const [characterDesignTab, setCharacterDesignTab] = useState<string>('new');
+  
   // アップロード関連の状態
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
