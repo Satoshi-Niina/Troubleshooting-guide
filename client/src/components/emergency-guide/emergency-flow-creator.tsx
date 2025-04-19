@@ -216,7 +216,16 @@ const EmergencyFlowCreator: React.FC = () => {
             // ファイル名情報を追加
             jsonData.fileName = selectedFile.name;
             setUploadedFileName(selectedFile.name);
-            setFlowData(jsonData);
+            
+            // データに nodes や edges がない場合は空の配列を設定
+            // この処理により既存のJSONデータから常に有効なキャラクターデータを作成できる
+            const enhancedData = {
+              ...jsonData,
+              nodes: jsonData.nodes || [],
+              edges: jsonData.edges || []
+            };
+            
+            setFlowData(enhancedData);
             
             // 読み込み成功したら、キャラクター編集用に「新規作成」タブに切り替え
             setCharacterDesignTab('new');
