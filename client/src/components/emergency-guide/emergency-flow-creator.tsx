@@ -433,11 +433,11 @@ const EmergencyFlowCreator: React.FC = () => {
                 
                 // 選択肢のポジションに応じてハンドルIDを設定
                 if (optIndex === 0) {
-                  sourceHandle = 'yes'; // 最初の選択肢は「はい」ハンドル
+                  sourceHandle = 'yes'; // 最初の選択肢は右のハンドル
                 } else if (optIndex === 1) {
-                  sourceHandle = 'no'; // 2番目の選択肢は「いいえ」ハンドル
+                  sourceHandle = 'no'; // 2番目の選択肢は下のハンドル
                 } else {
-                  sourceHandle = 'other'; // 3番目以降の選択肢は「その他」ハンドル
+                  sourceHandle = 'other'; // 3番目以降の選択肢は左のハンドル
                 }
                 
                 generatedEdges.push({
@@ -446,10 +446,8 @@ const EmergencyFlowCreator: React.FC = () => {
                   target: option.next,
                   sourceHandle: sourceHandle,
                   animated: true,
-                  type: 'smoothstep',
-                  label: edgeLabel,
-                  labelStyle: { fontSize: 12, fill: '#333' },
-                  labelBgStyle: { fill: 'rgba(255, 255, 255, 0.8)' }
+                  type: 'smoothstep'
+                  // ラベルの設定は削除
                 });
               }
             });

@@ -127,7 +127,7 @@ const DecisionNode = memo(({ data }: NodeProps) => {
         />
       </div>
       
-      {/* 右頂点（Yes用出力） */}
+      {/* 右頂点（出力1） */}
       <div className="absolute w-4 h-4" style={{ top: '68px', left: '140px' }}>
         <Handle
           type="source"
@@ -143,12 +143,9 @@ const DecisionNode = memo(({ data }: NodeProps) => {
           }}
           isConnectable={true}
         />
-        <div className="absolute whitespace-nowrap text-xs" style={{ left: '30px', top: '6px' }}>
-          はい
-        </div>
       </div>
       
-      {/* 下頂点（No用出力） */}
+      {/* 下頂点（出力2） */}
       <div className="absolute w-4 h-4" style={{ top: '140px', left: '68px' }}>
         <Handle
           type="source"
@@ -164,12 +161,9 @@ const DecisionNode = memo(({ data }: NodeProps) => {
           }}
           isConnectable={true}
         />
-        <div className="absolute whitespace-nowrap text-xs" style={{ left: '8px', top: '28px' }}>
-          いいえ
-        </div>
       </div>
       
-      {/* 左頂点（その他用出力） */}
+      {/* 左頂点（出力3） */}
       <div className="absolute w-4 h-4" style={{ top: '68px', left: '-4px' }}>
         <Handle
           type="source"
@@ -185,9 +179,6 @@ const DecisionNode = memo(({ data }: NodeProps) => {
           }}
           isConnectable={true}
         />
-        <div className="absolute whitespace-nowrap text-xs" style={{ right: '30px', top: '6px' }}>
-          その他
-        </div>
       </div>
     </div>
   );
@@ -266,30 +257,14 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
 
   // 接続処理
   const onConnect = useCallback((connection: Connection) => {
-    // 判断ノードからの接続の場合はラベルを追加
-    const sourceNode = nodes.find(node => node.id === connection.source);
-    let label = '';
-    
-    if (sourceNode?.type === 'decision') {
-      // sourceHandleがyesかnoかotherかで判定
-      if (connection.sourceHandle === 'yes') {
-        label = 'はい';
-      } else if (connection.sourceHandle === 'no') {
-        label = 'いいえ';
-      } else if (connection.sourceHandle === 'other') {
-        label = 'その他';
-      }
-    }
-    
+    // 接続を追加（ラベルは不要になりました）
     setEdges((eds) => addEdge({ 
       ...connection, 
       animated: true, 
       type: 'smoothstep',
-      label,
-      labelStyle: { fontSize: 12, fill: '#333' },
-      labelBgStyle: { fill: 'rgba(255, 255, 255, 0.8)' }
+      // ラベル関連の設定は不要
     }, eds));
-  }, [setEdges, nodes]);
+  }, [setEdges]);
 
   // ノード選択処理
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
