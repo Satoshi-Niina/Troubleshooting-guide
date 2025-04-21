@@ -4,23 +4,37 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
 import { cancelSearch, reloadImageSearchData } from "@/lib/image-search";
 
-// 画像パスを修正するヘルパー関数 - パスを適切に変換
+// 画像パスを修正するヘルパー関数 - PNG形式に統一
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
   // knowledge-base/images/ パスを持っていれば変更しない
   if (path.includes('/knowledge-base/images/')) {
+    // SVG拡張子の場合はPNGに変換
+    if (path.endsWith('.svg')) {
+      return path.replace('.svg', '.png');
+    }
     return path;
   }
   
   // /uploads/images/ から始まる場合は /knowledge-base/images/ に変換
   if (path.includes('/uploads/images/')) {
-    return path.replace('/uploads/images/', '/knowledge-base/images/');
+    let newPath = path.replace('/uploads/images/', '/knowledge-base/images/');
+    // SVG拡張子の場合はPNGに変換
+    if (newPath.endsWith('.svg')) {
+      return newPath.replace('.svg', '.png');
+    }
+    return newPath;
   }
   
   // /images/ から始まる場合は /knowledge-base/images/ に変換
   if (path.startsWith('/images/')) {
-    return path.replace('/images/', '/knowledge-base/images/');
+    let newPath = path.replace('/images/', '/knowledge-base/images/');
+    // SVG拡張子の場合はPNGに変換
+    if (newPath.endsWith('.svg')) {
+      return newPath.replace('.svg', '.png');
+    }
+    return newPath;
   }
   
   // /uploads/ から始まるがサブフォルダが不明確な場合
@@ -28,13 +42,24 @@ function fixImagePath(path: string | undefined): string {
     const parts = path.split('/');
     const fileName = parts.pop(); // 最後の部分（ファイル名）を取得
     if (fileName) {
+      // SVG拡張子の場合はPNGに変換
+      if (fileName.endsWith('.svg')) {
+        return `/knowledge-base/images/${fileName.replace('.svg', '.png')}`;
+      }
       return `/knowledge-base/images/${fileName}`;
     }
   }
   
   // 単なるファイル名の場合（パスがない）
-  if (!path.includes('/') && (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg'))) {
-    return `/knowledge-base/images/${path}`;
+  if (!path.includes('/')) {
+    // SVG拡張子の場合はPNGに変換
+    if (path.endsWith('.svg')) {
+      return `/knowledge-base/images/${path.replace('.svg', '.png')}`;
+    }
+    // 画像ファイルの場合はknowledge-baseフォルダに配置
+    if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      return `/knowledge-base/images/${path}`;
+    }
   }
   
   return path;
@@ -43,9 +68,9 @@ function fixImagePath(path: string | undefined): string {
 interface SearchResult {
   id: number | string;
   title: string;
-  type: string; // 'image' | 'svg-image' | 'text' | 'ai-response' | string
+  type: string; // 'image' | 'text' | 'ai-response' | string
   url?: string;
-  pngFallbackUrl?: string; // SVG画像の代替PNG URL
+  pngFallbackUrl?: string; // 代替画像のURL（非推奨、互換性のために残す）
   content?: string;
   relevance?: number;
   timestamp?: Date;
@@ -148,7 +173,7 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
               // 画像サムネイル (テキストなしのカードスタイル)
               <div className="flex justify-center items-center w-full bg-transparent border border-blue-200 rounded-lg">
                 <div className="relative w-full h-24 flex-shrink-0 overflow-hidden">
-                  {/* バックアップ画像を先にロードして隠しておく（SVG読み込み失敗時の高速切り替え用） */}
+                  {/* バックアップ画像がある場合は先にロードして隠しておく（互換性のために残す） */}
                   {result.pngFallbackUrl && (
                     <img 
                       src={fixImagePath(result.pngFallbackUrl)}
@@ -180,18 +205,14 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                         return;
                       }
                       
-                      // 専用フォールバックがない場合は拡張子に基づいて切り替え
-                      if (originalSrc.endsWith('.svg')) {
-                        // SVGが読み込めない場合はPNGに変更
-                        console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc);
-                        const pngPath = originalSrc.replace('.svg', '.png');
+                      // JPEG/JPG形式のみフォールバックを提供
+                      if (originalSrc.includes('.jpeg') || originalSrc.includes('.jpg')) {
+                        // JPEGが読み込めない場合はPNGに変更
+                        console.log('JPEG読み込みエラー、PNG代替に切り替え:', originalSrc);
+                        const pngPath = originalSrc.replace(/\.(jpeg|jpg)$/, '.png');
                         imgElement.src = pngPath;
-                      } else if (originalSrc.endsWith('.png')) {
-                        // PNGが読み込めない場合はSVGに変更
-                        console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc);
-                        const svgPath = originalSrc.replace('.png', '.svg');
-                        imgElement.src = svgPath;
                       }
+                      // PNGファイルの場合はフォールバックなし
                     }}
                   />
                   {/* 画像説明タイトルは非表示に変更（ユーザー要求により） */}
