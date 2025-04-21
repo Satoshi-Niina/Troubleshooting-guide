@@ -532,7 +532,7 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         // カテゴリに基づいて画像を検索
         if ((targetCategory || relatedKeywords.length > 0) && imageSearchData.length > 0) {
           // まずはカテゴリに基づくフィルタリング
-          let categoryResults = [];
+          let categoryResults: ImageSearchItem[] = [];
           
           if (targetCategory) {
             categoryResults = imageSearchData.filter(item => 
@@ -560,7 +560,7 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
                 (item.title && item.title.toLowerCase().includes(searchLower)) ||
                 (item.category && item.category.toLowerCase().includes(searchLower)) ||
                 (item.description && item.description.toLowerCase().includes(searchLower)) ||
-                (item.searchText && item.searchText.toLowerCase().includes(searchLower)) ||
+                (item.searchText && item.searchText?.toLowerCase().includes(searchLower)) ||
                 (item.keywords && item.keywords.some(k => 
                   k.toLowerCase().includes(searchLower) || searchLower.includes(k.toLowerCase())
                 ))
