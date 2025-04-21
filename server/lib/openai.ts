@@ -40,10 +40,20 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
 
     // ユーザー設定に応じて制約を追加
     // ナレッジベースからの情報を最大限活用するために常に専門的な回答を促す
-    const finalSystemPrompt = systemPrompt.replace(
+    let finalSystemPrompt = systemPrompt;
+    
+    // プロンプトにある情報を最優先に
+    finalSystemPrompt = finalSystemPrompt.replace(
       '- 提供された知識ベースの情報のみを使用し、それ以外の一般知識での回答は禁止',
-      '- 提供された知識ベースの情報を最優先で使用し、専門的かつ具体的な回答を提供する。一般的な表現を避け、専門用語や具体的な手順を含めること'
+      '- 提供された知識ベースの情報を最優先で使用し、専門的かつ具体的な回答を提供する。ユーザーの質問で述べられた事実（例：「燃料がある」など）は必ず尊重すること。一般的な表現を避け、専門用語や具体的な手順を含めること'
     );
+    
+    // 回答の質を高めるための追加指示
+    finalSystemPrompt += '\n\n追加の制約事項:\n';
+    finalSystemPrompt += '- ユーザーが既に確認済みの情報（例：「燃料が十分ある」など）については、再確認を促さないこと\n';
+    finalSystemPrompt += '- 回答は常に状況に応じた具体的な対処法を中心に構成すること\n';
+    finalSystemPrompt += '- 鉄道車両の専門知識に基づいた正確な診断と解決策を提供すること\n';
+    finalSystemPrompt += '- 曖昧な表現や一般的な助言ではなく、技術的に具体的な指示を提供すること';
 
     console.log("OpenAI APIに送信するシステムプロンプト:", finalSystemPrompt.substring(0, 200) + "...");
     console.log("ユーザープロンプト:", prompt);

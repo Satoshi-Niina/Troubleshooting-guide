@@ -784,13 +784,52 @@ export async function generateSystemPromptWithKnowledge(query: string): Promise<
 このようにユーザーとの対話を一問一答形式で進め、一度に複数の手順を提示せず、ユーザーの返答に合わせて次のステップを案内してください。`;
   } else {
     // 関連情報が見つからない場合
-    basePrompt += `\n\n質問に関する情報がナレッジベースにありません。以下のように回答してください：
+    // エンジン関連の特別な例を追加
+    if (query.toLowerCase().includes('エンジン') && query.toLowerCase().includes('燃料')) {
+      const examples = [
+        {
+          question: "エンジンが急に停止した。燃料はあるが、アクセルを吹かすとゆっくり止まった",
+          answer: "【応急復旧】\n1. エンジンの冷却システムを確認してください\n2. 燃料フィルターの詰まりを点検してください\n3. 点火系統（点火プラグ、配線）を確認してください\n4. エアフィルターの状態を確認してください"
+        },
+        {
+          question: "燃料は十分あるのにエンジンがかからない",
+          answer: "【応急復旧】\n1. バッテリー電圧を確認してください\n2. 燃料供給系統（ポンプ、インジェクター）を点検してください\n3. イグニッションスイッチとキーの状態を確認してください\n4. エンジン始動インターロックが作動していないか確認してください"
+        }
+      ];
+      
+      // 質問に最も近い例を使用
+      let bestExample = examples[0];
+      let bestScore = 0;
+      
+      for (const example of examples) {
+        // 簡易的な類似度計算
+        const exampleWords = example.question.toLowerCase().split(/\s+/);
+        const queryWords = query.toLowerCase().split(/\s+/);
+        
+        let matchCount = 0;
+        for (const word of queryWords) {
+          if (exampleWords.some(w => w.includes(word) || word.includes(w))) {
+            matchCount++;
+          }
+        }
+        
+        const score = matchCount / queryWords.length;
+        if (score > bestScore) {
+          bestScore = score;
+          bestExample = example;
+        }
+      }
+      
+      basePrompt += `\n\n以下の例に基づいて、ユーザーの質問に回答してください：\n\n---\n質問: ${bestExample.question}\n\n${bestExample.answer}\n---`;
+    } else {
+      basePrompt += `\n\n質問に関する情報がナレッジベースにありません。以下のように回答してください：
 
 【応急復旧】
 
 ナレッジベースに該当情報がありません。
 
 この問題は専門的な対応が必要です。保守担当者に電話連絡してください。`;
+    }
   }
   
   return basePrompt;
