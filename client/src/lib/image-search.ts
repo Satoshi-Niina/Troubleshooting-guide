@@ -343,18 +343,21 @@ window.addEventListener('image-search-data-updated', () => {
 const fuseOptions = {
   includeScore: true,
   keys: [
-    { name: 'title', weight: 0.4 },
+    { name: 'title', weight: 0.5 },
     { name: 'category', weight: 0.3 },
-    { name: 'description', weight: 0.3 },
-    { name: 'keywords', weight: 0.7 }, // キーワードの重みをさらに強化
-    { name: 'metadata', weight: 0.2 }, // メタデータも検索対象に
-    { name: 'details', weight: 0.4 }
+    { name: 'description', weight: 0.4 },
+    { name: 'keywords', weight: 0.9 }, // キーワードの重みを強化
+    { name: 'metadata.documentId', weight: 0.8 }, // ドキュメントIDによる検索を強化
+    { name: 'details', weight: 0.6 },
+    { name: 'searchText', weight: 1.0 }, // 検索用テキストフィールドを最高の重みで追加
   ],
-  threshold: 0.5, // 閾値を上げることで、より広く検索結果を取得
+  threshold: 0.3, // 閾値を下げることで、より厳密に関連性の高い結果を取得
   ignoreLocation: true, // 単語の位置を無視して検索
   useExtendedSearch: true, // 拡張検索モード
   minMatchCharLength: 2, // 最低2文字一致から検索対象に
-  distance: 300, // 単語間の距離制限を緩める（より広く検索）
+  distance: 500, // 単語間の距離制限をさらに緩める
+  findAllMatches: true, // すべての一致を見つける
+  isCaseSensitive: false, // 大文字小文字を区別しない
 };
 
 // 画像検索用のFuseインスタンスを作成するヘルパー関数

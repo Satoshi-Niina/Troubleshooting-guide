@@ -677,19 +677,41 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           keywords = ["保守", "部品", "修理"];
         }
         
-        // 新しい画像検索アイテムを作成
+        // ファイル名から追加のキーワードを抽出（数字や特殊文字を除去して単語分割）
+        const additionalKeywords = fileName
+          .replace(/[0-9_\-\.]/g, ' ')
+          .split(/\s+/)
+          .filter(word => word.length > 1)
+          .map(word => word.toLowerCase());
+        
+        // 重複を除去して既存のキーワードと結合
+        const uniqueKeywords = Array.from(new Set([...keywords, ...additionalKeywords]));
+        
+        // 詳細情報を充実させるための処理内容
+        const details = [
+          `保守用車の${category}に関する技術図面`,
+          `${title}の詳細図`,
+          `整備・点検・修理に使用`,
+          `技術マニュアル参照資料`
+        ];
+        
+        // 新しい画像検索アイテムを作成（より詳細な情報を含む）
         const newImageItem = {
           id: fileId,
           file: `/knowledge-base/images/${path.basename(filePath)}`,
           pngFallback: fileExt === '.svg' ? `/knowledge-base/images/${path.basename(pngFallbackPath)}` : '',
           title: title,
           category: category,
-          keywords: keywords,
-          description: `保守用車の${category}に関する図面または写真です。`,
+          keywords: uniqueKeywords,
+          description: `保守用車の${category}に関する図面または写真です。${title}の詳細を示しています。`,
+          details: details.join('. '),
+          searchText: `${title} ${category} ${uniqueKeywords.join(' ')} 保守用車 技術図面 整備 点検 修理`,
           metadata: {
             uploadDate: new Date().toISOString(),
             fileSize: file.size,
-            fileType: fileExt.substring(1).toUpperCase()
+            fileType: fileExt.substring(1).toUpperCase(),
+            sourcePath: filePath,
+            documentId: fileId.split('_')[0] // ドキュメントIDの関連付け
           }
         };
         
