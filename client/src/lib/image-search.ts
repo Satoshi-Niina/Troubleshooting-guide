@@ -114,11 +114,10 @@ async function loadImageSearchData() {
               }
             }
             
-            // JPEG画像の場合はできればPNGに置き換え
-            if (imagePath.toLowerCase().endsWith('.jpeg') || imagePath.toLowerCase().endsWith('.jpg')) {
+            // JPEG/SVGなど他の画像形式の場合はPNGに置き換え
+            if (!imagePath.toLowerCase().endsWith('.png')) {
               const basePath = imagePath.substring(0, imagePath.lastIndexOf('.'));
               const pngPath = `${basePath}.png`;
-              // 実際にはPNGファイルがあるかどうかは確認できないが、
               // 最終的には表示時にフォールバックする
               imagePath = pngPath;
             }
@@ -134,11 +133,10 @@ async function loadImageSearchData() {
             };
           });
           
-        // PNG/SVG画像のみを追加（優先度の高い画像形式）
+        // PNG画像のみを追加（PNG形式に統一）
         embeddedImages
           .filter((item: any) => 
-            item.file.toLowerCase().endsWith('.png') || 
-            item.file.toLowerCase().endsWith('.svg'))
+            item.file.toLowerCase().endsWith('.png'))
           .forEach((item: any) => imageSearchData.push(item));
       }
       
@@ -593,30 +591,16 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         let imageUrl = '';
         let fallbackUrl = '';
         
-        // SVGパスがあればそれを優先して使用
-        if (item.svgPath) {
-          imageUrl = item.svgPath;
-          // SVG形式の場合はPNGをフォールバックとして設定
-          fallbackUrl = item.pngFallback || (imageUrl.toLowerCase().endsWith('.svg') ? 
-            imageUrl.replace('.svg', '.png') : '');
-        } 
-        // SVGパスがなければfileを使用
-        else if (item.file) {
-          if (item.file.toLowerCase().endsWith('.svg')) {
-            // SVGファイルの場合
-            imageUrl = item.file;
-            fallbackUrl = item.pngFallback || item.file.replace('.svg', '.png');
-          } else if (item.file.toLowerCase().endsWith('.png')) {
+        // PNG形式のみを使用するように修正
+        if (item.file) {
+          if (item.file.toLowerCase().endsWith('.png')) {
             // PNGファイルの場合
             imageUrl = item.file;
-            // 対応するSVGファイルがあるか確認（命名規則に基づく）
-            const svgVersion = item.file.replace('.png', '.svg');
-            // SVGパスが明示的に設定されていれば使用、そうでなければPNG使用
-            imageUrl = item.svgPath || item.file;
-            fallbackUrl = item.file; // PNGはフォールバックにもなる
           } else {
-            // その他の形式の場合
-            imageUrl = item.file;
+            // その他の形式の場合、可能ならPNGに変換されたパスを使用
+            const basePath = item.file.substring(0, item.file.lastIndexOf('.'));
+            const pngPath = `${basePath}.png`;
+            imageUrl = pngPath;
           }
         } else {
           imageUrl = '';
@@ -631,8 +615,8 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
           fallbackUrl = '/' + fallbackUrl;
         }
         
-        // 画像の種類を決定（SVGを優先）
-        const imageType = imageUrl.toLowerCase().endsWith('.svg') ? 'svg-image' : 'image';
+        // 画像の種類を決定（PNGのみになったので常にimage）
+        const imageType = 'image';
         
         // メタデータをJSON文字列に変換
         const metadataStr = item.metadata ? JSON.stringify(item.metadata) : undefined;
@@ -650,8 +634,7 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
           id: item.id,
           title: item.title,
           type: imageType,
-          url: imageUrl,                   // SVGを優先
-          pngFallbackUrl: fallbackUrl,     // フォールバックとしてPNGを使用
+          url: imageUrl,                   // PNG形式を使用
           content: '', // テキスト表示を無効化
           relevance: (1 - (result.score || 0)) * 100, // スコアをパーセンテージの関連度に変換
           metadata_json: metadataStr, // JSONとして処理できるようにメタデータを文字列化

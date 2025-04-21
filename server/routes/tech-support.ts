@@ -424,12 +424,11 @@ router.post('/init-image-search-data', async (req, res) => {
     // ディレクトリが存在するか確認し、なければ作成
     ensureDirectoryExists(imagesDir);
     
-    // 初期データを作成
+    // 初期データを作成（PNG形式のみに統一）
     const initialData = [
       {
         id: "engine_001",
-        file: "/knowledge-base/images/engine_001.svg",
-        pngFallback: "/knowledge-base/images/engine_001.png",
+        file: "/knowledge-base/images/engine_001.png",
         title: "エンジン基本構造図",
         category: "エンジン",
         keywords: ["エンジン", "モーター", "動力系", "駆動部"],
@@ -437,8 +436,7 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cooling_001",
-        file: "/knowledge-base/images/cooling_001.svg",
-        pngFallback: "/knowledge-base/images/cooling_001.png",
+        file: "/knowledge-base/images/cooling_001.png",
         title: "冷却システム概略図",
         category: "冷却系統",
         keywords: ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"],
@@ -446,8 +444,7 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "frame_001",
-        file: "/knowledge-base/images/frame_001.svg",
-        pngFallback: "/knowledge-base/images/frame_001.png",
+        file: "/knowledge-base/images/frame_001.png",
         title: "車体フレーム構造",
         category: "車体",
         keywords: ["フレーム", "シャーシ", "車体", "構造", "強度部材"],
@@ -455,8 +452,7 @@ router.post('/init-image-search-data', async (req, res) => {
       },
       {
         id: "cabin_001",
-        file: "/knowledge-base/images/cabin_001.svg",
-        pngFallback: "/knowledge-base/images/cabin_001.png",
+        file: "/knowledge-base/images/cabin_001.png",
         title: "運転キャビン配置図",
         category: "運転室",
         keywords: ["キャビン", "運転室", "操作パネル", "計器盤"],
@@ -464,36 +460,31 @@ router.post('/init-image-search-data', async (req, res) => {
       }
     ];
     
-    // 既存のimagesディレクトリから検出されたSVGファイルを追加
+    // 既存のimagesディレクトリから検出されたPNGファイルを追加
     try {
-      // imagesディレクトリ内のすべてのSVGファイルを取得
-      const svgFiles = fs.readdirSync(imagesDir)
-        .filter(file => file.toLowerCase().endsWith('.svg'));
+      // imagesディレクトリ内のすべてのPNGファイルを取得
+      const pngFiles = fs.readdirSync(imagesDir)
+        .filter(file => file.toLowerCase().endsWith('.png'));
       
-      for (const svgFile of svgFiles) {
-        const svgId = svgFile.replace('.svg', '');
+      for (const pngFile of pngFiles) {
+        const pngId = pngFile.replace('.png', '');
         // 既に初期データとして含まれていない場合のみ追加
-        const exists = initialData.some(item => item.id === svgId);
+        const exists = initialData.some(item => item.id === pngId);
         
         if (!exists) {
-          // PNGファイルの存在を確認
-          const pngFile = svgFile.replace('.svg', '.png');
-          const hasPng = fs.existsSync(path.join(imagesDir, pngFile));
-          
           // 新しいアイテム作成
           initialData.push({
-            id: svgId,
-            file: `/knowledge-base/images/${svgFile}`,
-            pngFallback: hasPng ? `/knowledge-base/images/${pngFile}` : '',
-            title: `${svgId.replace(/_/g, ' ')}`,
-            category: 'アップロード済みSVG',
-            keywords: [`${svgId}`, 'SVG', '図面'],
-            description: `ファイル ${svgFile}`,
+            id: pngId,
+            file: `/knowledge-base/images/${pngFile}`,
+            title: `${pngId.replace(/_/g, ' ')}`,
+            category: 'アップロード済み画像',
+            keywords: [`${pngId}`, 'PNG', '図面'],
+            description: `ファイル ${pngFile}`
           });
         }
       }
     } catch (dirErr) {
-      console.error('SVGファイル検出中にエラー:', dirErr);
+      console.error('PNGファイル検出中にエラー:', dirErr);
     }
     
     // 既存データがある場合は読み込んで上書き更新する
