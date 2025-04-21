@@ -545,33 +545,8 @@ router.post('/init-image-search-data', async (req, res) => {
     // JSONファイルに保存 - 主要パス (knowledge-base)
     fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
     
-    // 下位互換性のため、uploads/dataディレクトリにもコピー
-    try {
-      fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(updatedData, null, 2));
-      console.log(`下位互換性のためuploads/dataにもデータファイルをコピーしました`);
-    } catch (copyErr) {
-      console.error('uploads/dataディレクトリへのJSONコピーエラー:', copyErr);
-      // エラーは無視して処理を続行
-    }
-    
-    // さらに下位互換性のため、public/uploadsにもシンボリックリンクまたはコピーを作成
-    try {
-      const publicDir = path.join(process.cwd(), 'public', 'uploads', 'data');
-      ensureDirectoryExists(publicDir);
-      const publicPath = path.join(publicDir, 'image_search_data.json');
-      
-      // 既存のファイルがあれば削除
-      if (fs.existsSync(publicPath)) {
-        fs.unlinkSync(publicPath);
-      }
-      
-      // 新しいファイルをコピー
-      fs.copyFileSync(imageSearchDataPath, publicPath);
-      console.log(`下位互換性のためpublic/uploadsにもデータファイルをコピーしました`);
-    } catch (copyErr) {
-      console.error('publicディレクトリへのJSONコピーエラー:', copyErr);
-      // エラーは無視して処理を続行
-    }
+    // データを一元管理のためknowledge-baseのみに保存し、コピーは行わない
+    console.log(`データの保存場所をknowledge-base/dataに一元化しました`);
     console.log(`画像検索データを初期化しました: ${updatedData.length}件`);
     
     return res.json({
@@ -659,13 +634,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           fs.mkdirSync(knowledgeBaseDataDir, { recursive: true });
         }
         
-        // メインの保存先はknowledge-base/data/ディレクトリ
+        // データの保存先は knowledge-base/data のみに一元化
         const imageSearchDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
         
-        // 下位互換性のためuploadsディレクトリにも保存
-        const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
-        ensureDirectoryExists(uploadsDataDir);
-        const publicImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
+        // 画像検索データの初期化
         let imageSearchData = [];
         
         if (fs.existsSync(imageSearchDataPath)) {
@@ -729,13 +701,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           imageSearchData.push(newImageItem);
         }
         
-        // 更新したデータを書き込み（メインの保存先）
+        // 更新したデータを書き込み（knowledge-base/dataのみに保存）
         fs.writeFileSync(imageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
         console.log(`画像検索データを更新しました: ${imageSearchData.length}件`);
-        
-        // 下位互換性のためuploadsディレクトリにも保存
-        fs.writeFileSync(publicImageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
-        console.log(`下位互換性のためuploads/dataにもデータファイルをコピーしました`);
         
         // 元ファイルを保存するオプションがオフの場合、元ファイルを削除
         if (!keepOriginalFile) {
