@@ -280,7 +280,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
           console.error(`画像変換エラー: ${convErr}`);
           // エラー時は元の形式で保存
           const fallbackFileName = `${imgBaseFileName}${originalExt}`;
-          const fallbackFilePath = path.join(publicImagesDir, fallbackFileName);
+          const fallbackFilePath = path.join(knowledgeBaseImagesDir, fallbackFileName);
           fs.writeFileSync(fallbackFilePath, imgData);
           console.log(`変換エラー - 元の形式で保存: ${fallbackFileName}`);
         }
@@ -354,9 +354,9 @@ export async function extractPptxText(filePath: string): Promise<string> {
           </text>
         </svg>`;
         
-        // SVGファイルとPNGファイルを直接公開ディレクトリに保存
-        const svgFilePath = path.join(publicImagesDir, `${slideFileName}.svg`);
-        const pngFilePath = path.join(publicImagesDir, `${slideFileName}.png`);
+        // SVGファイルとPNGファイルをknowledge-baseディレクトリに保存
+        const svgFilePath = path.join(knowledgeBaseImagesDir, `${slideFileName}.svg`);
+        const pngFilePath = path.join(knowledgeBaseImagesDir, `${slideFileName}.png`);
         fs.writeFileSync(svgFilePath, svgContent);
         
         // SVGからPNGへの変換を行う
@@ -378,8 +378,8 @@ export async function extractPptxText(filePath: string): Promise<string> {
           console.log(`変換に失敗したため、SVGコンテンツをPNGとして保存: ${pngFilePath}`);
         }
         
-        // ファイルは既に公開ディレクトリに直接保存済み
-        console.log(`SVGファイルとPNGファイルは公開ディレクトリに保存済み: ${svgFilePath}`);
+        // ファイルは既にknowledge-baseディレクトリに保存済み
+        console.log(`SVGファイルとPNGファイルはknowledge-baseディレクトリに保存済み: ${svgFilePath}`);
         
         console.log(`スライド画像を保存: ${slideFileName}`);
         
@@ -411,10 +411,10 @@ export async function extractPptxText(filePath: string): Promise<string> {
       // テキスト内容を設定
       slideInfoData.textContent = extractedText;
       
-      // メタデータをJSON形式で公開ディレクトリに直接保存
-      const publicMetadataPath = path.join(publicJsonDir, `${slideImageBaseName}_metadata.json`);
-      fs.writeFileSync(publicMetadataPath, JSON.stringify(slideInfoData, null, 2));
-      console.log(`メタデータJSONを公開ディレクトリに保存: ${publicMetadataPath}`);
+      // メタデータをJSON形式でknowledge-baseディレクトリに保存
+      const metadataPath = path.join(knowledgeBaseJsonDir, `${slideImageBaseName}_metadata.json`);
+      fs.writeFileSync(metadataPath, JSON.stringify(slideInfoData, null, 2));
+      console.log(`メタデータJSONをknowledge-baseディレクトリに保存: ${metadataPath}`);
       
       // 画像検索データに埋め込み画像を追加
       if (extractedImagePaths.length > 0) {
