@@ -4,9 +4,7 @@ import { apiRequest } from './queryClient';
 // 画像検索用の専用インターフェース定義
 interface ImageSearchItem {
   id: string | number;
-  file: string;
-  pngFallback?: string;  // PNG形式のフォールバックパス
-  svgPath?: string;      // SVG形式のパス
+  file: string;  // PNG形式のパス（SVGは使用しない）
   title: string;
   category: string;
   keywords: string[];

@@ -251,31 +251,25 @@ export async function extractPptxText(filePath: string): Promise<string> {
         const originalExt = path.extname(entry.entryName).toLowerCase();
         const imgBaseFileName = `${slideImageBaseName}_img_${(i+1).toString().padStart(3, '0')}`;
         
-        // すべての画像をSVG形式で保存（互換性のためPNG形式も生成）
-        // SVGをメイン形式とし、PNGをフォールバックとして使用
-        const svgFileName = `${imgBaseFileName}.svg`;
+        // すべての画像をPNG形式のみで保存（SVGは使用しない）
         const pngFileName = `${imgBaseFileName}.png`;
-        const svgFilePath = path.join(knowledgeBaseImagesDir, svgFileName);
         const pngFilePath = path.join(knowledgeBaseImagesDir, pngFileName);
         
-        console.log(`埋め込み画像を抽出: ${entry.entryName} -> ${svgFilePath} (メイン形式:SVG)`);
+        console.log(`埋め込み画像を抽出: ${entry.entryName} -> ${pngFilePath} (PNG形式のみ)`);
         
         // 画像データを抽出
         const imgData = entry.getData();
         
         try {
           if (originalExt === '.svg') {
-            // SVGファイルはそのまま保存
-            fs.writeFileSync(svgFilePath, imgData);
-            // フォールバック用のPNGも生成（実際の変換処理は将来実装）
+            // SVGファイルはPNGに変換して保存（将来的な実装）
+            // 現状では単純にPNGとして保存
             fs.writeFileSync(pngFilePath, imgData);
-            console.log(`SVG画像を保存: ${svgFileName} (PNGフォールバックも生成)`);
+            console.log(`SVG画像をPNGとして保存: ${pngFileName}`);
           } else {
-            // 非SVG画像はSVGとPNG両方のフォーマットで保存
-            // 現時点では元のファイルをそのまま保存し、将来的にはsharpなどでの変換を実装
-            fs.writeFileSync(svgFilePath, imgData);
+            // 非SVG画像はPNG形式のみで保存
             fs.writeFileSync(pngFilePath, imgData);
-            console.log(`画像を複数形式で保存: ${entry.entryName} -> ${svgFileName} および ${pngFileName}`);
+            console.log(`画像をPNG形式で保存: ${entry.entryName} -> ${pngFileName}`);
           }
         } catch (convErr) {
           console.error(`画像変換エラー: ${convErr}`);
@@ -286,20 +280,17 @@ export async function extractPptxText(filePath: string): Promise<string> {
           console.log(`変換エラー - 元の形式で保存: ${fallbackFileName}`);
         }
         
-        // PNGをメインとしてURLパスを設定
+        // PNGのURLパスを設定
         const imgUrl = `/knowledge-base/images/${pngFileName}`;
-        const pngUrl = `/knowledge-base/images/${pngFileName}`;
         extractedImagePaths.push(imgUrl);
         
-        // メタデータに追加（SVGとPNGの両方を記録）
+        // メタデータに追加（PNGのみを記録）
         slideInfoData.embeddedImages.push({
           元のファイル名: entry.entryName,
-          抽出パス: imgUrl, 
-          代替パス: pngUrl,
+          抽出パス: imgUrl,
           保存日時: new Date().toISOString(),
           サイズ: imgData.length,
-          形式: 'SVG', // メイン形式をSVGとして統一
-          代替形式: 'PNG' // 代替形式としてPNGを統一
+          形式: 'PNG'  // PNG形式のみを使用
         });
       }
       
@@ -382,7 +373,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
         
         console.log(`スライド画像を保存: ${slideFileName}`);
         
-        // メタデータに追加 (ユーザー提供の例に合わせた形式)
+        // メタデータに追加 (ユーザー提供の例に合わせた形式) - PNG形式のみ
         slideInfoData.slides.push({
           スライド番号: slideNum,
           タイトル: slideTexts[i].title,
@@ -390,7 +381,6 @@ export async function extractPptxText(filePath: string): Promise<string> {
           ノート: `スライド ${slideNum}のノート: ${slideTexts[i].title}\n${slideTexts[i].content}`,
           画像テキスト: [{
             画像パス: `/knowledge-base/images/${slideFileName}.png`,
-            代替画像パス: `/knowledge-base/images/${slideFileName}.png`,
             テキスト: slideTexts[i].content
           }]
         });
@@ -635,24 +625,16 @@ async function addEmbeddedImagesToSearchData(
       const imageId = `${baseFileName}_img_${(i+1).toString().padStart(3, '0')}`;
       const imageExt = path.extname(imagePath);
       
-      // SVGファイルパスを生成（PNGからSVGへのパス変換を行う）
-      const svgImagePath = imagePath.replace(/\.png$/i, '.svg');
-      
-      // SVGを優先
-      const primaryImagePath = svgImagePath;
-      // PNGフォールバックはそのまま
-      const pngFallbackPath = imagePath;
+      // PNGパスのみを使用
+      const pngPath = imagePath;
       
       // knowledge-baseのパスのみ使用（uploads参照から完全に移行）
-      const knowledgeBasePrimaryPath = `/knowledge-base/images/${path.basename(primaryImagePath)}`;
-      const knowledgeBasePngFallback = `/knowledge-base/images/${path.basename(pngFallbackPath)}`;
+      const knowledgeBasePngPath = `/knowledge-base/images/${path.basename(pngPath)}`;
       
-      // 画像検索アイテムを作成（SVG形式を優先、PNG形式はフォールバックとして設定）
+      // 画像検索アイテムを作成（PNG形式のみを使用）
       const newImageItem = {
         id: imageId,
-        file: knowledgeBasePrimaryPath, // SVG形式を優先
-        pngFallback: knowledgeBasePngFallback, // PNG形式はフォールバックとして使用
-        svgPath: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg') ? knowledgeBasePrimaryPath : undefined,
+        file: knowledgeBasePngPath, // PNG形式のみを使用
         title: `${originalFileName}内の画像 ${i+1}`,
         category: '保守用車マニュアル画像',
         keywords: ["保守用車", "マニュアル", "図面", "画像"],
@@ -660,11 +642,10 @@ async function addEmbeddedImagesToSearchData(
         metadata: {
           uploadDate: new Date().toISOString(),
           fileSize: -1, // ファイルサイズは不明
-          fileType: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg') ? 'SVG' : 'PNG',
+          fileType: 'PNG',
           sourceFile: originalFileName,
           extractedFrom: 'PowerPoint',
-          hasSvgVersion: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg'),
-          hasPngVersion: true // PNGは常に生成されていると仮定
+          hasPngVersion: true
         }
       };
       
