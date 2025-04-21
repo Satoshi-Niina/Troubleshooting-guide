@@ -45,11 +45,8 @@ const jsonDir = path.join(knowledgeBaseDir, 'json');
 const imageDir = path.join(knowledgeBaseDir, 'images');
 const tempDir = path.join(knowledgeBaseDir, 'temp');
 
-// 下位互換性のための旧ディレクトリ参照
-const uploadsDir = path.resolve('./uploads');
-const uploadsPptDir = path.join(uploadsDir, 'ppt');
-const uploadsJsonDir = path.join(uploadsDir, 'json');
-const uploadsImageDir = path.join(uploadsDir, 'images');
+// knowledge-baseに完全に一元化されたため、uploadsディレクトリの参照は不要
+// データの参照はすべてknowledge-baseディレクトリから行う
 
 // ディレクトリの存在確認と作成（主にknowledge-base）
 [knowledgeBaseDir, pptDir, jsonDir, imageDir, tempDir].forEach(dir => {

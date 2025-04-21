@@ -11,18 +11,18 @@ import {
 import { processDocument } from '../lib/document-processor';
 import { log } from '../vite';
 
-// ストレージ設定
+// ストレージ設定 - knowledge-baseに一元化
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // 一時保存ディレクトリ
-    const uploadDir = path.join(process.cwd(), 'uploads', 'temp');
+    // 一時保存ディレクトリはknowledge-base内に配置
+    const tempDir = path.join(process.cwd(), 'knowledge-base', 'temp');
     
     // ディレクトリの存在を確認し、ない場合は作成
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
     }
     
-    cb(null, uploadDir);
+    cb(null, tempDir);
   },
   filename: (req, file, cb) => {
     // ファイル名に現在時刻のタイムスタンプを追加して一意にする

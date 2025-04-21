@@ -19,12 +19,17 @@ app.use('/knowledge-base/data', express.static(path.join(process.cwd(), 'knowled
 app.use('/knowledge-base/json', express.static(path.join(process.cwd(), 'knowledge-base', 'json')));
 app.use('/knowledge-base/media', express.static(path.join(process.cwd(), 'knowledge-base', 'media')));
 
-// 下位互換性のために/uploadsからのリクエストも/knowledge-baseに転送
-app.use('/uploads/images', (req, res) => {
-  res.redirect(req.baseUrl.replace('/uploads', '/knowledge-base') + req.path);
-});
-app.use('/uploads/media', (req, res) => {
-  res.redirect(req.baseUrl.replace('/uploads', '/knowledge-base') + req.path);
+// 完全に/knowledge-baseに一元化、/uploadsへのリクエストを全て/knowledge-baseに転送
+app.use('/uploads/:dir', (req, res) => {
+  const dir = req.params.dir;
+  // 許可されたディレクトリのみリダイレクト
+  if (['images', 'data', 'json', 'media', 'ppt'].includes(dir)) {
+    const redirectPath = `/knowledge-base/${dir}${req.path}`;
+    console.log(`リダイレクト: ${req.path} -> ${redirectPath}`);
+    res.redirect(redirectPath);
+  } else {
+    res.status(404).send('Not found');
+  }
 });
 
 // Add a test route to serve our HTML test page
