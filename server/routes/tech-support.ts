@@ -147,8 +147,8 @@ const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
 const knowledgeBaseDataDir = path.join(knowledgeBaseDir, 'data');
 const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
 
-// public/imagesディレクトリを画像検索用に使用
-const publicImagesDir = path.join(process.cwd(), 'public', 'images');
+// knowledge-base/imagesディレクトリを画像用に使用 (一元化)
+const publicImagesDir = path.join(process.cwd(), 'knowledge-base', 'images');
 
 // 知識ベース一時ディレクトリのパス
 const knowledgeBaseTempDir = path.join(knowledgeBaseDir, 'temp');
@@ -418,12 +418,10 @@ router.post('/init-image-search-data', async (req, res) => {
     // 画像検索データJSONファイルのパス（主要なパス）
     const imageSearchDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
     
-    // 下位互換性のためpublicディレクトリにも保存するためのパス
-    const publicImageSearchDataPath = path.join(process.cwd(), 'public', 'uploads', 'data', 'image_search_data.json');
-    const imagesDir = path.join(process.cwd(), 'public', 'uploads', 'images');
+    // 画像ディレクトリの参照 - 一元化するためにknowledge-baseだけを使用
+    const imagesDir = path.join(process.cwd(), 'knowledge-base', 'images');
     
     // ディレクトリが存在するか確認し、なければ作成
-    ensureDirectoryExists(path.join(process.cwd(), 'public', 'uploads', 'data'));
     ensureDirectoryExists(imagesDir);
     
     // 初期データを作成
@@ -537,23 +535,27 @@ router.post('/init-image-search-data', async (req, res) => {
       updatedData = initialData;
     }
     
-    // knowledge-base/dataディレクトリにもJSONを保存
+    // JSONファイルに保存 - 一元管理のためknowledge-baseのみに保存
+    fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
+    
+    // 下位互換性のため、public/uploadsにもシンボリックリンクまたはコピーを作成
     try {
-      const knowledgeBaseDataDir = path.join(process.cwd(), 'knowledge-base', 'data');
-      if (!fs.existsSync(knowledgeBaseDataDir)) {
-        fs.mkdirSync(knowledgeBaseDataDir, { recursive: true });
+      const publicDir = path.join(process.cwd(), 'public', 'uploads', 'data');
+      ensureDirectoryExists(publicDir);
+      const publicPath = path.join(publicDir, 'image_search_data.json');
+      
+      // 既存のファイルがあれば削除
+      if (fs.existsSync(publicPath)) {
+        fs.unlinkSync(publicPath);
       }
       
-      const knowledgeBaseDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
-      fs.writeFileSync(knowledgeBaseDataPath, JSON.stringify(updatedData, null, 2));
-      console.log(`knowledge-baseディレクトリにも画像検索データを保存しました: ${knowledgeBaseDataPath}`);
+      // 新しいファイルをコピー
+      fs.copyFileSync(imageSearchDataPath, publicPath);
+      console.log(`下位互換性のためpublic/uploadsにもデータファイルをコピーしました`);
     } catch (copyErr) {
-      console.error('knowledge-baseディレクトリへのJSONコピーエラー:', copyErr);
+      console.error('publicディレクトリへのJSONコピーエラー:', copyErr);
       // エラーは無視して処理を続行
     }
-    
-    // JSONファイルに保存
-    fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
     console.log(`画像検索データを初期化しました: ${updatedData.length}件`);
     
     return res.json({
