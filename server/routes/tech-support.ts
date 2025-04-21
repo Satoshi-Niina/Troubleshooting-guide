@@ -41,13 +41,26 @@ function cleanupTempDirectory(dirPath: string): void {
   }
 }
 
-// 一時ディレクトリのクリーンアップ（知識ベースディレクトリのみ）
+// 一時ディレクトリのクリーンアップ（知識ベースディレクトリとuploadsディレクトリ）
 async function cleanupTempDirectories(): Promise<void> {
-  const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
-  const subDirs = ['temp'];
+  // 知識ベースディレクトリ
+  const rootDir = process.cwd();
+  const knowledgeBaseDir = path.join(rootDir, 'knowledge-base');
   
-  for (const subDir of subDirs) {
-    const dirPath = path.join(knowledgeBaseDir, subDir);
+  // 一時ファイル配置用ディレクトリ
+  const publicImagesDir = path.join(rootDir, 'public/images');
+  const publicUploadsDir = path.join(rootDir, 'public/uploads');
+  const uploadsDir = path.join(rootDir, 'uploads');
+  
+  // クリーンアップ対象の一時ディレクトリリスト
+  const tempDirs = [
+    path.join(knowledgeBaseDir, 'temp'),
+    path.join(uploadsDir, 'temp'),
+    path.join(publicUploadsDir, 'temp')
+  ];
+  
+  // 一時ディレクトリの処理
+  for (const dirPath of tempDirs) {
     if (!fs.existsSync(dirPath)) continue;
     
     try {
@@ -62,14 +75,80 @@ async function cleanupTempDirectories(): Promise<void> {
           await verifyAndCleanupDirectory(filePath);
         } else {
           // ファイルの場合は検証して削除
-          await verifyAndCleanupFile(filePath, subDir);
+          await verifyAndCleanupFile(filePath, path.basename(dirPath));
         }
       }
       
-      console.log(`アップロードディレクトリをクリーンアップしました: ${dirPath}`);
+      console.log(`一時ディレクトリをクリーンアップしました: ${dirPath}`);
     } catch (error) {
-      console.error(`アップロードディレクトリのクリーンアップ中にエラーが発生しました: ${dirPath}`, error);
+      console.error(`一時ディレクトリのクリーンアップ中にエラーが発生しました: ${dirPath}`, error);
     }
+  }
+  
+  // knowledge-baseに移動済みのファイルをuploadsとpublic/uploadsから削除
+  try {
+    await cleanupRedundantFiles();
+  } catch (error) {
+    console.error('重複ファイルのクリーンアップ中にエラーが発生しました:', error);
+  }
+}
+
+// knowledge-baseに存在するファイルと重複するファイルを一時ディレクトリから削除
+async function cleanupRedundantFiles(): Promise<{removed: number, errors: number}> {
+  const rootDir = process.cwd();
+  const knowledgeImagesDir = path.join(rootDir, 'knowledge-base/images');
+  const uploadsDirs = [
+    path.join(rootDir, 'uploads/images'),
+    path.join(rootDir, 'public/uploads/images'),
+    path.join(rootDir, 'public/images')
+  ];
+  
+  let removedCount = 0;
+  let errorCount = 0;
+  
+  try {
+    // knowledge-base/imagesのファイル一覧を取得
+    if (!fs.existsSync(knowledgeImagesDir)) {
+      console.log(`ディレクトリが存在しません: ${knowledgeImagesDir}`);
+      return { removed: 0, errors: 0 };
+    }
+    
+    const knowledgeImages = fs.readdirSync(knowledgeImagesDir);
+    console.log(`知識ベースディレクトリ内のファイル数: ${knowledgeImages.length}件`);
+    
+    // 各アップロードディレクトリをチェック
+    for (const dir of uploadsDirs) {
+      if (!fs.existsSync(dir)) {
+        console.log(`ディレクトリが存在しません: ${dir}`);
+        // ディレクトリが存在しない場合は作成する（一時ファイル用）
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`ディレクトリを作成しました: ${dir}`);
+        continue;
+      }
+      
+      const uploadedFiles = fs.readdirSync(dir);
+      console.log(`ディレクトリ内のファイル数: ${dir} - ${uploadedFiles.length}件`);
+      
+      for (const file of uploadedFiles) {
+        // knowledge-baseに同名のファイルが存在する場合は削除
+        if (knowledgeImages.includes(file)) {
+          try {
+            fs.unlinkSync(path.join(dir, file));
+            console.log(`重複ファイルを削除しました: ${path.join(dir, file)}`);
+            removedCount++;
+          } catch (error) {
+            console.error(`ファイル削除エラー: ${path.join(dir, file)}`, error);
+            errorCount++;
+          }
+        }
+      }
+    }
+    
+    console.log(`重複ファイル削除結果: 成功=${removedCount}件, 失敗=${errorCount}件`);
+    return { removed: removedCount, errors: errorCount };
+  } catch (error) {
+    console.error('重複ファイル削除処理でエラーが発生しました:', error);
+    return { removed: removedCount, errors: errorCount + 1 };
   }
 }
 
