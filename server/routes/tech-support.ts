@@ -604,27 +604,50 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         // ファイル名から一意のIDを生成
         const fileId = path.basename(filePath, fileExt).toLowerCase().replace(/\s+/g, '_');
         
-        // SVGファイルの場合はPNGフォールバックを生成
-        let pngFallbackPath = '';
-        if (fileExt === '.svg') {
+        // 全ての形式をPNGに統一するため、SVG/JPG/GIFなどからPNGへの変換を実行
+        let pngFilePath = '';
+        let originalFilePath = filePath;
+        let updatedFilePath = filePath;
+        let updatedFileExt = fileExt;
+        
+        if (fileExt !== '.png') {
           try {
-            // 公開ディレクトリ内のSVGファイルからPNGを生成
-            const publicSvgPath = path.join(publicImagesDir, path.basename(filePath));
-            pngFallbackPath = path.join(publicImagesDir, `${path.basename(filePath, '.svg')}.png`);
-            console.log(`SVGからPNGフォールバックを生成: ${pngFallbackPath}`);
+            // 元のファイルパスを保持
+            const origFilePath = filePath;
             
-            // SVGをPNGに変換
-            const svgContent = fs.readFileSync(publicSvgPath, 'utf8');
-            const svgBuffer = Buffer.from(svgContent);
+            // PNGファイルパスを生成
+            pngFilePath = path.join(
+              publicImagesDir, 
+              `${path.basename(filePath, fileExt)}.png`
+            );
             
-            await sharp(svgBuffer)
-              .png()
-              .toFile(pngFallbackPath);
+            console.log(`${fileExt}形式からPNG形式に変換: ${pngFilePath}`);
             
-            console.log(`PNGフォールバックを生成しました: ${pngFallbackPath}`);
+            if (fileExt === '.svg') {
+              // SVGの場合は特別な処理
+              const svgContent = fs.readFileSync(origFilePath, 'utf8');
+              const svgBuffer = Buffer.from(svgContent);
+              
+              await sharp(svgBuffer)
+                .png()
+                .toFile(pngFilePath);
+            } else {
+              // その他の画像形式はそのままsharpで変換
+              await sharp(origFilePath)
+                .png()
+                .toFile(pngFilePath);
+            }
+            
+            console.log(`PNG形式に変換完了: ${pngFilePath}`);
+            
+            // 以降の処理では変換したPNGファイルを使用
+            originalFilePath = origFilePath; // 元のパスを記録
+            updatedFilePath = pngFilePath; // 処理中のファイルパスを更新
+            updatedFileExt = '.png'; // 拡張子を更新
           } catch (convErr) {
-            console.error("SVGからPNGへの変換エラー:", convErr);
-            // 変換に失敗してもそのまま続行
+            console.error(`${fileExt}からPNGへの変換エラー:`, convErr);
+            // 変換に失敗した場合は元のファイルパスを使用
+            pngFilePath = '';
           }
         }
         
@@ -698,8 +721,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         // 新しい画像検索アイテムを作成（より詳細な情報を含む）
         const newImageItem = {
           id: fileId,
-          file: `/knowledge-base/images/${path.basename(filePath)}`,
-          pngFallback: fileExt === '.svg' ? `/knowledge-base/images/${path.basename(pngFallbackPath)}` : '',
+          file: `/knowledge-base/images/${path.basename(updatedFilePath || filePath)}`,
+          // 全てPNG形式に統一するため、pngFallbackは不要になりました
+          pngFallback: '',
           title: title,
           category: category,
           keywords: uniqueKeywords,
@@ -709,8 +733,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           metadata: {
             uploadDate: new Date().toISOString(),
             fileSize: file.size,
-            fileType: fileExt.substring(1).toUpperCase(),
-            sourcePath: filePath,
+            fileType: 'PNG', // 全てPNG形式に統一
+            originalFileType: fileExt !== '.png' ? fileExt.substring(1).toUpperCase() : 'PNG',
+            sourcePath: updatedFilePath || filePath,
+            originalPath: originalFilePath !== updatedFilePath ? originalFilePath : '',
             documentId: fileId.split('_')[0] // ドキュメントIDの関連付け
           }
         };
@@ -747,8 +773,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           file: {
             id: fileId,
             name: file.originalname,
-            path: `/knowledge-base/images/${path.basename(filePath)}`,
-            pngFallbackPath: fileExt === '.svg' ? `/knowledge-base/images/${path.basename(pngFallbackPath)}` : '',
+            path: `/knowledge-base/images/${path.basename(updatedFilePath || filePath)}`,
+            // pngFallbackPathは不要になりました（全てPNG形式に統一）
+            pngFallbackPath: '',
             size: file.size,
           },
           imageSearchData: {
