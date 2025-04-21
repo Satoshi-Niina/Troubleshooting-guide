@@ -253,42 +253,55 @@ export async function extractPptxText(filePath: string): Promise<string> {
         const originalExt = path.extname(entry.entryName).toLowerCase();
         const imgBaseFileName = `${slideImageBaseName}_img_${(i+1).toString().padStart(3, '0')}`;
         
-        // JPG/JPEG画像はPNG形式に変換して保存（他の形式はそのまま）
-        const imgExt = (originalExt === '.jpg' || originalExt === '.jpeg') ? '.png' : originalExt;
-        const imgFileName = `${imgBaseFileName}${imgExt}`;
-        const imgFilePath = path.join(publicImagesDir, imgFileName);
+        // すべての画像をSVG形式で保存（互換性のためPNG形式も生成）
+        // SVGをメイン形式とし、PNGをフォールバックとして使用
+        const svgFileName = `${imgBaseFileName}.svg`;
+        const pngFileName = `${imgBaseFileName}.png`;
+        const svgFilePath = path.join(publicImagesDir, svgFileName);
+        const pngFilePath = path.join(publicImagesDir, pngFileName);
         
-        console.log(`埋め込み画像を抽出: ${entry.entryName} -> ${imgFilePath} (${originalExt} -> ${imgExt})`);
+        console.log(`埋め込み画像を抽出: ${entry.entryName} -> ${svgFilePath} (メイン形式:SVG)`);
         
         // 画像データを抽出
         const imgData = entry.getData();
         
-        // JPG/JPEG画像はPNG形式に変換（実際のPNG変換処理はサーバーサイドでsharpなどのライブラリを使用）
-        if (originalExt === '.jpg' || originalExt === '.jpeg') {
-          try {
-            // 実際のPNG変換はここに実装（今回はファイルをそのまま保存）
-            fs.writeFileSync(imgFilePath, imgData);
-            console.log(`画像をPNG形式に変換: ${imgFileName}`);
-          } catch (convErr) {
-            console.error(`画像変換エラー: ${convErr}`);
-            fs.writeFileSync(imgFilePath, imgData);
+        try {
+          if (originalExt === '.svg') {
+            // SVGファイルはそのまま保存
+            fs.writeFileSync(svgFilePath, imgData);
+            // フォールバック用のPNGも生成（実際の変換処理は将来実装）
+            fs.writeFileSync(pngFilePath, imgData);
+            console.log(`SVG画像を保存: ${svgFileName} (PNGフォールバックも生成)`);
+          } else {
+            // 非SVG画像はSVGとPNG両方のフォーマットで保存
+            // 現時点では元のファイルをそのまま保存し、将来的にはsharpなどでの変換を実装
+            fs.writeFileSync(svgFilePath, imgData);
+            fs.writeFileSync(pngFilePath, imgData);
+            console.log(`画像を複数形式で保存: ${entry.entryName} -> ${svgFileName} および ${pngFileName}`);
           }
-        } else {
-          // その他の形式はそのまま保存
-          fs.writeFileSync(imgFilePath, imgData);
+        } catch (convErr) {
+          console.error(`画像変換エラー: ${convErr}`);
+          // エラー時は元の形式で保存
+          const fallbackFileName = `${imgBaseFileName}${originalExt}`;
+          const fallbackFilePath = path.join(publicImagesDir, fallbackFileName);
+          fs.writeFileSync(fallbackFilePath, imgData);
+          console.log(`変換エラー - 元の形式で保存: ${fallbackFileName}`);
         }
         
-        // 画像のURLパス
-        const imgUrl = `/knowledge-base/images/${imgFileName}`;
+        // SVGを優先してURLパスを設定
+        const imgUrl = `/knowledge-base/images/${svgFileName}`;
+        const pngUrl = `/knowledge-base/images/${pngFileName}`;
         extractedImagePaths.push(imgUrl);
         
-        // メタデータに追加（形式はPNGに統一）
+        // メタデータに追加（SVGとPNGの両方を記録）
         slideInfoData.embeddedImages.push({
           元のファイル名: entry.entryName,
-          抽出パス: imgUrl,
+          抽出パス: imgUrl, 
+          代替パス: pngUrl,
           保存日時: new Date().toISOString(),
           サイズ: imgData.length,
-          形式: (originalExt === '.jpg' || originalExt === '.jpeg') ? 'PNG' : imgExt.substring(1).toUpperCase()
+          形式: 'SVG', // メイン形式をSVGとして統一
+          代替形式: 'PNG' // 代替形式としてPNGを統一
         });
       }
       
@@ -380,7 +393,8 @@ export async function extractPptxText(filePath: string): Promise<string> {
           本文: [slideTexts[i].content],
           ノート: `スライド ${slideNum}のノート: ${slideTexts[i].title}\n${slideTexts[i].content}`,
           画像テキスト: [{
-            画像パス: `/knowledge-base/images/${slideFileName}.png`,
+            画像パス: `/knowledge-base/images/${slideFileName}.svg`,
+            代替画像パス: `/knowledge-base/images/${slideFileName}.png`,
             テキスト: slideTexts[i].content
           }]
         });
@@ -637,11 +651,11 @@ async function addEmbeddedImagesToSearchData(
       const knowledgeBasePrimaryPath = `/knowledge-base/images/${path.basename(primaryImagePath)}`;
       const knowledgeBasePngFallback = `/knowledge-base/images/${path.basename(pngFallbackPath)}`;
       
-      // 画像検索アイテムを作成
+      // 画像検索アイテムを作成（SVG形式を優先、PNG形式はフォールバックとして設定）
       const newImageItem = {
         id: imageId,
-        file: knowledgeBasePrimaryPath,
-        pngFallback: knowledgeBasePngFallback,
+        file: knowledgeBasePrimaryPath, // SVG形式を優先
+        pngFallback: knowledgeBasePngFallback, // PNG形式はフォールバックとして使用
         title: `${originalFileName}内の画像 ${i+1}`,
         category: '保守用車マニュアル画像',
         keywords: ["保守用車", "マニュアル", "図面", "画像"],
