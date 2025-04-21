@@ -3,7 +3,7 @@ import { useChat } from "@/context/chat-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Camera, Mic } from "lucide-react";
+import { Send, Camera, Mic, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MessageInput() {
@@ -116,6 +116,16 @@ export default function MessageInput() {
       }
     }
   };
+  
+  // テキスト入力欄をクリアする
+  const handleClearText = () => {
+    setMessage("");
+    if (isMobile && textareaRef.current) {
+      textareaRef.current.focus();
+    } else if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-t border-blue-200 p-2 message-input-container">
@@ -173,10 +183,20 @@ export default function MessageInput() {
                   }
                 }}
               />
+              {/* テキストがある場合にのみクリアボタンを表示 */}
+              {message.trim() && (
+                <button
+                  type="button"
+                  onClick={handleClearText}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           ) : (
             /* デスクトップ用インプット（より小さく） */
-            <div className="flex-1 h-[32px] flex items-center"> {/* 高さを小さく */}
+            <div className="flex-1 h-[32px] flex items-center relative"> {/* 高さを小さく */}
               <Input
                 ref={inputRef}
                 type="text"
@@ -186,6 +206,16 @@ export default function MessageInput() {
                 onChange={handleInputChange}
                 disabled={isLoading}
               />
+              {/* テキストがある場合にのみクリアボタンを表示 */}
+              {message.trim() && (
+                <button
+                  type="button"
+                  onClick={handleClearText}
+                  className="absolute right-1 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           )}
           <Button 
