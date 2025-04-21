@@ -704,6 +704,8 @@ export async function generateSystemPromptWithKnowledge(query: string): Promise<
 
 ## 厳守事項（最重要）
 - 提供された知識ベースの情報のみを使用し、それ以外の一般知識での回答は禁止
+- すべての提供された技術情報を統合し、包括的で網羅的な回答を作成すること
+- 保守用車に関する既存のドキュメント全体の内容を考慮して応答すること
 - 会話は一連のトラブルシューティングのQA対話形式として進行
 - ユーザーの質問に対して各ステップごとに1つだけ返答し、先の手順を一度に提示しない
 - ユーザーの返答に基づいて次のステップを案内する対話型のトラブルシューティングを実現
@@ -1277,11 +1279,39 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
           // ドキュメントIDに関連する画像を除外
           const updatedImages = imageIndex.images.filter((img: any) => img.documentId !== docId);
           
+          // 関連する画像ファイルも削除
+          const imagesToDelete = imageIndex.images.filter((img: any) => img.documentId === docId);
+          
+          // 画像ファイルを物理的に削除
+          for (const img of imagesToDelete) {
+            if (img.path && fs.existsSync(img.path)) {
+              try {
+                fs.unlinkSync(img.path);
+                console.log(`関連画像ファイルを削除しました: ${img.path}`);
+              } catch (fileErr) {
+                console.error(`画像ファイル削除エラー: ${img.path}`, fileErr);
+              }
+            }
+            
+            // SVGとPNGの両方のバージョンがある場合は両方削除
+            if (img.path && img.path.toLowerCase().endsWith('.svg')) {
+              const pngPath = img.path.replace(/\.svg$/i, '.png');
+              if (fs.existsSync(pngPath)) {
+                try {
+                  fs.unlinkSync(pngPath);
+                  console.log(`関連PNG画像も削除しました: ${pngPath}`);
+                } catch (pngErr) {
+                  console.error(`PNG画像削除エラー: ${pngPath}`, pngErr);
+                }
+              }
+            }
+          }
+          
           if (updatedImages.length !== imageIndex.images.length) {
             // 画像が削除された場合は更新
             imageIndex.images = updatedImages;
             fs.writeFileSync(KNOWLEDGE_IMAGE_INDEX_FILE, JSON.stringify(imageIndex, null, 2));
-            console.log(`画像インデックスから${docId}に関連する画像を削除しました`);
+            console.log(`画像インデックスから${docId}に関連する画像を削除しました (${imageIndex.images.length - updatedImages.length}件)`);
           }
         }
       } catch (err) {
