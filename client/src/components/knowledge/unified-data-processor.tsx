@@ -37,12 +37,12 @@ const UnifiedDataProcessor: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // 処理オプション（元ファイル保存はデフォルト無効、他は有効）
+  // 処理オプション（すべてデフォルト無効に変更）
   const [options, setOptions] = useState<ProcessingOptions>({
     keepOriginalFile: false,
-    extractKnowledgeBase: true,
-    extractImageSearch: true,
-    createQA: true
+    extractKnowledgeBase: false,
+    extractImageSearch: false,
+    createQA: false
   });
 
   // コンポーネントがマウントされたときに文書リストを読み込む
@@ -118,6 +118,16 @@ const UnifiedDataProcessor: React.FC = () => {
       toast({
         title: "未対応のファイル形式",
         description: "PDF, Word, Excel, PowerPoint, またはテキストファイルのみ処理可能です",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // 少なくとも1つの処理オプションが選択されているか確認
+    if (!(options.extractKnowledgeBase || options.extractImageSearch || options.createQA)) {
+      toast({
+        title: "処理オプションが選択されていません",
+        description: "処理に必要な項目をチェックしてください！",
         variant: "destructive",
       });
       return;

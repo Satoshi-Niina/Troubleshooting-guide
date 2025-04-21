@@ -11,6 +11,22 @@ import {
 import { processDocument } from '../lib/document-processor';
 import { log } from '../vite';
 
+// ファイル拡張子からドキュメントタイプを取得するヘルパー関数
+function getFileTypeFromExtension(ext: string): string {
+  const extMap: Record<string, string> = {
+    '.pdf': 'pdf',
+    '.docx': 'word',
+    '.doc': 'word',
+    '.xlsx': 'excel',
+    '.xls': 'excel',
+    '.pptx': 'powerpoint',
+    '.ppt': 'powerpoint',
+    '.txt': 'text'
+  };
+  
+  return extMap[ext] || 'unknown';
+}
+
 // ストレージ設定 - knowledge-baseに一元化
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -73,19 +89,54 @@ export function registerDataProcessorRoutes(app: Express) {
       
       // 1. ナレッジベースに追加（テキスト抽出とチャンク生成）
       let docId = '';
+      let processedDocument = null;
+      
+      // 必ずドキュメントの処理は行う（後の処理で必要）
+      processedDocument = await processDocument(filePath);
+      
       if (extractKnowledgeBase) {
+        // ナレッジベースに追加
         docId = await addDocumentToKnowledgeBase(filePath);
         log(`ナレッジベースに追加しました: ${docId}`);
+      } else if (extractImageSearch || createQA) {
+        // 画像検索やQ&Aのみの場合でも、ドキュメントIDを生成して文書一覧に表示されるようにする
+        const timestamp = Date.now();
+        const filename = path.basename(filePath);
+        const fileExt = path.extname(filename).toLowerCase();
+        const fileType = getFileTypeFromExtension(fileExt);
+        
+        // ユニークなIDを生成
+        docId = `doc_${timestamp}_${Math.floor(Math.random() * 1000)}`;
+        
+        // ナレッジベースインデックスに追加
+        const index = loadKnowledgeBaseIndex();
+        index.documents.push({
+          id: docId,
+          title: filename,
+          path: filePath,
+          type: fileType,
+          chunkCount: 0, // 実際のチャンクはないが、表示用に追加
+          addedAt: new Date().toISOString()
+        });
+        
+        // インデックスを保存
+        const indexPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+        fs.writeFileSync(
+          indexPath,
+          JSON.stringify(index, null, 2)
+        );
+        
+        log(`画像検索/Q&A専用ドキュメントとして追加: ${docId}`);
       }
       
       // 2. 画像検索用データの生成（画像の抽出とメタデータ生成）
       if (extractImageSearch) {
-        // 画像検索データの初期化APIを呼び出してデータを再生成
-        const document = await processDocument(filePath);
-        
-        // 必要に応じて画像検索データにアイテムを追加
-        // 成功メッセージにはこの処理結果を含める
-        log(`画像検索用データを生成しました: ${document.chunks.length}チャンク`);
+        // 既に処理されたドキュメントを使用
+        if (processedDocument) {
+          // 必要に応じて画像検索データにアイテムを追加
+          // 成功メッセージにはこの処理結果を含める
+          log(`画像検索用データを生成しました: ${processedDocument.chunks.length}チャンク`);
+        }
       }
       
       // 3. Q&A用の処理
@@ -94,39 +145,46 @@ export function registerDataProcessorRoutes(app: Express) {
           // OpenAIモジュールを直接インポート
           const { generateQAPairs } = await import('../lib/openai');
           
-          // ドキュメントの処理をして本文テキストを取得
-          const document = await processDocument(filePath);
-          const fullText = document.chunks.map(chunk => chunk.text).join("\n");
+          // QAペアの初期化
+          let qaPairs: any[] = [];
           
-          log(`Q&A生成用のテキスト準備完了: ${fullText.length}文字`);
-          
-          // Q&Aペアを生成
-          const qaPairs = await generateQAPairs(fullText, 10);
-          log(`${qaPairs.length}個のQ&Aペアを生成しました`);
-          
-          // 結果を保存
-          const qaDir = path.join(process.cwd(), 'knowledge-base', 'qa');
-          if (!fs.existsSync(qaDir)) {
-            fs.mkdirSync(qaDir, { recursive: true });
+          // 既に処理されたドキュメントを使用
+          if (processedDocument) {
+            // 本文テキストを取得
+            const fullText = processedDocument.chunks.map(chunk => chunk.text).join("\n");
+            
+            log(`Q&A生成用のテキスト準備完了: ${fullText.length}文字`);
+            
+            // Q&Aペアを生成
+            qaPairs = await generateQAPairs(fullText, 10);
+            log(`${qaPairs.length}個のQ&Aペアを生成しました`);
+            
+            // 結果を保存
+            const qaDir = path.join(process.cwd(), 'knowledge-base', 'qa');
+            if (!fs.existsSync(qaDir)) {
+              fs.mkdirSync(qaDir, { recursive: true });
+            }
+            
+            // ファイル名からタイムスタンプ付きのJSONファイル名を生成
+            const fileName = path.basename(filePath, path.extname(filePath));
+            const timestamp = Date.now();
+            const qaFileName = `${fileName}_qa_${timestamp}.json`;
+            
+            // Q&AペアをJSONファイルとして保存
+            fs.writeFileSync(
+              path.join(qaDir, qaFileName),
+              JSON.stringify({
+                source: filePath,
+                fileName: path.basename(filePath),
+                timestamp: new Date().toISOString(),
+                qaPairs
+              }, null, 2)
+            );
+            
+            log(`Q&Aデータを保存しました: ${qaFileName}`);
+          } else {
+            throw new Error('Q&A生成のためのドキュメント処理が完了していません');
           }
-          
-          // ファイル名からタイムスタンプ付きのJSONファイル名を生成
-          const fileName = path.basename(filePath, path.extname(filePath));
-          const timestamp = Date.now();
-          const qaFileName = `${fileName}_qa_${timestamp}.json`;
-          
-          // Q&AペアをJSONファイルとして保存
-          fs.writeFileSync(
-            path.join(qaDir, qaFileName),
-            JSON.stringify({
-              source: filePath,
-              fileName: path.basename(filePath),
-              timestamp: new Date().toISOString(),
-              qaPairs
-            }, null, 2)
-          );
-          
-          log(`Q&Aデータを保存しました: ${qaFileName}`);
         } catch (qaError) {
           log(`Q&A生成中にエラーが発生しました: ${qaError}`);
           // Q&A生成エラーは処理を継続
