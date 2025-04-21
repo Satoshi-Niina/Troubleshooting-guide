@@ -39,12 +39,11 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
     const systemPrompt = await generateSystemPromptWithKnowledge(prompt);
 
     // ユーザー設定に応じて制約を追加
-    const finalSystemPrompt = useOnlyKnowledgeBase 
-      ? systemPrompt 
-      : systemPrompt.replace(
-          '- 提供された知識ベースの情報のみを使用し、それ以外の一般知識での回答は禁止',
-          '- 提供された知識ベースの情報を優先して使用し、必要に応じて一般知識も使用可能'
-        );
+    // ナレッジベースからの情報を最大限活用するために常に専門的な回答を促す
+    const finalSystemPrompt = systemPrompt.replace(
+      '- 提供された知識ベースの情報のみを使用し、それ以外の一般知識での回答は禁止',
+      '- 提供された知識ベースの情報を最優先で使用し、専門的かつ具体的な回答を提供する。一般的な表現を避け、専門用語や具体的な手順を含めること'
+    );
 
     console.log("OpenAI APIに送信するシステムプロンプト:", finalSystemPrompt.substring(0, 200) + "...");
     console.log("ユーザープロンプト:", prompt);
@@ -62,8 +61,8 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
           content: prompt,
         },
       ],
-      temperature: 0.1, // 非常に低い温度設定で確定的な回答を得る（デフォルトよりさらに低く設定）
-      max_tokens: 800, // 回答の長さを制限して具体的にする
+      temperature: 0.05, // さらに低い温度設定で専門的で確定的な回答を得る
+      max_tokens: 1000, // 回答の長さを少し増やして詳細な情報を含められるようにする
     });
     
     // 応答内容をデバッグ出力
