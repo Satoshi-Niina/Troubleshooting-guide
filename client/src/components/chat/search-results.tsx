@@ -170,12 +170,7 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                       }
                     }}
                   />
-                  {/* 画像説明タイトル - 画像の下に小さく表示 */}
-                  {result.title && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-blue-600 bg-opacity-70 text-white text-xs p-1 truncate">
-                      {result.title}
-                    </div>
-                  )}
+                  {/* 画像説明タイトルは非表示に変更（ユーザー要求により） */}
                 </div>
               </div>
             ) : (
