@@ -716,10 +716,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/knowledge/:docId', requireAuth, requireAdmin, (req, res) => {
     try {
       const docId = req.params.docId;
+      console.log(`ドキュメント削除リクエスト受信: ID=${docId}`);
+      
+      // ドキュメントとその関連ファイルを削除
       const success = removeDocumentFromKnowledgeBase(docId);
       
       if (success) {
-        res.json({ success: true, message: 'ドキュメントが正常に削除されました' });
+        // 画像検索データを再初期化
+        fetch('http://localhost:5000/api/tech-support/init-image-search-data', {
+          method: 'POST'
+        }).then(response => {
+          if (response.ok) {
+            console.log('画像検索データを再初期化しました');
+          } else {
+            console.warn('画像検索データの再初期化に失敗しました');
+          }
+        }).catch(err => {
+          console.error('画像検索データ再初期化エラー:', err);
+        });
+        
+        res.json({ 
+          success: true, 
+          message: 'ドキュメントとその関連ファイルが正常に削除されました',
+          docId: docId
+        });
       } else {
         res.status(404).json({ error: '指定されたドキュメントが見つかりません' });
       }

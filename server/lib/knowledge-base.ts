@@ -1179,9 +1179,13 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
       return false;
     }
     
-    // 削除対象ドキュメントのパスを保存
-    const docPath = index.documents[docIndex].path;
+    // 削除対象ドキュメントの情報を保存
+    const docInfo = index.documents[docIndex];
+    const docPath = docInfo.path;
+    const docTitle = docInfo.title;
+    const docType = docInfo.type;
     console.log(`削除対象ドキュメント: ${docPath}`);
+    console.log(`ドキュメントタイトル: ${docTitle}, タイプ: ${docType}`);
     
     // インデックスから削除
     index.documents.splice(docIndex, 1);
@@ -1246,6 +1250,92 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
       }
     }
     
+    // 画像検索データから関連画像を削除
+    try {
+      // 画像検索データのパス
+      const imageSearchDataPath = path.join(KNOWLEDGE_BASE_DIR, 'data', 'image_search_data.json');
+      if (fs.existsSync(imageSearchDataPath)) {
+        // 画像検索データを読み込む
+        const jsonContent = fs.readFileSync(imageSearchDataPath, 'utf8');
+        const imageSearchData = JSON.parse(jsonContent);
+        
+        if (Array.isArray(imageSearchData)) {
+          // ドキュメントタイトルから生成されたIDパターンを検索
+          // docTitle（拡張子なし）から先頭2文字を取得
+          const baseNameWithoutExt = path.basename(docTitle, path.extname(docTitle));
+          const prefix = baseNameWithoutExt.substring(0, 2).toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+          
+          console.log(`画像検索データからの削除: 検索プレフィックス=${prefix}`);
+          
+          // 元のデータサイズを保存
+          const originalSize = imageSearchData.length;
+          
+          // ドキュメントIDまたはプレフィックスに関連する画像を除外
+          const filteredData = imageSearchData.filter((item: any) => {
+            // fileまたはidにdocIdやプレフィックスが含まれていないものを残す
+            return !(
+              (item.id && (item.id.includes(docId) || item.id.includes(prefix))) ||
+              (item.file && item.file.includes(prefix))
+            );
+          });
+          
+          // 変更があれば保存
+          if (filteredData.length !== originalSize) {
+            fs.writeFileSync(imageSearchDataPath, JSON.stringify(filteredData, null, 2));
+            console.log(`画像検索データを更新しました: ${originalSize}件 -> ${filteredData.length}件（${originalSize - filteredData.length}件削除）`);
+          } else {
+            console.log('画像検索データに削除すべき項目はありませんでした');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('画像検索データ更新エラー:', err);
+    }
+    
+    // PowerPointドキュメントの場合、extracted_data.jsonからも削除
+    if (docType === 'powerpoint' || docType === 'pptx') {
+      try {
+        const extractedDataPath = path.join(process.cwd(), 'extracted_data.json');
+        if (fs.existsSync(extractedDataPath)) {
+          const extractedData = JSON.parse(fs.readFileSync(extractedDataPath, 'utf-8'));
+          
+          // ドキュメントタイトルから拡張子を除いた名前を取得
+          const baseNameWithoutExt = path.basename(docTitle, path.extname(docTitle));
+          
+          // 保守用車データキーが存在するか確認
+          const vehicleDataKey = '保守用車データ';
+          if (extractedData[vehicleDataKey] && Array.isArray(extractedData[vehicleDataKey])) {
+            // ドキュメントIDに関連するデータを除外
+            const originalSize = extractedData[vehicleDataKey].length;
+            
+            // docIdの一部やタイトルの一部が含まれるエントリを削除
+            extractedData[vehicleDataKey] = extractedData[vehicleDataKey].filter((item: any) => {
+              // idやtitleにdocIdの一部が含まれていないものを残す
+              return !(
+                (item.id && (item.id.includes(docId) || item.id.includes(baseNameWithoutExt))) ||
+                (item.title && (
+                  item.title === docTitle || 
+                  item.title.includes(baseNameWithoutExt)
+                ))
+              );
+            });
+            
+            // 変更があれば保存
+            if (extractedData[vehicleDataKey].length !== originalSize) {
+              fs.writeFileSync(extractedDataPath, JSON.stringify(extractedData, null, 2));
+              console.log(`extracted_data.jsonを更新しました: ${originalSize}件 -> ${extractedData[vehicleDataKey].length}件（${originalSize - extractedData[vehicleDataKey].length}件削除）`);
+            } else {
+              console.log('extracted_data.jsonに削除すべき項目はありませんでした');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('extracted_data.json更新エラー:', err);
+      }
+    }
+    
+    // 処理完了
+    console.log(`ドキュメント削除処理が完了しました: ${docId}`);
     return true;
   } catch (err: any) {
     console.error(`ドキュメント削除中のエラー ${docId}:`, err);
