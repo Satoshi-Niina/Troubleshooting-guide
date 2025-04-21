@@ -161,7 +161,7 @@ async function loadImageSearchData() {
         
         // knowledge-baseから再度データを読み込み
         try {
-          // 優先順位1: knowledge-base/dataディレクトリから読み込む
+          // knowledge-base/dataディレクトリから読み込む（一元化）
           const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
           if (kbReloadResponse.ok) {
             const reloadedData = await kbReloadResponse.json();
@@ -175,23 +175,7 @@ async function loadImageSearchData() {
           }
         } catch (error) {
           console.warn(`knowledge-base/dataからの読み込みに失敗しました:`, error);
-          
-          try {
-            // 優先順位2: uploads/dataディレクトリから読み込む（下位互換性用）
-            const uploadsReloadResponse = await fetch(`/uploads/data/image_search_data.json?t=${Date.now()}`);
-            if (uploadsReloadResponse.ok) {
-              const reloadedData = await uploadsReloadResponse.json();
-              if (Array.isArray(reloadedData)) {
-                console.log(`uploads/dataから再読み込みした画像検索データ: ${reloadedData.length}件`);
-                imageSearchData = reloadedData;
-                return;
-              }
-            } else {
-              throw new Error('uploads/dataのデータ読み込みに失敗しました');
-            }
-          } catch (uploadError) {
-            console.error(`両方のソースからの画像検索データ読み込みに失敗しました:`, uploadError);
-          }
+          console.error(`画像検索データ読み込みに失敗しました:`, error);
         }
       }
     } catch (initError) {

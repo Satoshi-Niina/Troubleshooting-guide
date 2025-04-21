@@ -415,15 +415,8 @@ router.post('/init-image-search-data', async (req, res) => {
       fs.mkdirSync(knowledgeBaseDataDir, { recursive: true });
     }
     
-    // 画像検索データJSONファイルのパス（主要なパス）
+    // 画像検索データJSONファイルのパス（knowledge-baseに一元化）
     const imageSearchDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
-    
-    // 下位互換性のためuploadsディレクトリにも保存
-    const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
-    if (!fs.existsSync(uploadsDataDir)) {
-      fs.mkdirSync(uploadsDataDir, { recursive: true });
-    }
-    const uploadsImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
     
     // 画像ディレクトリの参照 - 一元化するためにknowledge-baseだけを使用
     const imagesDir = path.join(process.cwd(), 'knowledge-base', 'images');
@@ -542,13 +535,10 @@ router.post('/init-image-search-data', async (req, res) => {
       updatedData = initialData;
     }
     
-    // JSONファイルに保存 - 主要パス (knowledge-base)
+    // JSONファイルに保存 - knowledge-baseに一元化
     fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
     
-    // 下位互換性のためuploads/dataディレクトリにも同じデータをコピー
-    fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(updatedData, null, 2));
-    
-    console.log(`データをknowledge-base/dataおよびuploads/dataの両方に保存しました`);
+    console.log(`データをknowledge-base/dataに保存しました`);
     console.log(`画像検索データを初期化しました: ${updatedData.length}件`);
     
     return res.json({
@@ -751,18 +741,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           imageSearchData.push(newImageItem);
         }
         
-        // 更新したデータを両方のパスに書き込み
+        // 更新したデータを知識ベースに書き込み
         fs.writeFileSync(imageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
         
-        // 下位互換性のためuploads/dataディレクトリにも保存
-        const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
-        if (!fs.existsSync(uploadsDataDir)) {
-          fs.mkdirSync(uploadsDataDir, { recursive: true });
-        }
-        const uploadsImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
-        fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
-        
-        console.log(`画像検索データを両方のパスに更新しました: ${imageSearchData.length}件`);
+        console.log(`画像検索データを知識ベースに更新しました: ${imageSearchData.length}件`);
         
         // 元ファイルを保存するオプションがオフの場合、元ファイルを削除
         if (!keepOriginalFile) {
