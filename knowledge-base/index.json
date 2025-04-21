@@ -4,12 +4,20 @@
   "fileCount": 0,
   "documents": [
     {
-      "id": "doc_1745212235096_344",
-      "title": "railway_maintenance_knowledge_1745212235022.txt",
-      "path": "/home/runner/workspace/knowledge-base/doc_1745212235096_344/railway_maintenance_knowledge_1745212235022.txt",
+      "id": "doc_1745213335462_637",
+      "title": "railway_maintenance_knowledge_1745213335240.txt",
+      "path": "/home/runner/workspace/knowledge-base/doc_1745213335462_637/railway_maintenance_knowledge_1745213335240.txt",
       "type": "text",
       "chunkCount": 83,
-      "addedAt": "2025-04-21T05:10:54.376Z"
+      "addedAt": "2025-04-21T05:29:02.517Z"
+    },
+    {
+      "id": "doc_1745213378156_286",
+      "title": "MC応急処置サンプル_1745213367144.pptx",
+      "path": "/home/runner/workspace/knowledge-base/doc_1745213378156_286/MC応急処置サンプル_1745213367144.pptx",
+      "type": "powerpoint",
+      "chunkCount": 6,
+      "addedAt": "2025-04-21T05:29:46.195Z"
     }
   ]
 }

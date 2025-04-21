@@ -190,4 +190,129 @@ export function registerDataProcessorRoutes(app: Express) {
       });
     }
   });
+  
+  // ナレッジベースの差分更新API
+  app.post('/api/data-processor/merge', upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'ファイルがアップロードされていません' });
+      }
+      
+      const { targetDocId } = req.body;
+      
+      if (!targetDocId) {
+        return res.status(400).json({ error: '更新対象のドキュメントIDが指定されていません' });
+      }
+      
+      log(`差分更新を開始します: ターゲットID=${targetDocId}, ファイル=${req.file.originalname}`);
+      
+      // 新しいファイルを処理
+      const filePath = req.file.path;
+      const newDocument = await processDocument(filePath);
+      
+      // 差分更新を実行
+      await mergeDocumentContent(newDocument, targetDocId);
+      
+      // 元ファイルを削除
+      try {
+        fs.unlinkSync(filePath);
+        log(`元ファイルを削除しました: ${filePath}`);
+      } catch (deleteError) {
+        log(`元ファイルの削除に失敗しました: ${deleteError}`);
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: '差分更新が完了しました',
+        targetDocId
+      });
+    } catch (error) {
+      console.error('差分更新エラー:', error);
+      return res.status(500).json({ 
+        error: '差分更新中にエラーが発生しました',
+        message: error instanceof Error ? error.message : '不明なエラーです'
+      });
+    }
+  });
+  
+  // ナレッジベース文書一覧取得API
+  app.get('/api/data-processor/documents', (req: Request, res: Response) => {
+    try {
+      const index = loadKnowledgeBaseIndex();
+      return res.status(200).json({
+        success: true,
+        documents: index.documents.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          chunkCount: doc.chunkCount,
+          addedAt: doc.addedAt
+        }))
+      });
+    } catch (error) {
+      console.error('ドキュメント一覧取得エラー:', error);
+      return res.status(500).json({ 
+        error: 'ドキュメント一覧取得中にエラーが発生しました',
+        message: error instanceof Error ? error.message : '不明なエラーです'
+      });
+    }
+  });
+  
+  // ナレッジベースバックアップAPI
+  app.post('/api/data-processor/backup', async (req: Request, res: Response) => {
+    try {
+      const { docIds } = req.body;
+      
+      if (!Array.isArray(docIds)) {
+        return res.status(400).json({ error: 'ドキュメントIDのリストが必要です' });
+      }
+      
+      log(`バックアップ作成開始: ${docIds.length}個のドキュメント`);
+      
+      const zipFilePath = await backupKnowledgeBase(docIds);
+      
+      // 相対パスを返す
+      const relativePath = path.relative(process.cwd(), zipFilePath);
+      
+      return res.status(200).json({
+        success: true,
+        backupPath: relativePath,
+        message: 'バックアップが作成されました'
+      });
+    } catch (error) {
+      console.error('バックアップエラー:', error);
+      return res.status(500).json({ 
+        error: 'バックアップ中にエラーが発生しました',
+        message: error instanceof Error ? error.message : '不明なエラーです'
+      });
+    }
+  });
+  
+  // バックアップファイルのダウンロード
+  app.get('/api/data-processor/download-backup/:filename', (req: Request, res: Response) => {
+    try {
+      const { filename } = req.params;
+      const backupDir = path.join(process.cwd(), 'knowledge-base', 'backups');
+      const filePath = path.join(backupDir, filename);
+      
+      // パスのバリデーション（ディレクトリトラバーサル対策）
+      if (!filePath.startsWith(backupDir) || filePath.includes('..')) {
+        return res.status(400).json({ error: '不正なファイルパスです' });
+      }
+      
+      // ファイルの存在確認
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'ファイルが見つかりません' });
+      }
+      
+      // ファイルのダウンロード
+      return res.download(filePath);
+    } catch (error) {
+      console.error('バックアップダウンロードエラー:', error);
+      return res.status(500).json({ 
+        error: 'ダウンロード中にエラーが発生しました',
+        message: error instanceof Error ? error.message : '不明なエラーです'
+      });
+    }
+  });
 }
