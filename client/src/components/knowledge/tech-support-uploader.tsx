@@ -20,10 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Upload, Trash2, FileType, File, Presentation, FileBox } from "lucide-react";
+import { FileText, Upload, Trash2, FileType, File, Presentation, FileBox, RefreshCw, Database, Eraser } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { reloadImageSearchData } from "@/lib/image-search";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TechDocument {
   id: string;
@@ -41,6 +47,8 @@ const TechSupportUploader: React.FC = () => {
   const [uploadedDocuments, setUploadedDocuments] = useState<TechDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [keepOriginalFile, setKeepOriginalFile] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -233,6 +241,81 @@ const TechSupportUploader: React.FC = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+  
+  // 一時ファイルをクリーンアップする関数
+  const handleCleanupTempFiles = async () => {
+    try {
+      setIsCleaningUp(true);
+      
+      const response = await fetch('/api/tech-support/cleanup-uploads', {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "クリーンアップに失敗しました");
+      }
+      
+      const result = await response.json();
+      console.log("クリーンアップ結果:", result);
+      
+      toast({
+        title: "クリーンアップ成功",
+        description: `一時ファイルのクリーンアップが完了しました。${result.details.removedFiles}件のファイルを削除しました。`,
+      });
+      
+    } catch (error) {
+      console.error("クリーンアップエラー:", error);
+      toast({
+        title: "クリーンアップエラー",
+        description: error instanceof Error ? error.message : "未知のエラーが発生しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningUp(false);
+    }
+  };
+  
+  // ディレクトリを同期する関数
+  const handleSyncDirectories = async () => {
+    try {
+      setIsSyncing(true);
+      
+      const response = await fetch('/api/tech-support/sync-directories', {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "ディレクトリ同期に失敗しました");
+      }
+      
+      const result = await response.json();
+      console.log("ディレクトリ同期結果:", result);
+      
+      toast({
+        title: "同期成功",
+        description: `
+          ディレクトリ同期が完了しました。
+          ・知識ベースへ移動: ${result.details.toKnowledgeBase}件
+          ・一時フォルダへ同期: ${result.details.fromKnowledgeBase}件
+        `,
+      });
+      
+      // 画像検索データを再読み込み
+      reloadImageSearchData();
+      
+    } catch (error) {
+      console.error("同期エラー:", error);
+      toast({
+        title: "同期エラー",
+        description: error instanceof Error ? error.message : "未知のエラーが発生しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <Card className="w-full">
@@ -372,10 +455,92 @@ const TechSupportUploader: React.FC = () => {
             )}
           </div>
         </div>
+        
+        {/* システムメンテナンスセクション */}
+        <div className="mt-8 border-t pt-4">
+          <h3 className="text-lg font-medium mb-2">システムメンテナンス</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            一時ファイルのクリーンアップや知識ベースの同期などのシステムメンテナンス機能を提供します。
+          </p>
+          
+          <div className="flex flex-wrap gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="border-blue-200 bg-blue-50"
+                    onClick={handleCleanupTempFiles}
+                    disabled={isCleaningUp}
+                  >
+                    {isCleaningUp ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Eraser className="mr-2 h-4 w-4 text-blue-600" />
+                    )}
+                    一時ファイルを削除
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>一時ファイルをクリーンアップしてストレージスペースを解放します</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="border-green-200 bg-green-50"
+                    onClick={handleSyncDirectories}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4 text-green-600" />
+                    )}
+                    ディレクトリを同期
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>知識ベースと一時ディレクトリ間でファイルを同期します</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="border-purple-200 bg-purple-50"
+                    onClick={() => {
+                      // キャッシュをクリアしてデータを再読み込み
+                      reloadImageSearchData();
+                      loadVehicleData();
+                      toast({
+                        title: "キャッシュクリア",
+                        description: "画像検索データとドキュメントデータを再読み込みしました",
+                      });
+                    }}
+                  >
+                    <Database className="mr-2 h-4 w-4 text-purple-600" />
+                    キャッシュをクリア
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>アプリケーションのキャッシュをクリアして最新のデータを読み込みます</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
       </CardContent>
       <CardFooter className="flex justify-between border-t pt-4">
         <p className="text-xs text-gray-500">
-          アップロードされたファイルは自動的に処理され、検索可能になります。
+          アップロードされたファイルは自動的に処理され、検索可能になります。処理後は必要に応じて一時ファイルを削除してストレージ容量を最適化できます。
         </p>
       </CardFooter>
     </Card>
