@@ -159,31 +159,38 @@ async function loadImageSearchData() {
         const initData = await initResponse.json();
         console.log("画像検索データを初期化しました:", initData);
         
-        // 再度データを読み込み
+        // knowledge-baseから再度データを読み込み
         try {
-          const reloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
-          if (reloadResponse.ok) {
-            const reloadedData = await reloadResponse.json();
+          // 優先順位1: knowledge-base/dataディレクトリから読み込む
+          const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
+          if (kbReloadResponse.ok) {
+            const reloadedData = await kbReloadResponse.json();
             if (Array.isArray(reloadedData)) {
               console.log(`再読み込みした画像検索データ: ${reloadedData.length}件`);
               imageSearchData = reloadedData;
               return;
             }
+          } else {
+            throw new Error('knowledge-baseのデータ読み込みに失敗しました');
           }
         } catch (error) {
-          console.warn(`knowledge-baseからの読み込みに失敗しました:`, error);
+          console.warn(`knowledge-base/dataからの読み込みに失敗しました:`, error);
+          
           try {
-            const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
-            if (kbReloadResponse.ok) {
-              const reloadedData = await kbReloadResponse.json();
+            // 優先順位2: uploads/dataディレクトリから読み込む（下位互換性用）
+            const uploadsReloadResponse = await fetch(`/uploads/data/image_search_data.json?t=${Date.now()}`);
+            if (uploadsReloadResponse.ok) {
+              const reloadedData = await uploadsReloadResponse.json();
               if (Array.isArray(reloadedData)) {
-                console.log(`knowledge-baseから再読み込みした画像検索データ: ${reloadedData.length}件`);
+                console.log(`uploads/dataから再読み込みした画像検索データ: ${reloadedData.length}件`);
                 imageSearchData = reloadedData;
                 return;
               }
+            } else {
+              throw new Error('uploads/dataのデータ読み込みに失敗しました');
             }
-          } catch (kbError) {
-            console.error(`両方のパスからの再読み込みに失敗しました:`, kbError);
+          } catch (uploadError) {
+            console.error(`両方のソースからの画像検索データ読み込みに失敗しました:`, uploadError);
           }
         }
       }
@@ -480,7 +487,12 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       // デバッグ用：データの状態を確認
       console.log(`検索実行時のデータ件数: ${imageSearchData.length}件`);
       if (imageSearchData.length > 0) {
-        console.log(`検索用データの最初のアイテム:`, imageSearchData[0]);
+        // 検索対象データの一部をログ出力 (先頭3件のIDと画像パス)
+        const sampleData = imageSearchData.slice(0, 3).map(item => ({
+          id: item.id,
+          file: item.file
+        }));
+        console.log(`検索用サンプルデータ:`, sampleData);
       }
       
       // キーワードを分割して検索
