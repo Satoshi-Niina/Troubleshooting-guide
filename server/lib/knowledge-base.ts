@@ -1284,6 +1284,7 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
           
           // 画像ファイルを物理的に削除
           for (const img of imagesToDelete) {
+            // path属性があれば直接パスを使用
             if (img.path && fs.existsSync(img.path)) {
               try {
                 fs.unlinkSync(img.path);
@@ -1293,17 +1294,50 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
               }
             }
             
-            // SVGとPNGの両方のバージョンがある場合は両方削除
-            if (img.path && img.path.toLowerCase().endsWith('.svg')) {
-              const pngPath = img.path.replace(/\.svg$/i, '.png');
-              if (fs.existsSync(pngPath)) {
+            // file属性があれば（画像検索用データ）
+            if (img.file && !img.path) {
+              // 絶対パスに変換（/knowledge-base/images/... → プロジェクトルートからの相対パス）
+              const absolutePath = path.join(process.cwd(), img.file.replace(/^\//, ''));
+              if (fs.existsSync(absolutePath)) {
                 try {
-                  fs.unlinkSync(pngPath);
-                  console.log(`関連PNG画像も削除しました: ${pngPath}`);
-                } catch (pngErr) {
-                  console.error(`PNG画像削除エラー: ${pngPath}`, pngErr);
+                  fs.unlinkSync(absolutePath);
+                  console.log(`関連画像ファイルを削除しました: ${absolutePath}`);
+                } catch (fileErr) {
+                  console.error(`画像ファイル削除エラー: ${absolutePath}`, fileErr);
                 }
               }
+            }
+            
+            // SVGとPNGの両方のバージョンがある場合は両方削除
+            const checkAndDeleteAlternative = (filePath: string) => {
+              if (filePath.toLowerCase().endsWith('.svg')) {
+                const pngPath = filePath.replace(/\.svg$/i, '.png');
+                if (fs.existsSync(pngPath)) {
+                  try {
+                    fs.unlinkSync(pngPath);
+                    console.log(`関連PNG画像も削除しました: ${pngPath}`);
+                  } catch (pngErr) {
+                    console.error(`PNG画像削除エラー: ${pngPath}`, pngErr);
+                  }
+                }
+              } else if (filePath.toLowerCase().endsWith('.png')) {
+                const svgPath = filePath.replace(/\.png$/i, '.svg');
+                if (fs.existsSync(svgPath)) {
+                  try {
+                    fs.unlinkSync(svgPath);
+                    console.log(`関連SVG画像も削除しました: ${svgPath}`);
+                  } catch (svgErr) {
+                    console.error(`SVG画像削除エラー: ${svgPath}`, svgErr);
+                  }
+                }
+              }
+            };
+            
+            // パスとファイルの両方について代替フォーマットも削除
+            if (img.path) checkAndDeleteAlternative(img.path);
+            if (img.file && !img.path) {
+              const absolutePath = path.join(process.cwd(), img.file.replace(/^\//, ''));
+              checkAndDeleteAlternative(absolutePath);
             }
           }
           
@@ -1341,12 +1375,57 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
           // 元のデータサイズを保存
           const originalSize = imageSearchData.length;
           
+          // 削除対象項目を特定（実際に削除する前に）
+          const itemsToDelete = imageSearchData.filter((item: any) => 
+            (item.id && (item.id.includes(docId) || item.id.includes(prefix))) ||
+            (item.file && (item.file.includes(docId) || item.file.includes(prefix)))
+          );
+          
+          // 削除対象項目のファイルを実際に削除
+          for (const item of itemsToDelete) {
+            if (item.file) {
+              // ファイルパスを絶対パスに変換して削除
+              const absoluteFilePath = path.join(process.cwd(), item.file.replace(/^\//, ''));
+              if (fs.existsSync(absoluteFilePath)) {
+                try {
+                  fs.unlinkSync(absoluteFilePath);
+                  console.log(`検索データ関連の画像を削除しました: ${absoluteFilePath}`);
+                } catch (fileError) {
+                  console.error(`検索データ関連の画像削除エラー: ${absoluteFilePath}`, fileError);
+                }
+              }
+              
+              // 代替形式のファイルも確認して削除
+              if (absoluteFilePath.toLowerCase().endsWith('.svg')) {
+                const pngPath = absoluteFilePath.replace(/\.svg$/i, '.png');
+                if (fs.existsSync(pngPath)) {
+                  try {
+                    fs.unlinkSync(pngPath);
+                    console.log(`関連PNG画像も削除しました: ${pngPath}`);
+                  } catch (fileError) {
+                    console.error(`関連PNG画像削除エラー: ${pngPath}`, fileError);
+                  }
+                }
+              } else if (absoluteFilePath.toLowerCase().endsWith('.png')) {
+                const svgPath = absoluteFilePath.replace(/\.png$/i, '.svg');
+                if (fs.existsSync(svgPath)) {
+                  try {
+                    fs.unlinkSync(svgPath);
+                    console.log(`関連SVG画像も削除しました: ${svgPath}`);
+                  } catch (fileError) {
+                    console.error(`関連SVG画像削除エラー: ${svgPath}`, fileError);
+                  }
+                }
+              }
+            }
+          }
+          
           // ドキュメントIDまたはプレフィックスに関連する画像を除外
           const filteredData = imageSearchData.filter((item: any) => {
             // fileまたはidにdocIdやプレフィックスが含まれていないものを残す
             return !(
               (item.id && (item.id.includes(docId) || item.id.includes(prefix))) ||
-              (item.file && item.file.includes(prefix))
+              (item.file && (item.file.includes(docId) || item.file.includes(prefix)))
             );
           });
           
