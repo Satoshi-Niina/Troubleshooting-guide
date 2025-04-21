@@ -681,7 +681,26 @@ async function addEmbeddedImagesToSearchData(
  */
 export async function extractTxtText(filePath: string): Promise<string> {
   try {
-    return fs.readFileSync(filePath, 'utf-8');
+    // Try different encodings if needed
+    let content: string;
+    try {
+      // First try UTF-8
+      content = fs.readFileSync(filePath, 'utf-8');
+    } catch (encError) {
+      // If UTF-8 fails, try other encodings
+      console.log('UTF-8 reading failed, trying Shift-JIS...');
+      const buffer = fs.readFileSync(filePath);
+      try {
+        // Try with Shift-JIS (common for Japanese text)
+        content = buffer.toString('latin1'); // Using latin1 as fallback
+      } catch (fallbackError) {
+        console.error('All encoding attempts failed:', fallbackError);
+        throw new Error('Text file encoding detection failed');
+      }
+    }
+    
+    console.log(`Successfully read text file: ${filePath} (${content.length} characters)`);
+    return content;
   } catch (error) {
     console.error('Error reading text file:', error);
     throw new Error('Text file reading failed');

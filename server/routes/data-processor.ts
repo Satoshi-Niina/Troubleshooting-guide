@@ -83,10 +83,49 @@ export function registerDataProcessorRoutes(app: Express) {
         log(`画像検索用データを生成しました: ${document.chunks.length}チャンク`);
       }
       
-      // 3. Q&A用の処理（必要に応じて実装）
+      // 3. Q&A用の処理
       if (createQA) {
-        // Q&A用の処理を実装
-        log(`Q&A用の処理を行いました`);
+        try {
+          // OpenAIモジュールを直接インポート
+          const { generateQAPairs } = await import('../lib/openai');
+          
+          // ドキュメントの処理をして本文テキストを取得
+          const document = await processDocument(filePath);
+          const fullText = document.chunks.map(chunk => chunk.text).join("\n");
+          
+          log(`Q&A生成用のテキスト準備完了: ${fullText.length}文字`);
+          
+          // Q&Aペアを生成
+          const qaPairs = await generateQAPairs(fullText, 10);
+          log(`${qaPairs.length}個のQ&Aペアを生成しました`);
+          
+          // 結果を保存
+          const qaDir = path.join(process.cwd(), 'knowledge-base', 'qa');
+          if (!fs.existsSync(qaDir)) {
+            fs.mkdirSync(qaDir, { recursive: true });
+          }
+          
+          // ファイル名からタイムスタンプ付きのJSONファイル名を生成
+          const fileName = path.basename(filePath, path.extname(filePath));
+          const timestamp = Date.now();
+          const qaFileName = `${fileName}_qa_${timestamp}.json`;
+          
+          // Q&AペアをJSONファイルとして保存
+          fs.writeFileSync(
+            path.join(qaDir, qaFileName),
+            JSON.stringify({
+              source: filePath,
+              fileName: path.basename(filePath),
+              timestamp: new Date().toISOString(),
+              qaPairs
+            }, null, 2)
+          );
+          
+          log(`Q&Aデータを保存しました: ${qaFileName}`);
+        } catch (qaError) {
+          log(`Q&A生成中にエラーが発生しました: ${qaError}`);
+          // Q&A生成エラーは処理を継続
+        }
       }
       
       // 4. 処理が完了したら、元のファイルを削除するか保存するかの指定により分岐

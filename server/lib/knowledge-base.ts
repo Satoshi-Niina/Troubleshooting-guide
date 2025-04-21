@@ -233,6 +233,43 @@ async function storeProcessedDocument(docId: string, doc: ProcessedDocument): Pr
     JSON.stringify(doc.metadata, null, 2)
   );
   
+  // Q&Aデータ用のディレクトリ
+  const qaDir = path.join(docDir, 'qa');
+  ensureDirectoryExists(qaDir);
+  
+  // Q&Aデータを生成して保存
+  try {
+    const fullText = doc.chunks.map(chunk => chunk.text).join("\n");
+    console.log(`Q&A生成用のテキスト: ${fullText.length}文字`);
+    
+    // OpenAIを使用してQ&Aペアを生成
+    // OpenAIモジュールをインポート
+    const openaiModule = await import('./openai');
+    
+    // Q&Aペアを生成（最大10個）
+    const qaPairs = await openaiModule.generateQAPairs(fullText, 10);
+    console.log(`${qaPairs.length}個のQ&Aペアを生成しました`);
+    
+    // Q&AペアをJSONファイルとして保存
+    fs.writeFileSync(
+      path.join(qaDir, 'qa_pairs.json'),
+      JSON.stringify(qaPairs, null, 2)
+    );
+    console.log('Q&Aデータを保存しました');
+    
+    // チャンク用に1ファイルずつQ&Aも保存
+    qaPairs.forEach((qa, index) => {
+      const qaFileName = `qa_${index + 1}.json`;
+      fs.writeFileSync(
+        path.join(qaDir, qaFileName),
+        JSON.stringify(qa, null, 2)
+      );
+    });
+  } catch (qaError) {
+    console.error('Q&A生成エラー:', qaError);
+    // Q&A生成が失敗しても処理は続行
+  }
+  
   // チャンクをJSONファイルとして保存
   fs.writeFileSync(
     path.join(docDir, 'chunks.json'),

@@ -127,6 +127,98 @@ export async function generateSearchQuery(
 }
 
 // Analyze an image to identify vehicle parts or issues
+// Generate Q&A pairs from document content
+export async function generateQAPairs(text: string, count: number = 5): Promise<{question: string, answer: string}[]> {
+  try {
+    // Check if API key is available
+    if (!validateApiKey()) {
+      return [{
+        question: "APIキーが設定されていません",
+        answer: "システム管理者に連絡してください。"
+      }];
+    }
+    
+    // Truncate text if it's too long to fit in a prompt
+    const maxLength = 14000; // GPT-4o has a large context window but we'll still limit it
+    const truncatedText = text.length > maxLength 
+      ? text.substring(0, maxLength) + "...(以下省略)" 
+      : text;
+    
+    console.log(`QA生成: テキスト長さ ${text.length} 文字 (${truncatedText.length} 文字に切り詰め)`);
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `あなたは保守用車マニュアルから質問と回答のペアを生成する専門家です。以下の指示に従ってください：
+1. 提供されたテキストから最も重要で実用的な情報に基づいて質問と回答のペアを生成してください
+2. 質問は実際の現場作業者が緊急時に尋ねるような実践的なものにしてください
+3. それぞれの回答は具体的で、テキストの情報に基づいた正確なものであること
+4. 回答は簡潔かつ明瞭で、参照番号や数値を含める場合は正確に引用すること
+5. 質問はユーザーの立場を想定した実践的で自然な表現にすること`,
+        },
+        {
+          role: "user",
+          content: `以下のテキストから${count}個の質問と回答のペアを生成してください。JSONフォーマットで返してください。各アイテムには "question" と "answer" キーを含めてください：\n\n${truncatedText}`,
+        },
+      ],
+      temperature: 0.2, // 創造性よりも一貫性を重視するため低く設定
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0].message.content || "{}";
+    try {
+      const result = JSON.parse(content);
+      // qaPairs キーで取得できる場合
+      if (Array.isArray(result.qaPairs)) {
+        console.log(`${result.qaPairs.length}個のQAペアを生成しました`);
+        return result.qaPairs;
+      } 
+      // 配列で直接返ってくる場合
+      else if (Array.isArray(result) && result.length > 0 && 'question' in result[0] && 'answer' in result[0]) {
+        console.log(`${result.length}個のQAペアを生成しました（配列形式）`);
+        return result;
+      } else {
+        // 結果がQAペアの配列以外の場合、フォールバック処理
+        console.error("予期しないフォーマットのレスポンス:", content);
+        return [{
+          question: "生成されたQAペアが不正なフォーマットです",
+          answer: "エラーが発生しました。もう一度お試しください。"
+        }];
+      }
+    } catch (parseError) {
+      console.error("JSON解析エラー:", parseError, "元のコンテンツ:", content);
+      return [{
+        question: "QAデータの解析エラー",
+        answer: "エラーが発生しました。もう一度お試しください。"
+      }];
+    }
+  } catch (error: any) {
+    console.error("OpenAI QA生成エラー:", error);
+    
+    // エラーに応じたフォールバック処理
+    if (error?.status === 401) {
+      return [{
+        question: "OpenAIのAPIキーが無効です",
+        answer: "システム管理者に連絡してAPIキーを確認してください。"
+      }];
+    }
+    
+    if (error?.status === 429) {
+      return [{
+        question: "APIレート制限に達しました",
+        answer: "しばらく待ってからもう一度お試しください。"
+      }];
+    }
+    
+    return [{
+      question: "エラーが発生しました",
+      answer: "技術的な問題が発生しました。もう一度お試しください。"
+    }];
+  }
+}
+
 export async function analyzeVehicleImage(base64Image: string): Promise<{
   analysis: string;
   suggestedActions: string[];
