@@ -1,7 +1,7 @@
 [
   {
     "id": "engine_001",
-    "file": "/knowledge-base/images/engine_001.svg",
+    "file": "/knowledge-base/images/engine_001.png",
     "pngFallback": "/knowledge-base/images/engine_001.png",
     "title": "エンジン基本構造図",
     "category": "エンジン",
@@ -15,7 +15,7 @@
   },
   {
     "id": "cooling_001",
-    "file": "/knowledge-base/images/cooling_001.svg",
+    "file": "/knowledge-base/images/cooling_001.png",
     "pngFallback": "/knowledge-base/images/cooling_001.png",
     "title": "冷却システム概略図",
     "category": "冷却系統",
@@ -29,7 +29,7 @@
   },
   {
     "id": "frame_001",
-    "file": "/knowledge-base/images/frame_001.svg",
+    "file": "/knowledge-base/images/frame_001.png",
     "pngFallback": "/knowledge-base/images/frame_001.png",
     "title": "車体フレーム構造",
     "category": "車体",
@@ -44,7 +44,7 @@
   },
   {
     "id": "cabin_001",
-    "file": "/knowledge-base/images/cabin_001.svg",
+    "file": "/knowledge-base/images/cabin_001.png",
     "pngFallback": "/knowledge-base/images/cabin_001.png",
     "title": "運転キャビン配置図",
     "category": "運転室",
@@ -58,7 +58,7 @@
   },
   {
     "id": "mc_1745226157492_001",
-    "file": "/knowledge-base/images/mc_1745226157492_001.svg",
+    "file": "/knowledge-base/images/mc_1745226157492_001.png",
     "pngFallback": "/knowledge-base/images/mc_1745226157492_001.png",
     "title": "mc 1745226157492 001",
     "category": "アップロード済みSVG",
@@ -71,7 +71,7 @@
   },
   {
     "id": "mc_1745226157492_002",
-    "file": "/knowledge-base/images/mc_1745226157492_002.svg",
+    "file": "/knowledge-base/images/mc_1745226157492_002.png",
     "pngFallback": "/knowledge-base/images/mc_1745226157492_002.png",
     "title": "mc 1745226157492 002",
     "category": "アップロード済みSVG",
@@ -84,7 +84,7 @@
   },
   {
     "id": "mc_1745226157492_003",
-    "file": "/knowledge-base/images/mc_1745226157492_003.svg",
+    "file": "/knowledge-base/images/mc_1745226157492_003.png",
     "pngFallback": "/knowledge-base/images/mc_1745226157492_003.png",
     "title": "mc 1745226157492 003",
     "category": "アップロード済みSVG",
@@ -97,7 +97,7 @@
   },
   {
     "id": "mc_1745226157492_004",
-    "file": "/knowledge-base/images/mc_1745226157492_004.svg",
+    "file": "/knowledge-base/images/mc_1745226157492_004.png",
     "pngFallback": "/knowledge-base/images/mc_1745226157492_004.png",
     "title": "mc 1745226157492 004",
     "category": "アップロード済みSVG",
@@ -121,14 +121,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_001.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -145,14 +144,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_002.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -169,14 +167,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_003.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -193,14 +190,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_004.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -217,14 +213,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_005.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -241,14 +236,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_006.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -265,14 +259,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_007.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -289,14 +282,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_008.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -313,14 +305,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_009.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -337,14 +328,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_010.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -361,14 +351,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_011.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -385,14 +374,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_012.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -409,14 +397,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_013.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -433,14 +420,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_014.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -457,14 +443,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_015.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -481,14 +466,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_016.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -505,14 +489,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_017.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -529,14 +512,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_018.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -553,14 +535,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_019.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -577,14 +558,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_020.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -601,14 +581,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_021.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -625,14 +604,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_022.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -649,14 +627,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_023.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -673,14 +650,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_024.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -697,14 +673,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_025.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -721,14 +696,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_026.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -745,20 +719,19 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226157492_img_027.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:37.683Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
   {
     "id": "mc_1745226164554_001",
-    "file": "/knowledge-base/images/mc_1745226164554_001.svg",
+    "file": "/knowledge-base/images/mc_1745226164554_001.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164554_001.png",
     "title": "mc 1745226164554 001",
     "category": "アップロード済みSVG",
@@ -771,7 +744,7 @@
   },
   {
     "id": "mc_1745226164554_002",
-    "file": "/knowledge-base/images/mc_1745226164554_002.svg",
+    "file": "/knowledge-base/images/mc_1745226164554_002.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164554_002.png",
     "title": "mc 1745226164554 002",
     "category": "アップロード済みSVG",
@@ -784,7 +757,7 @@
   },
   {
     "id": "mc_1745226164554_003",
-    "file": "/knowledge-base/images/mc_1745226164554_003.svg",
+    "file": "/knowledge-base/images/mc_1745226164554_003.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164554_003.png",
     "title": "mc 1745226164554 003",
     "category": "アップロード済みSVG",
@@ -797,7 +770,7 @@
   },
   {
     "id": "mc_1745226164554_004",
-    "file": "/knowledge-base/images/mc_1745226164554_004.svg",
+    "file": "/knowledge-base/images/mc_1745226164554_004.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164554_004.png",
     "title": "mc 1745226164554 004",
     "category": "アップロード済みSVG",
@@ -821,14 +794,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_001.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -845,14 +817,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_002.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -869,14 +840,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_003.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -893,14 +863,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_004.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -917,14 +886,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_005.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -941,14 +909,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_006.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -965,14 +932,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_007.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -989,14 +955,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_008.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1013,14 +978,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_009.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1037,14 +1001,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_010.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1061,14 +1024,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_011.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1085,14 +1047,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_012.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1109,14 +1070,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_013.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1133,14 +1093,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_014.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1157,14 +1116,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_015.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1181,14 +1139,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_016.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1205,14 +1162,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_017.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1229,14 +1185,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_018.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1253,14 +1208,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_019.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1277,14 +1231,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_020.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1301,14 +1254,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_021.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1325,14 +1277,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_022.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1349,14 +1300,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_023.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1373,14 +1323,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_024.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1397,14 +1346,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_025.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1421,14 +1369,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_026.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1445,20 +1392,19 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164554_img_027.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.682Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
   {
     "id": "mc_1745226164688_001",
-    "file": "/knowledge-base/images/mc_1745226164688_001.svg",
+    "file": "/knowledge-base/images/mc_1745226164688_001.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164688_001.png",
     "title": "mc 1745226164688 001",
     "category": "アップロード済みSVG",
@@ -1471,7 +1417,7 @@
   },
   {
     "id": "mc_1745226164688_002",
-    "file": "/knowledge-base/images/mc_1745226164688_002.svg",
+    "file": "/knowledge-base/images/mc_1745226164688_002.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164688_002.png",
     "title": "mc 1745226164688 002",
     "category": "アップロード済みSVG",
@@ -1484,7 +1430,7 @@
   },
   {
     "id": "mc_1745226164688_003",
-    "file": "/knowledge-base/images/mc_1745226164688_003.svg",
+    "file": "/knowledge-base/images/mc_1745226164688_003.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164688_003.png",
     "title": "mc 1745226164688 003",
     "category": "アップロード済みSVG",
@@ -1497,7 +1443,7 @@
   },
   {
     "id": "mc_1745226164688_004",
-    "file": "/knowledge-base/images/mc_1745226164688_004.svg",
+    "file": "/knowledge-base/images/mc_1745226164688_004.png",
     "pngFallback": "/knowledge-base/images/mc_1745226164688_004.png",
     "title": "mc 1745226164688 004",
     "category": "アップロード済みSVG",
@@ -1521,14 +1467,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_001.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1545,14 +1490,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_002.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1569,14 +1513,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_003.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1593,14 +1536,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_004.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1617,14 +1559,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_005.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1641,14 +1582,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_006.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1665,14 +1605,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_007.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1689,14 +1628,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_008.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1713,14 +1651,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_009.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1737,14 +1674,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_010.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1761,14 +1697,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_011.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1785,14 +1720,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_012.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1809,14 +1743,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_013.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1833,14 +1766,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_014.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1857,14 +1789,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_015.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1881,14 +1812,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_016.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1905,14 +1835,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_017.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.778Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1929,14 +1858,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_018.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1953,14 +1881,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_019.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -1977,14 +1904,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_020.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2001,14 +1927,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_021.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2025,14 +1950,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_022.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2049,14 +1973,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_023.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2073,14 +1996,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_024.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2097,14 +2019,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_025.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2121,14 +2042,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_026.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   },
@@ -2145,14 +2065,13 @@
       "画像"
     ],
     "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1745226155821.pptx」から抽出された画像です。",
-    "svgPath": "/knowledge-base/images/mc_1745226164688_img_027.svg",
     "metadata": {
       "uploadDate": "2025-04-21T09:02:44.779Z",
       "fileSize": -1,
-      "fileType": "SVG",
+      "fileType": "PNG",
       "sourceFile": "MC応急処置（画像検索用サンプル）_1745226155821.pptx",
       "extractedFrom": "PowerPoint",
-      "hasSvgVersion": true,
+      "hasSvgVersion": false,
       "hasPngVersion": true
     }
   }

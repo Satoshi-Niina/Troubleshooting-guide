@@ -169,6 +169,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
     console.log(`- ナレッジベースディレクトリ: ${knowledgeBaseDir} (URL: /knowledge-base)`);
     console.log(`- ナレッジベース画像ディレクトリ: ${knowledgeBaseImagesDir} (URL: /knowledge-base/images)`);
     console.log(`- ナレッジベースJSONディレクトリ: ${knowledgeBaseJsonDir} (URL: /knowledge-base/json)`);
+    console.log(`- ナレッジベースデータディレクトリ: ${knowledgeBaseDataDir} (URL: /knowledge-base/data)`);
     
     // ディレクトリの存在確認
     console.log('\n=== 存在確認 ===');
@@ -285,8 +286,8 @@ export async function extractPptxText(filePath: string): Promise<string> {
           console.log(`変換エラー - 元の形式で保存: ${fallbackFileName}`);
         }
         
-        // SVGを優先してURLパスを設定
-        const imgUrl = `/knowledge-base/images/${svgFileName}`;
+        // PNGをメインとしてURLパスを設定
+        const imgUrl = `/knowledge-base/images/${pngFileName}`;
         const pngUrl = `/knowledge-base/images/${pngFileName}`;
         extractedImagePaths.push(imgUrl);
         
@@ -354,10 +355,9 @@ export async function extractPptxText(filePath: string): Promise<string> {
           </text>
         </svg>`;
         
-        // SVGファイルとPNGファイルをknowledge-baseディレクトリに保存
-        const svgFilePath = path.join(knowledgeBaseImagesDir, `${slideFileName}.svg`);
+        // PNGファイルをknowledge-baseディレクトリに保存
         const pngFilePath = path.join(knowledgeBaseImagesDir, `${slideFileName}.png`);
-        fs.writeFileSync(svgFilePath, svgContent);
+        // SVGは不要になったので、PNGを直接生成
         
         // SVGからPNGへの変換を行う
         try {
@@ -369,7 +369,6 @@ export async function extractPptxText(filePath: string): Promise<string> {
             .png()
             .toFile(pngFilePath);
           
-          console.log(`SVGファイルを保存: ${svgFilePath}`);
           console.log(`PNGファイルを保存: ${pngFilePath} (SVGから変換)`);
         } catch (convErr) {
           console.error(`SVG→PNG変換エラー:`, convErr);
@@ -379,7 +378,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
         }
         
         // ファイルは既にknowledge-baseディレクトリに保存済み
-        console.log(`SVGファイルとPNGファイルはknowledge-baseディレクトリに保存済み: ${svgFilePath}`);
+        console.log(`PNGファイルはknowledge-baseディレクトリに保存済み: ${pngFilePath}`);
         
         console.log(`スライド画像を保存: ${slideFileName}`);
         
@@ -390,7 +389,7 @@ export async function extractPptxText(filePath: string): Promise<string> {
           本文: [slideTexts[i].content],
           ノート: `スライド ${slideNum}のノート: ${slideTexts[i].title}\n${slideTexts[i].content}`,
           画像テキスト: [{
-            画像パス: `/knowledge-base/images/${slideFileName}.svg`,
+            画像パス: `/knowledge-base/images/${slideFileName}.png`,
             代替画像パス: `/knowledge-base/images/${slideFileName}.png`,
             テキスト: slideTexts[i].content
           }]
