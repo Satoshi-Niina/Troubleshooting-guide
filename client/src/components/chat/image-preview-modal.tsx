@@ -65,8 +65,8 @@ export default function ImagePreviewModal() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [metadataJson, setMetadataJson] = useState<ImageMetaData | null>(null);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
-  // デフォルトで説明文パネルを非表示に設定
-  const [showInfo, setShowInfo] = useState(false);
+  // 説明文パネルを完全に非表示にする（常にfalse）
+  const showInfo = false;
   const [title, setTitle] = useState<string>("画像プレビュー");
   const [content, setContent] = useState<string>("");
   
@@ -168,8 +168,7 @@ export default function ImagePreviewModal() {
         // モーダルを必ず表示する
         setIsOpen(true);
         
-        // 情報パネルは常に非表示に設定（説明文表示を無効化）
-        setShowInfo(false);
+        // 情報パネルは表示しない（setShowInfoを削除）
       }
     };
     
@@ -178,7 +177,7 @@ export default function ImagePreviewModal() {
     return () => {
       window.removeEventListener('preview-image', handlePreviewImage);
     };
-  }, [showInfo]);
+  }, []);
 
   // 現在のスライドに関連するスライド情報を取得
   const getCurrentSlideInfo = () => {
@@ -210,14 +209,6 @@ export default function ImagePreviewModal() {
             {allSlides.length > 1 && ` - スライド ${currentSlideIndex + 1}/${allSlides.length}`}
           </h3>
           <div className="flex items-center">
-            <Button 
-              className="text-white hover:bg-blue-600 rounded-full" 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setShowInfo(!showInfo)}
-            >
-              <Info className="h-5 w-5" />
-            </Button>
             <Button 
               className="text-white hover:bg-blue-600 rounded-full" 
               variant="ghost" 
