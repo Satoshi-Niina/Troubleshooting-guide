@@ -418,6 +418,13 @@ router.post('/init-image-search-data', async (req, res) => {
     // 画像検索データJSONファイルのパス（主要なパス）
     const imageSearchDataPath = path.join(knowledgeBaseDataDir, 'image_search_data.json');
     
+    // 下位互換性のためuploadsディレクトリにも保存
+    const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
+    if (!fs.existsSync(uploadsDataDir)) {
+      fs.mkdirSync(uploadsDataDir, { recursive: true });
+    }
+    const uploadsImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
+    
     // 画像ディレクトリの参照 - 一元化するためにknowledge-baseだけを使用
     const imagesDir = path.join(process.cwd(), 'knowledge-base', 'images');
     
@@ -535,10 +542,19 @@ router.post('/init-image-search-data', async (req, res) => {
       updatedData = initialData;
     }
     
-    // JSONファイルに保存 - 一元管理のためknowledge-baseのみに保存
+    // JSONファイルに保存 - 主要パス (knowledge-base)
     fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
     
-    // 下位互換性のため、public/uploadsにもシンボリックリンクまたはコピーを作成
+    // 下位互換性のため、uploads/dataディレクトリにもコピー
+    try {
+      fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(updatedData, null, 2));
+      console.log(`下位互換性のためuploads/dataにもデータファイルをコピーしました`);
+    } catch (copyErr) {
+      console.error('uploads/dataディレクトリへのJSONコピーエラー:', copyErr);
+      // エラーは無視して処理を続行
+    }
+    
+    // さらに下位互換性のため、public/uploadsにもシンボリックリンクまたはコピーを作成
     try {
       const publicDir = path.join(process.cwd(), 'public', 'uploads', 'data');
       ensureDirectoryExists(publicDir);
@@ -717,11 +733,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         fs.writeFileSync(imageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
         console.log(`画像検索データを更新しました: ${imageSearchData.length}件`);
         
-        // 下位互換性のためpublicディレクトリにも保存
+        // 下位互換性のためuploadsディレクトリにも保存
         fs.writeFileSync(publicImageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
-        console.log(`publicディレクトリにも画像検索データをコピーしました`);
-        
-// この部分は削除（すでにmainデータとして保存しているため）
+        console.log(`下位互換性のためuploads/dataにもデータファイルをコピーしました`);
         
         // 元ファイルを保存するオプションがオフの場合、元ファイルを削除
         if (!keepOriginalFile) {
