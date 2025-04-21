@@ -157,33 +157,30 @@ export async function extractPptxText(filePath: string): Promise<string> {
     const rootDir = process.cwd();
     
     // ======= パス構造の修正 =======
-    // 公開ディレクトリに統一（public/uploads）
-    const publicDir = path.join(rootDir, 'public');
-    const publicUploadsDir = path.join(publicDir, 'uploads');
-    const publicImagesDir = path.join(publicUploadsDir, 'images');
-    const publicJsonDir = path.join(publicUploadsDir, 'json');
-    const publicDataDir = path.join(publicUploadsDir, 'data');
+    // knowledge-baseディレクトリを使用
+    const knowledgeBaseDir = path.join(rootDir, 'knowledge-base');
+    const knowledgeBaseImagesDir = path.join(knowledgeBaseDir, 'images');
+    const knowledgeBaseJsonDir = path.join(knowledgeBaseDir, 'json');
+    const knowledgeBaseDataDir = path.join(knowledgeBaseDir, 'data');
     
     // ディレクトリ構造のログ
     console.log('=== ディレクトリ構造と対応するURLパス ===');
     console.log(`- ルートディレクトリ: ${rootDir}`);
-    console.log(`- 公開ディレクトリ: ${publicDir} (URL: /)`);
-    console.log(`- 公開アップロードディレクトリ: ${publicUploadsDir} (URL: /knowledge-base)`);
-    console.log(`- 公開画像ディレクトリ: ${publicImagesDir} (URL: /knowledge-base/images)`);
-    console.log(`- 公開JSONディレクトリ: ${publicJsonDir} (URL: /knowledge-base/json)`);
+    console.log(`- ナレッジベースディレクトリ: ${knowledgeBaseDir} (URL: /knowledge-base)`);
+    console.log(`- ナレッジベース画像ディレクトリ: ${knowledgeBaseImagesDir} (URL: /knowledge-base/images)`);
+    console.log(`- ナレッジベースJSONディレクトリ: ${knowledgeBaseJsonDir} (URL: /knowledge-base/json)`);
     
     // ディレクトリの存在確認
     console.log('\n=== 存在確認 ===');
     console.log(`- ルートディレクトリ: ${fs.existsSync(rootDir)}`);
-    console.log(`- 公開ディレクトリ: ${fs.existsSync(publicDir)}`);
-    console.log(`- 公開アップロードディレクトリ: ${fs.existsSync(publicUploadsDir)}`);
-    console.log(`- 公開画像ディレクトリ: ${fs.existsSync(publicImagesDir)}`);
-    console.log(`- 公開JSONディレクトリ: ${fs.existsSync(publicJsonDir)}`);
+    console.log(`- ナレッジベースディレクトリ: ${fs.existsSync(knowledgeBaseDir)}`);
+    console.log(`- ナレッジベース画像ディレクトリ: ${fs.existsSync(knowledgeBaseImagesDir)}`);
+    console.log(`- ナレッジベースJSONディレクトリ: ${fs.existsSync(knowledgeBaseJsonDir)}`);
     
     // 必要なディレクトリをすべて作成
     console.log('\n=== ディレクトリ作成 ===');
     [
-      publicDir, publicUploadsDir, publicImagesDir, publicJsonDir, publicDataDir
+      knowledgeBaseDir, knowledgeBaseImagesDir, knowledgeBaseJsonDir, knowledgeBaseDataDir
     ].forEach(dir => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -257,8 +254,8 @@ export async function extractPptxText(filePath: string): Promise<string> {
         // SVGをメイン形式とし、PNGをフォールバックとして使用
         const svgFileName = `${imgBaseFileName}.svg`;
         const pngFileName = `${imgBaseFileName}.png`;
-        const svgFilePath = path.join(publicImagesDir, svgFileName);
-        const pngFilePath = path.join(publicImagesDir, pngFileName);
+        const svgFilePath = path.join(knowledgeBaseImagesDir, svgFileName);
+        const pngFilePath = path.join(knowledgeBaseImagesDir, pngFileName);
         
         console.log(`埋め込み画像を抽出: ${entry.entryName} -> ${svgFilePath} (メイン形式:SVG)`);
         
