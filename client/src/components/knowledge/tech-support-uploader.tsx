@@ -276,6 +276,43 @@ const TechSupportUploader: React.FC = () => {
     }
   };
   
+  // 重複画像を検出して削除する関数
+  const handleDetectDuplicateImages = async () => {
+    try {
+      setIsCleaningUp(true);
+      
+      const response = await fetch('/api/tech-support/detect-duplicate-images', {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "重複画像の検出に失敗しました");
+      }
+      
+      const result = await response.json();
+      console.log("重複画像検出結果:", result);
+      
+      // 画像検索データを再読み込み
+      reloadImageSearchData();
+      
+      toast({
+        title: "重複画像検出完了",
+        description: `内容が同じ重複画像の検出と削除が完了しました。${result.details.removedFiles}件の重複ファイルを削除しました。`,
+      });
+      
+    } catch (error) {
+      console.error("重複画像検出エラー:", error);
+      toast({
+        title: "重複画像検出エラー",
+        description: error instanceof Error ? error.message : "未知のエラーが発生しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningUp(false);
+    }
+  };
+  
   // ディレクトリを同期する関数
   const handleSyncDirectories = async () => {
     try {
@@ -483,6 +520,29 @@ const TechSupportUploader: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>一時ファイルをクリーンアップしてストレージスペースを解放します</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="border-amber-200 bg-amber-50"
+                    onClick={handleDetectDuplicateImages}
+                    disabled={isCleaningUp}
+                  >
+                    {isCleaningUp ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4 text-amber-600" />
+                    )}
+                    重複画像を検出・削除
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>同じ内容の重複画像を検出して削除します（タイムスタンプが異なる同じ画像を削除）</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

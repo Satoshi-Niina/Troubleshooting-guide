@@ -4,20 +4,12 @@
   "fileCount": 0,
   "documents": [
     {
-      "id": "doc_1745233987839_645",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "path": "/home/runner/workspace/knowledge-base/doc_1745233987839_645/MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "type": "powerpoint",
-      "chunkCount": 6,
-      "addedAt": "2025-04-21T11:13:17.676Z"
-    },
-    {
-      "id": "doc_1745234685825_472",
-      "title": "railway_maintenance_knowledge_1745234685192.txt",
-      "path": "/home/runner/workspace/knowledge-base/doc_1745234685825_472/railway_maintenance_knowledge_1745234685192.txt",
+      "id": "doc_1745235432958_161",
+      "title": "railway_maintenance_knowledge_1745235432716.txt",
+      "path": "/home/runner/workspace/knowledge-base/doc_1745235432958_161/railway_maintenance_knowledge_1745235432716.txt",
       "type": "text",
       "chunkCount": 83,
-      "addedAt": "2025-04-21T11:24:54.925Z"
+      "addedAt": "2025-04-21T11:37:22.830Z"
     }
   ]
 }

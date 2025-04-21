@@ -93,6 +93,119 @@ async function cleanupTempDirectories(): Promise<void> {
   }
 }
 
+// 画像ファイルのハッシュ値を計算する関数（内容の一致を検出するため）
+async function calculateImageHash(filePath: string): Promise<string> {
+  try {
+    const fileContent = fs.readFileSync(filePath);
+    // 単純なハッシュ値を計算（実際の実装ではより堅牢なハッシュアルゴリズムを使用することも可能）
+    const hash = require('crypto').createHash('md5').update(fileContent).digest('hex');
+    return hash;
+  } catch (error) {
+    console.error(`ファイルのハッシュ計算に失敗: ${filePath}`, error);
+    return '';
+  }
+}
+
+// 知識ベース内の画像ファイルの重複を検出して削除する
+async function detectAndRemoveDuplicateImages(): Promise<{removed: number, errors: number}> {
+  const knowledgeImagesDir = path.join(process.cwd(), 'knowledge-base/images');
+  let removedCount = 0;
+  let errorCount = 0;
+  
+  if (!fs.existsSync(knowledgeImagesDir)) {
+    console.log(`画像ディレクトリが存在しません: ${knowledgeImagesDir}`);
+    return { removed: 0, errors: 0 };
+  }
+  
+  try {
+    // 画像ファイル一覧を取得
+    const imageFiles = fs.readdirSync(knowledgeImagesDir)
+      .filter(file => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+    
+    console.log(`knowledge-base/imagesディレクトリ内の画像ファイル数: ${imageFiles.length}件`);
+    if (imageFiles.length <= 1) return { removed: 0, errors: 0 };
+    
+    // ファイル名のプレフィックスでグループ化する正規表現パターン
+    // mc_1745233987873_img_001 -> mc_1745233987873
+    const prefixPattern = /^(mc_\d+)_/;
+    
+    // ハッシュ値とファイルパスのマップ
+    const fileHashes = new Map<string, string[]>();
+    // ファイル名のプレフィックスでグループ化
+    const prefixGroups = new Map<string, string[]>();
+    
+    // まずファイル名のプレフィックスでグループ化（タイムスタンプ違いの可能性がある同名ファイルを見つける）
+    for (const file of imageFiles) {
+      const match = file.match(prefixPattern);
+      if (match) {
+        const prefix = match[1]; // 例: mc_1745233987873
+        if (!prefixGroups.has(prefix)) {
+          prefixGroups.set(prefix, []);
+        }
+        prefixGroups.get(prefix)!.push(file);
+      }
+    }
+    
+    // 重複の可能性があるグループのみを検査（パフォーマンス改善のため）
+    for (const entry of Array.from(prefixGroups.entries())) {
+      const [prefix, files] = entry;
+      if (files.length > 1) {
+        console.log(`プレフィックス "${prefix}" で ${files.length}件の潜在的な重複ファイルを検出`);
+        
+        // 各ファイルのハッシュを計算して重複を検出
+        for (const file of files) {
+          const filePath = path.join(knowledgeImagesDir, file);
+          const hash = await calculateImageHash(filePath);
+          
+          if (hash) {
+            if (!fileHashes.has(hash)) {
+              fileHashes.set(hash, []);
+            }
+            fileHashes.get(hash)!.push(filePath);
+          }
+        }
+      }
+    }
+    
+    // 重複ファイルを削除（最も新しいタイムスタンプのファイル以外）
+    for (const entry of Array.from(fileHashes.entries())) {
+      const [hash, filePaths] = entry;
+      if (filePaths.length > 1) {
+        console.log(`ハッシュ値 ${hash} で ${filePaths.length}件の重複ファイルを検出`);
+        
+        // ファイル名からタイムスタンプを抽出して最新のファイルを特定
+        const timestamps = filePaths.map((filePath: string) => {
+          const fileName = path.basename(filePath);
+          const match = fileName.match(/mc_(\d+)/);
+          return match ? parseInt(match[1]) : 0;
+        });
+        
+        // 最大のタイムスタンプを持つファイルのインデックス
+        const latestFileIndex = timestamps.indexOf(Math.max(...timestamps));
+        
+        // 最新以外のファイルを削除
+        for (let i = 0; i < filePaths.length; i++) {
+          if (i !== latestFileIndex) {
+            try {
+              fs.unlinkSync(filePaths[i]);
+              console.log(`重複ファイルを削除しました: ${filePaths[i]}`);
+              removedCount++;
+            } catch (error) {
+              console.error(`重複ファイル削除エラー: ${filePaths[i]}`, error);
+              errorCount++;
+            }
+          }
+        }
+      }
+    }
+    
+    return { removed: removedCount, errors: errorCount };
+  } catch (error) {
+    console.error('重複画像検出処理でエラーが発生しました:', error);
+    return { removed: removedCount, errors: errorCount + 1 };
+  }
+}
+
 // knowledge-baseに存在するファイルと重複するファイルを一時ディレクトリから削除
 async function cleanupRedundantFiles(): Promise<{removed: number, errors: number}> {
   const rootDir = process.cwd();
@@ -1119,18 +1232,56 @@ router.post('/cleanup-uploads', async (req, res) => {
     // knowledge-baseに移動済みのファイルを一時ディレクトリから削除
     const result = await cleanupRedundantFiles();
     
+    // 重複した画像ファイルのクリーンアップはオプション（重たい処理なのでデフォルトは実行しない）
+    const detectDuplicates = req.query.detectDuplicates === 'true' || req.body.detectDuplicates === true;
+    let duplicateResult = { removed: 0, errors: 0 };
+    
+    if (detectDuplicates) {
+      console.log('knowledge-base内の重複画像検出と削除を実行...');
+      duplicateResult = await detectAndRemoveDuplicateImages();
+    }
+    
     return res.json({
       success: true,
       message: 'アップロードディレクトリのクリーンアップが完了しました',
       details: {
         removedFiles: result.removed,
-        errors: result.errors
+        errors: result.errors,
+        duplicatesRemoved: duplicateResult.removed,
+        duplicateErrors: duplicateResult.errors
       }
     });
   } catch (error) {
     console.error('アップロードファイルのクリーンアップエラー:', error);
     return res.status(500).json({
       error: 'クリーンアップ処理に失敗しました',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
+ * 重複画像ファイルを検出して削除するエンドポイント
+ * knowledge-base/images内の重複画像を削除（同一ハッシュの画像で最新タイムスタンプのもののみ残す）
+ */
+router.post('/detect-duplicate-images', async (req, res) => {
+  try {
+    console.log('重複画像検出リクエストを受信...');
+    
+    const result = await detectAndRemoveDuplicateImages();
+    
+    return res.json({
+      success: true,
+      message: '重複画像の検出と削除が完了しました',
+      details: {
+        removedFiles: result.removed,
+        errors: result.errors
+      }
+    });
+  } catch (error) {
+    console.error('重複画像検出エラー:', error);
+    return res.status(500).json({
+      error: '重複画像の検出と削除に失敗しました',
       details: error instanceof Error ? error.message : String(error)
     });
   }
