@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// 画像パスを修正するヘルパー関数 - SVGのみを使用する
+// 画像パスを修正するヘルパー関数 - 最適な画像形式を使用
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
@@ -15,22 +15,20 @@ function fixImagePath(path: string | undefined): string {
   
   // すでに knowledge-base パスを持っていればそのまま返す
   if (path.includes('/knowledge-base/images/')) {
-    // もしPNGなどの場合は、代わりにSVGファイルを探す
-    if (!path.toLowerCase().endsWith('.svg')) {
-      // 拡張子をSVGに置き換えて返す
-      return path.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-    }
-    return path;
+    return path; // 元の拡張子を維持
+  }
+  
+  // uploads パスから knowledge-base パスへ変換
+  if (path.includes('/uploads/')) {
+    return path.replace('/uploads/', '/knowledge-base/');
   }
   
   // 画像ファイルの拡張子を持つパスはファイル名だけ抽出して知識ベースのパスに変換
   if (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
     const fileName = path.split('/').pop();
     if (fileName) {
-      // ファイル名からSVGバージョンを取得
-      const svgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-      console.log('プレビューモーダル: SVGパス変換:', path, ' -> ', `/knowledge-base/images/${svgFileName}`);
-      return `/knowledge-base/images/${svgFileName}`;
+      // 元の拡張子を維持してパスを変換
+      return `/knowledge-base/images/${fileName}`;
     }
   }
 
@@ -236,13 +234,30 @@ export default function ImagePreviewModal() {
             </Button>
           )}
           
-          {/* メイン画像 - SVGのみ使用 */}
+          {/* メイン画像表示 - 拡張子はそのまま使用、エラー時は自動切り替え */}
           <img 
             src={fixImagePath(imageUrl || '')} 
-            alt={currentSlideInfo?.タイトル || "拡大画像"} 
+            alt={currentSlideInfo?.タイトル || title || "拡大画像"} 
             className="max-w-full max-h-[70vh] object-contain rounded-lg border border-blue-500"
             loading="eager"
             decoding="async"
+            onError={(e) => {
+              const imgElement = e.currentTarget;
+              const originalSrc = imgElement.src;
+              
+              // 画像形式の自動切り替え
+              if (originalSrc.endsWith('.svg')) {
+                // SVGが読み込めない場合はPNGに変更
+                console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc);
+                const pngPath = originalSrc.replace('.svg', '.png');
+                imgElement.src = pngPath;
+              } else if (originalSrc.endsWith('.png')) {
+                // PNGが読み込めない場合はSVGに変更
+                console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc);
+                const svgPath = originalSrc.replace('.png', '.svg');
+                imgElement.src = svgPath;
+              }
+            }}
           />
           
           {/* 次へボタン */}

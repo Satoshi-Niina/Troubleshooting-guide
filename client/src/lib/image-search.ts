@@ -560,24 +560,19 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         // SVGのみ使用する
         let imageUrl = '';
         
-        // SVGファイルパスを識別
+        // 使用可能な画像パスを設定
         if (item.file) {
-          const fileLower = item.file.toLowerCase();
-          if (fileLower.endsWith('.svg')) {
-            imageUrl = item.file;
-          } else if (fileLower.endsWith('.png') || fileLower.endsWith('.jpg') || fileLower.endsWith('.jpeg')) {
-            // PNGやJPGファイルがある場合は、同じファイル名のSVGを探す
-            imageUrl = item.file.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-          }
+          // 元の拡張子を維持
+          imageUrl = item.file;
+        } else {
+          imageUrl = '';
         }
         
-        // SVGが指定されていない場合は元のファイルを使用（互換性のため）
-        if (!imageUrl) {
-          imageUrl = item.file || '';
-        }
-        
-        // フォールバックは使用しない
+        // PNG画像をフォールバックとして設定（SVGの場合のみ）
         let fallbackUrl = '';
+        if (imageUrl.toLowerCase().endsWith('.svg')) {
+          fallbackUrl = imageUrl.replace('.svg', '.png');
+        }
         
         // パスが相対パスの場合、絶対パスに変換
         if (imageUrl && !imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
