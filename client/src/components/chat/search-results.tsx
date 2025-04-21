@@ -136,32 +136,39 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                     />
                   )}
                   
-                  {/* メイン画像 - PNG代替があるならそちらを優先表示（より信頼性が高いため） */}
+                  {/* メイン画像表示 - 用途に応じた適切な画像形式を使用 */}
                   <img 
-                    src={fixImagePath(result.pngFallbackUrl || result.url)} 
+                    src={fixImagePath(result.url)} 
                     alt={result.title || "応急復旧サポート"} 
                     className="w-full h-full object-contain bg-white p-1"
                     style={{ minHeight: '96px', minWidth: '96px' }} // 最小サイズを設定して白い画像問題を防止
                     loading="eager" // 急いで読み込んで点滅を防止
                     decoding="async" // 非同期デコードで表示を高速化
-                    // 画像読み込みエラー時の単純化したフォールバック
+                    // 画像読み込みエラー時の自動フォールバック
                     onError={(e) => {
                       const imgElement = e.currentTarget;
                       const originalSrc = imgElement.src;
                       
-                      // SVGとPNG間の拡張子切替でフォールバック
+                      // 画像形式の自動切り替え
                       if (originalSrc.endsWith('.svg')) {
                         // SVGが読み込めない場合はPNGに変更
+                        console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc);
                         const pngPath = originalSrc.replace('.svg', '.png');
                         imgElement.src = pngPath;
                       } else if (originalSrc.endsWith('.png')) {
                         // PNGが読み込めない場合はSVGに変更
+                        console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc);
                         const svgPath = originalSrc.replace('.png', '.svg');
                         imgElement.src = svgPath;
                       }
                     }}
                   />
-                  {/* 画像説明テキストは非表示 */}
+                  {/* 画像説明タイトル - 画像の下に小さく表示 */}
+                  {result.title && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-blue-600 bg-opacity-70 text-white text-xs p-1 truncate">
+                      {result.title}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
