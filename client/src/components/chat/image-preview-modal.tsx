@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// 画像パスを修正するヘルパー関数 - 最適な画像形式を使用
+// 画像パスを修正するヘルパー関数 - PNG形式に統一
 function fixImagePath(path: string | undefined): string {
   if (!path) return '';
   
@@ -24,10 +24,16 @@ function fixImagePath(path: string | undefined): string {
   }
   
   // 画像ファイルの拡張子を持つパスはファイル名だけ抽出して知識ベースのパスに変換
-  if (path.endsWith('.svg') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+  if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.svg')) {
     const fileName = path.split('/').pop();
     if (fileName) {
-      // 元の拡張子を維持してパスを変換
+      // SVG形式の場合はPNG形式に変換
+      if (fileName.endsWith('.svg')) {
+        const pngFileName = fileName.replace('.svg', '.png');
+        return `/knowledge-base/images/${pngFileName}`;
+      }
+      
+      // 他の形式はそのまま
       return `/knowledge-base/images/${fileName}`;
     }
   }
@@ -103,13 +109,8 @@ export default function ImagePreviewModal() {
     const newSlideUrl = allSlides[newIndex];
     setImageUrl(newSlideUrl);
     
-    // スライド変更時もPNGフォールバックを設定（SVG画像のフォールバックとして）
-    if (imageUrl.toLowerCase().endsWith('.svg')) {
-      const newPngFallback = newSlideUrl.replace('.svg', '.png');
-      setPngFallbackUrl(newPngFallback);
-    } else {
-      setPngFallbackUrl("");
-    }
+    // PNG形式のみを使用するため、フォールバックは設定しない
+    setPngFallbackUrl("");
   };
 
   useEffect(() => {
@@ -244,24 +245,19 @@ export default function ImagePreviewModal() {
               const originalSrc = imgElement.src;
               
               // 専用フォールバックURLが指定されている場合はそちらを優先
-              if (pngFallbackUrl && originalSrc.endsWith('.svg')) {
-                console.log('SVG読み込みエラー、指定されたフォールバックに切り替え:', pngFallbackUrl);
+              if (pngFallbackUrl) {
+                console.log('画像読み込みエラー、指定されたフォールバックに切り替え:', pngFallbackUrl);
                 imgElement.src = fixImagePath(pngFallbackUrl);
                 return;
               }
               
-              // 専用フォールバックがない場合は拡張子に基づいて切り替え
-              if (originalSrc.endsWith('.svg')) {
-                // SVGが読み込めない場合はPNGに変更
-                console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc);
-                const pngPath = originalSrc.replace('.svg', '.png');
+              if (originalSrc.includes('.jpg') || originalSrc.includes('.jpeg')) {
+                // JPG/JPEGが読み込めない場合はPNGを試す
+                console.log('JPG読み込みエラー、PNG代替に切り替え:', originalSrc);
+                const pngPath = originalSrc.replace(/\.(jpg|jpeg)$/, '.png');
                 imgElement.src = pngPath;
-              } else if (originalSrc.endsWith('.png')) {
-                // PNGが読み込めない場合はSVGに変更
-                console.log('PNG読み込みエラー、SVG代替に切り替え:', originalSrc);
-                const svgPath = originalSrc.replace('.png', '.svg');
-                imgElement.src = svgPath;
               }
+              // PNGファイルのエラーはそのまま表示する（代替手段なし）
             }}
           />
           
@@ -372,13 +368,8 @@ export default function ImagePreviewModal() {
                   setCurrentSlideIndex(index);
                   setImageUrl(slide);
                   
-                  // PNG形式のフォールバックURLを設定
-                  if (slide.toLowerCase().endsWith('.svg')) {
-                    const pngFallback = slide.replace('.svg', '.png');
-                    setPngFallbackUrl(pngFallback);
-                  } else {
-                    setPngFallbackUrl("");
-                  }
+                  // PNG形式のみに統一するためフォールバックは不要
+                  setPngFallbackUrl("");
                 }}
               >
                 <img 
