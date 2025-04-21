@@ -65,6 +65,7 @@ export default function ImagePreviewModal() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [metadataJson, setMetadataJson] = useState<ImageMetaData | null>(null);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  // デフォルトで説明文パネルを非表示に設定
   const [showInfo, setShowInfo] = useState(false);
   const [title, setTitle] = useState<string>("画像プレビュー");
   const [content, setContent] = useState<string>("");
@@ -167,11 +168,8 @@ export default function ImagePreviewModal() {
         // モーダルを必ず表示する
         setIsOpen(true);
         
-        // 情報パネルは常に非表示状態から開始し、表示設定は維持
-        // これによりパネルの表示/非表示を切り替えても点滅しなくなる
-        if (!showInfo && customEvent.detail.content) {
-          setShowInfo(true);
-        }
+        // 情報パネルは常に非表示に設定（説明文表示を無効化）
+        setShowInfo(false);
       }
     };
     
