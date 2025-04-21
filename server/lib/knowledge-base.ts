@@ -77,7 +77,14 @@ export function loadKnowledgeBaseIndex(): KnowledgeBaseIndex {
   try {
     if (fs.existsSync(KNOWLEDGE_INDEX_FILE)) {
       const indexData = fs.readFileSync(KNOWLEDGE_INDEX_FILE, 'utf8');
-      return JSON.parse(indexData);
+      const parsedData = JSON.parse(indexData);
+      
+      // documents配列が存在することを確認
+      if (!parsedData.documents) {
+        parsedData.documents = [];
+      }
+      
+      return parsedData;
     }
     return { documents: [] };
   } catch (err) {
@@ -396,15 +403,29 @@ async function storeProcessedDocument(docId: string, doc: ProcessedDocument): Pr
   }
   
   // 各チャンクをDBに保存（オプション）
-  for (const chunk of doc.chunks) {
-    try {
+  try {
+    // documentIdをPostgreSQLのinteger範囲内（2147483647まで）に収める
+    // タイムスタンプから適切なサイズのIDを生成
+    const timestamp = new Date().getTime();
+    const safeId = Math.floor(timestamp % 1000000); // 6桁の数値に制限
+    
+    console.log(`キーワード保存用のsafeId生成: ${safeId} (元のdocId: ${docId})`);
+    
+    // 最初の数チャンクだけをキーワードとして保存（多すぎるとパフォーマンス問題を引き起こす）
+    const chunkLimit = 5;
+    const chunksToSave = doc.chunks.slice(0, chunkLimit);
+    
+    for (const chunk of chunksToSave) {
       await storage.createKeyword({
-        documentId: parseInt(docId.split('_')[1] || '0'), // DBの外部キー制約に合わせる必要がある
-        word: chunk.text.substring(0, 255), // キーワードフィールドの長さ制限に注意
+        documentId: safeId, // PostgreSQLのinteger範囲内の値を使用
+        word: chunk.text.substring(0, 200), // キーワードフィールドの長さ制限に注意
       });
-    } catch (err) {
-      console.error('Error creating keyword:', err);
     }
+    
+    console.log(`${chunksToSave.length}個のキーワードをDBに保存しました`);
+  } catch (err) {
+    console.error('キーワード保存エラー:', err);
+    // キーワード保存エラーは処理を続行
   }
 }
 
@@ -786,8 +807,11 @@ export function listKnowledgeBaseDocuments(): { id: string, title: string, type:
     console.log('ナレッジベースディレクトリ確認:', KNOWLEDGE_BASE_DIR);
     console.log('ファイル存在確認:', fs.existsSync(path.join(KNOWLEDGE_BASE_DIR, '保守用車ナレッジ.txt')));
     
-    // インデックスを読み込み
+    // インデックスを読み込み、documents配列が必ず存在することを確認
     const index = loadKnowledgeBaseIndex();
+    if (!index.documents) {
+      index.documents = [];
+    }
     console.log('既存インデックス:', index);
     
     // 実際にファイルシステムをスキャンして、ファイルが存在するかチェック
