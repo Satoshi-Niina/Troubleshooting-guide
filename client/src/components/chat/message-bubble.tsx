@@ -128,7 +128,18 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
             isUserMessage 
               ? `chat-bubble-user bg-blue-50 rounded-[18px_18px_4px_18px] border ${isDraft ? "border-blue-400 border-dashed" : "border-blue-200"}` 
               : "chat-bubble-ai bg-white rounded-[18px_18px_18px_4px] border border-blue-200"
-          }`}
+          } ${isDraft ? "cursor-pointer hover:bg-blue-100 transition-colors" : ""}`}
+          onClick={() => {
+            // ドラフトメッセージの場合、クリックで入力欄にテキストをコピーする
+            if (isDraft && message.content) {
+              setSelectedText(message.content);
+              toast({
+                title: "テキストをコピーしました",
+                description: "音声認識テキストが入力欄にコピーされました",
+                duration: 2000,
+              });
+            }
+          }}
         >
           <div className="relative">
             <p className={`${!isUserMessage ? "text-blue-600" : "text-black"}`}>{message.content}</p>
@@ -142,6 +153,13 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
               >
                 <Copy size={14} />
               </button>
+            )}
+            
+            {/* ドラフトメッセージの場合、テキストをタップして入力欄にコピーできることを示すヒント */}
+            {isDraft && message.content && (
+              <div className="mt-2 text-xs text-blue-500 italic">
+                ↑ タップしてテキストを入力欄にコピー
+              </div>
             )}
           </div>
           
