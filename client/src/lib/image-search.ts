@@ -14,6 +14,7 @@ interface ImageSearchItem {
   metadata?: any;
   all_slides?: string[];
   details?: string;
+  searchText?: string;   // 検索用の追加テキストフィールド
 }
 
 // 画像検索用データ
@@ -312,18 +313,21 @@ const fuseOptions = {
     { name: 'title', weight: 0.5 },
     { name: 'category', weight: 0.3 },
     { name: 'description', weight: 0.4 },
-    { name: 'keywords', weight: 0.9 }, // キーワードの重みを強化
+    { name: 'keywords', weight: 1.0 }, // キーワードの重みをさらに強化
     { name: 'metadata.documentId', weight: 0.8 }, // ドキュメントIDによる検索を強化
     { name: 'details', weight: 0.6 },
     { name: 'searchText', weight: 1.0 }, // 検索用テキストフィールドを最高の重みで追加
   ],
-  threshold: 0.3, // 閾値を下げることで、より厳密に関連性の高い結果を取得
+  threshold: 0.4, // 閾値を高めに設定して、より幅広い一致を許容
   ignoreLocation: true, // 単語の位置を無視して検索
   useExtendedSearch: true, // 拡張検索モード
-  minMatchCharLength: 2, // 最低2文字一致から検索対象に
-  distance: 500, // 単語間の距離制限をさらに緩める
+  minMatchCharLength: 1, // 部分一致の条件を緩和 (1文字一致から検索対象に)
+  distance: 1000, // 単語間の距離制限をさらに緩める
   findAllMatches: true, // すべての一致を見つける
   isCaseSensitive: false, // 大文字小文字を区別しない
+  shouldSort: true, // 結果をスコア順にソート
+  tokenize: true, // 検索文字列をトークン化して部分一致を強化
+  matchAllTokens: false, // すべてのトークンが一致する必要はない
 };
 
 // 画像検索用のFuseインスタンスを作成するヘルパー関数
@@ -506,31 +510,95 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         
         // 特定のキーワードに基づいてカテゴリをマッピング
         let targetCategory = '';
+        let relatedKeywords: string[] = [];
+        
         if (text.includes('エンジン') || text.includes('モーター') || text.includes('駆動')) {
           targetCategory = 'エンジン';
+          relatedKeywords = ["エンジン", "モーター", "動力系", "駆動部"];
         } else if (text.includes('冷却') || text.includes('水') || text.includes('温度')) {
           targetCategory = '冷却系統';
+          relatedKeywords = ["冷却", "ラジエーター", "水漏れ", "オーバーヒート"];
         } else if (text.includes('フレーム') || text.includes('車体') || text.includes('シャーシ')) {
           targetCategory = '車体';
+          relatedKeywords = ["フレーム", "シャーシ", "車体", "構造"];
         } else if (text.includes('運転') || text.includes('キャビン') || text.includes('操作')) {
           targetCategory = '運転室';
+          relatedKeywords = ["キャビン", "運転室", "操作パネル", "計器盤"];
+        } else if (text.includes('ブレーキ') || text.includes('制動') || text.includes('バネ')) {
+          targetCategory = 'ブレーキ系統';
+          relatedKeywords = ["ブレーキ", "制動装置", "バネ", "駐車ブレーキ", "エアータンク"];
         }
         
         // カテゴリに基づいて画像を検索
-        if (targetCategory && imageSearchData.length > 0) {
-          const categoryResults = imageSearchData.filter(item => 
-            item.category === targetCategory || 
-            (item.keywords && item.keywords.some(k => k.includes(targetCategory)))
-          );
+        if ((targetCategory || relatedKeywords.length > 0) && imageSearchData.length > 0) {
+          // まずはカテゴリに基づくフィルタリング
+          let categoryResults = [];
+          
+          if (targetCategory) {
+            categoryResults = imageSearchData.filter(item => 
+              item.category === targetCategory || 
+              (item.keywords && item.keywords.some(k => k.includes(targetCategory)))
+            );
+          }
+          
+          // カテゴリベースで見つからない場合は、関連キーワードを使用
+          if (categoryResults.length === 0 && relatedKeywords.length > 0) {
+            categoryResults = imageSearchData.filter(item => 
+              item.keywords && 
+              item.keywords.some(k => 
+                relatedKeywords.some(rk => k.includes(rk) || rk.includes(k))
+              )
+            );
+          }
+          
+          // それでも見つからない場合は元のクエリで部分一致検索
+          if (categoryResults.length === 0) {
+            categoryResults = imageSearchData.filter(item => {
+              // 検索テキストを項目のタイトル、カテゴリ、キーワード、説明に部分一致させる
+              const searchLower = text.toLowerCase();
+              return (
+                (item.title && item.title.toLowerCase().includes(searchLower)) ||
+                (item.category && item.category.toLowerCase().includes(searchLower)) ||
+                (item.description && item.description.toLowerCase().includes(searchLower)) ||
+                (item.searchText && item.searchText.toLowerCase().includes(searchLower)) ||
+                (item.keywords && item.keywords.some(k => 
+                  k.toLowerCase().includes(searchLower) || searchLower.includes(k.toLowerCase())
+                ))
+              );
+            });
+          }
           
           if (categoryResults.length > 0) {
-            console.log(`カテゴリ「${targetCategory}」に基づいて ${categoryResults.length} 件の関連画像を見つけました`);
-            // カテゴリに基づく結果をFuse.js形式に変換
+            if (targetCategory) {
+              console.log(`カテゴリ「${targetCategory}」に基づいて ${categoryResults.length} 件の関連画像を見つけました`);
+            } else {
+              console.log(`関連キーワード [${relatedKeywords.join(', ')}] に基づいて ${categoryResults.length} 件の関連画像を見つけました`);
+            }
+            
+            // 関連結果をFuse.js形式に変換
             searchResults = categoryResults.map(item => ({
               item,
               score: 0.5, // 中程度の関連度
               refIndex: 0
             }));
+          } else {
+            // 最後の手段として、ランダムな画像を表示
+            if (imageSearchData.length > 0) {
+              console.log('関連画像が見つからないため、利用可能な画像からランダムに5件表示します');
+              const randomSample = [];
+              const shuffled = [...imageSearchData].sort(() => 0.5 - Math.random());
+              const sampleSize = Math.min(5, shuffled.length);
+              
+              for (let i = 0; i < sampleSize; i++) {
+                randomSample.push(shuffled[i]);
+              }
+              
+              searchResults = randomSample.map(item => ({
+                item,
+                score: 0.9, // 低い関連度
+                refIndex: 0
+              }));
+            }
           }
         }
       }

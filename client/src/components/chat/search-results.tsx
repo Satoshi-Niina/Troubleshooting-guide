@@ -2,7 +2,7 @@ import { FileText, MessageCircle } from "lucide-react";
 import { useOrientation } from "@/hooks/use-orientation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect } from "react";
-import { cancelSearch } from "@/lib/image-search";
+import { cancelSearch, reloadImageSearchData } from "@/lib/image-search";
 
 // 画像パスを修正するヘルパー関数 - パスを適切に変換
 function fixImagePath(path: string | undefined): string {

@@ -751,9 +751,18 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           imageSearchData.push(newImageItem);
         }
         
-        // 更新したデータを書き込み（knowledge-base/dataのみに保存）
+        // 更新したデータを両方のパスに書き込み
         fs.writeFileSync(imageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
-        console.log(`画像検索データを更新しました: ${imageSearchData.length}件`);
+        
+        // 下位互換性のためuploads/dataディレクトリにも保存
+        const uploadsDataDir = path.join(process.cwd(), 'uploads', 'data');
+        if (!fs.existsSync(uploadsDataDir)) {
+          fs.mkdirSync(uploadsDataDir, { recursive: true });
+        }
+        const uploadsImageSearchDataPath = path.join(uploadsDataDir, 'image_search_data.json');
+        fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(imageSearchData, null, 2));
+        
+        console.log(`画像検索データを両方のパスに更新しました: ${imageSearchData.length}件`);
         
         // 元ファイルを保存するオプションがオフの場合、元ファイルを削除
         if (!keepOriginalFile) {
