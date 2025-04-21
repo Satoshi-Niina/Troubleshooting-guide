@@ -102,8 +102,13 @@ export default function ImagePreviewModal() {
     const newSlideUrl = allSlides[newIndex];
     setImageUrl(newSlideUrl);
     
-    // SVGのみを使用するため、PNG代替は不要
-    setPngFallbackUrl("");
+    // スライド変更時もPNGフォールバックを設定（SVG画像のフォールバックとして）
+    if (imageUrl.toLowerCase().endsWith('.svg')) {
+      const newPngFallback = newSlideUrl.replace('.svg', '.png');
+      setPngFallbackUrl(newPngFallback);
+    } else {
+      setPngFallbackUrl("");
+    }
   };
 
   useEffect(() => {
@@ -116,8 +121,12 @@ export default function ImagePreviewModal() {
           setImageUrl(customEvent.detail.url);
         }
         
-        // SVGのみを使用するため、PNG代替URLは不要
-        setPngFallbackUrl("");
+        // PNG形式のフォールバックURLを設定
+        if (customEvent.detail.pngFallbackUrl) {
+          setPngFallbackUrl(customEvent.detail.pngFallbackUrl);
+        } else {
+          setPngFallbackUrl("");
+        }
         
         // タイトルを設定
         if (customEvent.detail.title) {

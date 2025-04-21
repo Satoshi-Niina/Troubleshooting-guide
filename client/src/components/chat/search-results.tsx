@@ -149,7 +149,14 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                       const imgElement = e.currentTarget;
                       const originalSrc = imgElement.src;
                       
-                      // 画像形式の自動切り替え
+                      // 専用フォールバックURLが指定されている場合はそちらを優先
+                      if (result.pngFallbackUrl) {
+                        console.log('画像読み込みエラー、指定されたフォールバックに切り替え:', result.pngFallbackUrl);
+                        imgElement.src = fixImagePath(result.pngFallbackUrl);
+                        return;
+                      }
+                      
+                      // 専用フォールバックがない場合は拡張子に基づいて切り替え
                       if (originalSrc.endsWith('.svg')) {
                         // SVGが読み込めない場合はPNGに変更
                         console.log('SVG読み込みエラー、PNG代替に切り替え:', originalSrc);
