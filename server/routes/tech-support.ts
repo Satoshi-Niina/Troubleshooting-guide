@@ -545,8 +545,10 @@ router.post('/init-image-search-data', async (req, res) => {
     // JSONファイルに保存 - 主要パス (knowledge-base)
     fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
     
-    // データを一元管理のためknowledge-baseのみに保存し、コピーは行わない
-    console.log(`データの保存場所をknowledge-base/dataに一元化しました`);
+    // 下位互換性のためuploads/dataディレクトリにも同じデータをコピー
+    fs.writeFileSync(uploadsImageSearchDataPath, JSON.stringify(updatedData, null, 2));
+    
+    console.log(`データをknowledge-base/dataおよびuploads/dataの両方に保存しました`);
     console.log(`画像検索データを初期化しました: ${updatedData.length}件`);
     
     return res.json({
