@@ -2,7 +2,12 @@ import { Express, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-import { addDocumentToKnowledgeBase } from '../lib/knowledge-base';
+import { 
+  addDocumentToKnowledgeBase, 
+  mergeDocumentContent, 
+  backupKnowledgeBase, 
+  loadKnowledgeBaseIndex 
+} from '../lib/knowledge-base';
 import { processDocument } from '../lib/document-processor';
 import { log } from '../vite';
 

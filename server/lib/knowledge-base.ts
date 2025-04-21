@@ -8,6 +8,7 @@ import {
   chunkText
 } from './document-processor';
 import { storage } from '../storage';
+import AdmZip from 'adm-zip';
 
 // ESM環境で__dirnameを再現
 const __filename = fileURLToPath(import.meta.url);
@@ -958,6 +959,205 @@ export function listKnowledgeBaseDocuments(): { id: string, title: string, type:
   } catch (error) {
     console.error('ナレッジベース一覧取得エラー:', error);
     return [];
+  }
+}
+
+/**
+ * 差分処理でドキュメントを更新する
+ * @param newDoc 新しいドキュメント
+ * @param existingDocId 既存のドキュメントID
+ */
+export async function mergeDocumentContent(newDoc: ProcessedDocument, existingDocId: string): Promise<void> {
+  try {
+    console.log(`ドキュメント差分更新開始: ${existingDocId}`);
+    
+    // 既存ドキュメントのチャンクを読み込む
+    const existingDocDir = path.join(KNOWLEDGE_DOCUMENTS_DIR, existingDocId);
+    const chunksFile = path.join(existingDocDir, 'chunks.json');
+    
+    if (fs.existsSync(chunksFile)) {
+      const existingChunks: DocumentChunk[] = JSON.parse(fs.readFileSync(chunksFile, 'utf8'));
+      console.log(`既存チャンク数: ${existingChunks.length}`);
+      
+      // 既存チャンクのテキスト内容をハッシュマップに格納
+      const existingChunkMap = new Map<string, DocumentChunk>();
+      existingChunks.forEach(chunk => {
+        // テキストの最初の50文字をキーとして使用
+        const key = chunk.text.substring(0, 50);
+        existingChunkMap.set(key, chunk);
+      });
+      
+      // 新しいチャンクを既存のものとマージ
+      const mergedChunks: DocumentChunk[] = [...existingChunks];
+      
+      for (const newChunk of newDoc.chunks) {
+        const key = newChunk.text.substring(0, 50);
+        if (existingChunkMap.has(key)) {
+          // 重複チャンクは既存のものを更新
+          const index = mergedChunks.findIndex(chunk => 
+            chunk.text.substring(0, 50) === key);
+          if (index !== -1) {
+            mergedChunks[index] = newChunk;
+            console.log(`チャンクを更新: ${key.substring(0, 20)}...`);
+          }
+        } else {
+          // 新規チャンクを追加
+          mergedChunks.push(newChunk);
+          console.log(`新規チャンクを追加: ${key.substring(0, 20)}...`);
+        }
+      }
+      
+      // マージしたチャンクを保存
+      fs.writeFileSync(chunksFile, JSON.stringify(mergedChunks, null, 2));
+      console.log(`マージ後のチャンク数: ${mergedChunks.length}`);
+      
+      // Q&Aデータもマージする
+      try {
+        const qaDir = path.join(existingDocDir, 'qa');
+        ensureDirectoryExists(qaDir);
+        
+        // 既存のQ&Aデータを読み込む
+        const qaPairsFile = path.join(qaDir, 'qa_pairs.json');
+        let existingQAPairs: any[] = [];
+        
+        if (fs.existsSync(qaPairsFile)) {
+          try {
+            existingQAPairs = JSON.parse(fs.readFileSync(qaPairsFile, 'utf8'));
+            if (!Array.isArray(existingQAPairs)) {
+              existingQAPairs = [];
+            }
+          } catch (e) {
+            console.error('既存のQ&Aデータ読み込みエラー:', e);
+          }
+        }
+        
+        // 新しいQ&Aデータを生成
+        const fullText = newDoc.chunks.map(chunk => chunk.text).join("\n");
+        const openaiModule = await import('./openai');
+        const newQAPairs = await openaiModule.generateQAPairs(fullText, 5);
+        
+        // 既存のQ&Aとマージ（重複を避ける）
+        const existingQuestions = new Set(existingQAPairs.map(qa => qa.question));
+        const mergedQAPairs = [...existingQAPairs];
+        
+        for (const qa of newQAPairs) {
+          if (!existingQuestions.has(qa.question)) {
+            mergedQAPairs.push(qa);
+          }
+        }
+        
+        // マージしたQ&Aデータを保存
+        fs.writeFileSync(qaPairsFile, JSON.stringify(mergedQAPairs, null, 2));
+        console.log(`マージ後のQ&A数: ${mergedQAPairs.length}`);
+        
+        // 個別のQ&Aファイルも更新
+        mergedQAPairs.forEach((qa, index) => {
+          const qaFileName = `qa_${index + 1}.json`;
+          fs.writeFileSync(
+            path.join(qaDir, qaFileName),
+            JSON.stringify(qa, null, 2)
+          );
+        });
+      } catch (qaError) {
+        console.error('Q&Aマージエラー:', qaError);
+      }
+      
+      // インデックスも更新
+      const index = loadKnowledgeBaseIndex();
+      const docIndex = index.documents.findIndex(doc => doc.id === existingDocId);
+      
+      if (docIndex !== -1) {
+        index.documents[docIndex].chunkCount = mergedChunks.length;
+        saveKnowledgeBaseIndex(index);
+        console.log('ドキュメントインデックスを更新しました');
+      }
+    } else {
+      console.error(`既存のチャンクファイルが見つかりません: ${chunksFile}`);
+    }
+  } catch (error) {
+    console.error('ドキュメントマージエラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * 知識ベースのバックアップを作成する
+ * @param docIds バックアップするドキュメントIDの配列（空の場合はすべてをバックアップ）
+ * @returns バックアップファイルのパス
+ */
+export async function backupKnowledgeBase(docIds?: string[]): Promise<string> {
+  try {
+    // バックアップ用のディレクトリを確認
+    const backupDir = path.join(KNOWLEDGE_BASE_DIR, 'backups');
+    ensureDirectoryExists(backupDir);
+    
+    // 新しいZIPファイルを作成
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const zipFileName = `knowledge_backup_${timestamp}.zip`;
+    const zipFilePath = path.join(backupDir, zipFileName);
+    
+    const zip = new AdmZip();
+    
+    // バックアップするドキュメントの選択
+    let targetDocIds: string[] = docIds || [];
+    
+    // 指定がない場合はすべてのドキュメントをバックアップ
+    if (targetDocIds.length === 0) {
+      const index = loadKnowledgeBaseIndex();
+      targetDocIds = index.documents.map(doc => doc.id);
+    }
+    
+    console.log(`バックアップ対象ドキュメント数: ${targetDocIds.length}`);
+    
+    // インデックスファイルを追加
+    if (fs.existsSync(KNOWLEDGE_INDEX_FILE)) {
+      zip.addLocalFile(KNOWLEDGE_INDEX_FILE, '');
+      console.log('インデックスファイルをバックアップに追加しました');
+    }
+    
+    // 指定されたドキュメントをバックアップ
+    for (const docId of targetDocIds) {
+      const docDir = path.join(KNOWLEDGE_DOCUMENTS_DIR, docId);
+      
+      if (fs.existsSync(docDir)) {
+        // ディレクトリ内のすべてのファイルを再帰的に追加
+        addDirectoryToZip(zip, docDir, `documents/${docId}`);
+        console.log(`ドキュメント ${docId} をバックアップに追加しました`);
+      } else {
+        console.warn(`ドキュメント ${docId} が見つかりません`);
+      }
+    }
+    
+    // ZIPファイルを書き込む
+    zip.writeZip(zipFilePath);
+    
+    console.log(`バックアップを作成しました: ${zipFilePath}`);
+    return zipFilePath;
+  } catch (error) {
+    console.error('バックアップ作成エラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * ディレクトリを再帰的にZIPに追加するヘルパー関数
+ */
+function addDirectoryToZip(zip: AdmZip, dirPath: string, zipPath: string): void {
+  if (!fs.existsSync(dirPath)) return;
+  
+  const items = fs.readdirSync(dirPath);
+  
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item);
+    const zipEntryPath = path.join(zipPath, item);
+    
+    if (fs.statSync(fullPath).isDirectory()) {
+      // サブディレクトリを再帰的に処理
+      addDirectoryToZip(zip, fullPath, zipEntryPath);
+    } else {
+      // ファイルをZIPに追加
+      zip.addLocalFile(fullPath, path.dirname(zipEntryPath));
+    }
   }
 }
 
