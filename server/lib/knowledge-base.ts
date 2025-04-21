@@ -1250,6 +1250,9 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
       }
     }
     
+    // ドキュメントタイトルから拡張子を除いた名前を取得（共通利用）
+    const baseNameWithoutExt = path.basename(docTitle, path.extname(docTitle));
+    
     // 画像検索データから関連画像を削除
     try {
       // 画像検索データのパス
@@ -1262,7 +1265,6 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
         if (Array.isArray(imageSearchData)) {
           // ドキュメントタイトルから生成されたIDパターンを検索
           // docTitle（拡張子なし）から先頭2文字を取得
-          const baseNameWithoutExt = path.basename(docTitle, path.extname(docTitle));
           const prefix = baseNameWithoutExt.substring(0, 2).toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
           
           console.log(`画像検索データからの削除: 検索プレフィックス=${prefix}`);
@@ -1298,9 +1300,6 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
         const extractedDataPath = path.join(process.cwd(), 'extracted_data.json');
         if (fs.existsSync(extractedDataPath)) {
           const extractedData = JSON.parse(fs.readFileSync(extractedDataPath, 'utf-8'));
-          
-          // ドキュメントタイトルから拡張子を除いた名前を取得
-          const baseNameWithoutExt = path.basename(docTitle, path.extname(docTitle));
           
           // 保守用車データキーが存在するか確認
           const vehicleDataKey = '保守用車データ';
