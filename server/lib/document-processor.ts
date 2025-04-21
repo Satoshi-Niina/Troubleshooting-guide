@@ -656,6 +656,7 @@ async function addEmbeddedImagesToSearchData(
         id: imageId,
         file: knowledgeBasePrimaryPath, // SVG形式を優先
         pngFallback: knowledgeBasePngFallback, // PNG形式はフォールバックとして使用
+        svgPath: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg') ? knowledgeBasePrimaryPath : undefined,
         title: `${originalFileName}内の画像 ${i+1}`,
         category: '保守用車マニュアル画像',
         keywords: ["保守用車", "マニュアル", "図面", "画像"],
@@ -663,9 +664,11 @@ async function addEmbeddedImagesToSearchData(
         metadata: {
           uploadDate: new Date().toISOString(),
           fileSize: -1, // ファイルサイズは不明
-          fileType: 'SVG', // SVGを優先
+          fileType: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg') ? 'SVG' : 'PNG',
           sourceFile: originalFileName,
-          extractedFrom: 'PowerPoint'
+          extractedFrom: 'PowerPoint',
+          hasSvgVersion: knowledgeBasePrimaryPath.toLowerCase().endsWith('.svg'),
+          hasPngVersion: true // PNGは常に生成されていると仮定
         }
       };
       

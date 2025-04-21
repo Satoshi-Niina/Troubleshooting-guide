@@ -5,7 +5,8 @@ import { apiRequest } from './queryClient';
 interface ImageSearchItem {
   id: string | number;
   file: string;
-  pngFallback?: string;
+  pngFallback?: string;  // PNG形式のフォールバックパス
+  svgPath?: string;      // SVG形式のパス
   title: string;
   category: string;
   keywords: string[];
@@ -569,21 +570,37 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       const formattedResults = searchResults.map(result => {
         const item = result.item;
         
-        // SVGのみ使用する
+        // 画像URLとフォールバックを設定
         let imageUrl = '';
+        let fallbackUrl = '';
         
-        // 使用可能な画像パスを設定
-        if (item.file) {
-          // 元の拡張子を維持
-          imageUrl = item.file;
+        // SVGパスがあればそれを優先して使用
+        if (item.svgPath) {
+          imageUrl = item.svgPath;
+          // SVG形式の場合はPNGをフォールバックとして設定
+          fallbackUrl = item.pngFallback || (imageUrl.toLowerCase().endsWith('.svg') ? 
+            imageUrl.replace('.svg', '.png') : '');
+        } 
+        // SVGパスがなければfileを使用
+        else if (item.file) {
+          if (item.file.toLowerCase().endsWith('.svg')) {
+            // SVGファイルの場合
+            imageUrl = item.file;
+            fallbackUrl = item.pngFallback || item.file.replace('.svg', '.png');
+          } else if (item.file.toLowerCase().endsWith('.png')) {
+            // PNGファイルの場合
+            imageUrl = item.file;
+            // 対応するSVGファイルがあるか確認（命名規則に基づく）
+            const svgVersion = item.file.replace('.png', '.svg');
+            // SVGパスが明示的に設定されていれば使用、そうでなければPNG使用
+            imageUrl = item.svgPath || item.file;
+            fallbackUrl = item.file; // PNGはフォールバックにもなる
+          } else {
+            // その他の形式の場合
+            imageUrl = item.file;
+          }
         } else {
           imageUrl = '';
-        }
-        
-        // PNG画像をフォールバックとして設定（SVGの場合のみ）
-        let fallbackUrl = '';
-        if (imageUrl.toLowerCase().endsWith('.svg')) {
-          fallbackUrl = imageUrl.replace('.svg', '.png');
         }
         
         // パスが相対パスの場合、絶対パスに変換
