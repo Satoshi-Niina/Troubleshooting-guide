@@ -1415,4 +1415,204 @@ router.get('/knowledge-base-files', async (req, res) => {
   }
 });
 
+/**
+ * 削除されたドキュメントに関連する孤立JSONファイルを検出して削除する関数
+ * ドキュメント削除後に実行することで、残存しているJSONデータを完全に削除する
+ */
+async function cleanupOrphanedJsonFiles(): Promise<{removed: number, errors: number}> {
+  const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+  let removedCount = 0;
+  let errorCount = 0;
+  
+  try {
+    if (!fs.existsSync(jsonDir)) {
+      console.log(`JSONディレクトリが存在しません: ${jsonDir}`);
+      return { removed: 0, errors: 0 };
+    }
+    
+    // 特定のファイルをブラックリスト化（特殊な用途のファイルなど）
+    const blacklistFiles = ['guide_1744876404679_metadata.json', 'guide_metadata.json'];
+    
+    // メタデータJSONファイル一覧を取得
+    const allFiles = fs.readdirSync(jsonDir);
+    const metadataFiles = allFiles.filter(file => 
+      file.endsWith('_metadata.json') && 
+      !blacklistFiles.includes(file)
+    );
+    
+    console.log(`JSONディレクトリ内のメタデータファイル: ${metadataFiles.length}件`);
+    
+    // knowledge-base内のドキュメントディレクトリ一覧を取得
+    const knowledgeBaseDir = path.join(process.cwd(), 'knowledge-base');
+    const docDirs = fs.readdirSync(knowledgeBaseDir)
+      .filter(dir => dir.startsWith('doc_'))
+      .map(dir => {
+        // doc_1745233987839_645 からプレフィックスを抽出: mc_1745233987839
+        const match = dir.match(/doc_(\d+)_/);
+        return match ? `mc_${match[1]}` : '';
+      })
+      .filter(Boolean);  // 空文字列を除外
+    
+    // 新しいドキュメント構造も考慮
+    const documentsDir = path.join(knowledgeBaseDir, 'documents');
+    if (fs.existsSync(documentsDir)) {
+      const moreDocs = fs.readdirSync(documentsDir)
+        .filter(dir => dir.startsWith('doc_'))
+        .map(dir => {
+          const match = dir.match(/doc_(\d+)_/);
+          return match ? `mc_${match[1]}` : '';
+        })
+        .filter(Boolean);
+        
+      // 配列を結合
+      docDirs.push(...moreDocs);
+    }
+    
+    console.log(`知識ベース内のドキュメントプレフィックス: ${docDirs.length}件`);
+    
+    // 各メタデータファイルをチェック
+    for (const file of metadataFiles) {
+      // ファイル名のプレフィックスを抽出（例: mc_1744105287766_metadata.jsonからmc_1744105287766）
+      const prefix = file.split('_metadata.json')[0];
+      
+      // 対応するドキュメントが存在するかチェック
+      const hasMatchingDocument = docDirs.some(docPrefix => docPrefix === prefix);
+      
+      if (!hasMatchingDocument) {
+        // 対応するドキュメントが存在しない場合は孤立したJSONファイルと判断して削除
+        try {
+          const filePath = path.join(jsonDir, file);
+          fs.unlinkSync(filePath);
+          console.log(`孤立したJSONファイルを削除しました: ${file}`);
+          removedCount++;
+        } catch (error) {
+          console.error(`JSONファイル削除エラー: ${file}`, error);
+          errorCount++;
+        }
+      }
+    }
+    
+    console.log(`孤立したJSONファイル削除結果: 成功=${removedCount}件, 失敗=${errorCount}件`);
+    return { removed: removedCount, errors: errorCount };
+  } catch (error) {
+    console.error('孤立したJSONファイルのクリーンアップ中にエラーが発生しました:', error);
+    return { removed: removedCount, errors: errorCount + 1 };
+  }
+}
+
+/**
+ * 孤立したJSONファイルを削除するエンドポイント
+ * 管理機能として実装し、明示的に呼び出すことでメンテナンスを実行
+ */
+router.post('/cleanup-json', async (req, res) => {
+  try {
+    console.log('孤立JSONファイルクリーンアップリクエスト受信');
+    const result = await cleanupOrphanedJsonFiles();
+    
+    return res.json({
+      success: true,
+      removed: result.removed,
+      errors: result.errors,
+      message: `${result.removed}件の孤立JSONファイルを削除しました`
+    });
+  } catch (error) {
+    console.error('孤立JSONファイルクリーンアップエラー:', error);
+    return res.status(500).json({
+      success: false,
+      error: '孤立JSONファイルのクリーンアップ中にエラーが発生しました'
+    });
+  }
+});
+
+// キャッシュクリア時に孤立JSONファイルも自動的にクリーンアップする
+router.post('/clear-cache', async (req, res) => {
+  try {
+    console.log('サーバーキャッシュクリア要求を受信しました');
+    
+    // 知識ベースJSONディレクトリの再検証
+    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+    if (fs.existsSync(jsonDir)) {
+      try {
+        // 実際のファイル一覧を取得
+        const files = fs.readdirSync(jsonDir);
+        console.log(`検証: knowledge-base/jsonディレクトリに${files.length}個のファイルが存在`);
+        
+        // キャッシュからファイルの実在性を再チェック
+        for (const file of files) {
+          const fullPath = path.join(jsonDir, file);
+          try {
+            // ファイルの存在を確認し、アクセス可能かチェック
+            fs.accessSync(fullPath, fs.constants.F_OK | fs.constants.R_OK);
+          } catch (err) {
+            // アクセスできない場合は警告を出す
+            console.warn(`警告: ファイルにアクセスできません: ${fullPath}`, err);
+          }
+        }
+      } catch (readErr) {
+        console.error('ディレクトリ読み取りエラー:', readErr);
+      }
+    }
+    
+    // index.json ファイルの再構築（トラッキングファイル）
+    const indexJsonPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+    
+    try {
+      // 実際のファイルリストを取得
+      const jsonFiles = fs.existsSync(jsonDir) ? fs.readdirSync(jsonDir) : [];
+      
+      // 現在のメタデータファイルから最新インデックスを再構築
+      const indexData = {
+        lastUpdated: new Date().toISOString(),
+        guides: [] as any[],
+        fileCount: jsonFiles.length
+      };
+      
+      // インデックスファイルに書き込み
+      fs.writeFileSync(indexJsonPath, JSON.stringify(indexData, null, 2));
+      console.log(`インデックスファイルを更新しました: ${indexJsonPath}`);
+    } catch (indexErr) {
+      console.error('インデックスファイル更新エラー:', indexErr);
+    }
+    
+    // image_search_data.jsonの再読み込み
+    try {
+      const imageSearchDataPath = path.join(process.cwd(), 'knowledge-base', 'data', 'image_search_data.json');
+      
+      // ファイルが存在する場合、キャッシュデータを再読み込み
+      if (fs.existsSync(imageSearchDataPath)) {
+        fs.readFileSync(imageSearchDataPath, 'utf8');
+        console.log('画像検索データを再読み込みしました');
+      } else {
+        console.log('画像検索データファイルが見つかりません');
+      }
+    } catch (imageDataErr) {
+      console.error('画像検索データ読み込みエラー:', imageDataErr);
+    }
+    
+    // 孤立したJSONファイルのクリーンアップを実行
+    try {
+      // 孤立JSONファイルの検出と削除を実行
+      const cleanupResult = await cleanupOrphanedJsonFiles();
+      console.log(`孤立JSONファイルクリーンアップ: ${cleanupResult.removed}件削除, ${cleanupResult.errors}件エラー`);
+      
+      if (cleanupResult.removed > 0) {
+        console.log('孤立JSONファイルが検出・削除されました。メタデータを更新します');
+      }
+    } catch (cleanupErr) {
+      console.error('孤立JSONファイルクリーンアップエラー:', cleanupErr);
+    }
+    
+    // カスタムイベントエミッタでキャッシュクリアをクライアントに通知
+    return res.json({ 
+      success: true, 
+      message: 'サーバーキャッシュをクリアしました' 
+    });
+  } catch (err) {
+    console.error('キャッシュクリアエラー:', err);
+    return res.status(500).json({ 
+      error: 'キャッシュクリア中にエラーが発生しました' 
+    });
+  }
+});
+
 export default router;

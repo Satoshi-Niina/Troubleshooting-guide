@@ -1481,6 +1481,45 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
       }
     }
     
+    // 関連するJSONファイルを検索して削除
+    try {
+      // プレフィックスパターンの抽出
+      // docId が doc_1745233987839_123 の場合、mc_1745233987839 を探す
+      const matchDocId = docId.match(/doc_(\d+)_/);
+      const timeIdPrefix = matchDocId ? `mc_${matchDocId[1]}` : '';
+      
+      if (timeIdPrefix) {
+        // JSONディレクトリパス
+        const jsonDir = path.join(KNOWLEDGE_BASE_DIR, 'json');
+        
+        if (fs.existsSync(jsonDir)) {
+          // JSONディレクトリ内のファイル一覧を取得
+          const jsonFiles = fs.readdirSync(jsonDir);
+          let removedJsonCount = 0;
+          
+          // 関連するJSONファイルを検索して削除
+          for (const jsonFile of jsonFiles) {
+            // 削除対象ドキュメントのタイムスタンプを含むJSONファイルを検出
+            if (jsonFile.includes(timeIdPrefix)) {
+              const jsonFilePath = path.join(jsonDir, jsonFile);
+              try {
+                fs.unlinkSync(jsonFilePath);
+                console.log(`関連JSONファイルを削除しました: ${jsonFilePath}`);
+                removedJsonCount++;
+              } catch (jsonErr) {
+                console.error(`JSONファイル削除エラー: ${jsonFilePath}`, jsonErr);
+              }
+            }
+          }
+          
+          console.log(`${removedJsonCount}件の関連JSONファイルを削除しました (プレフィックス: ${timeIdPrefix})`);
+        }
+      }
+    } catch (jsonCleanupErr) {
+      console.error('JSONファイルクリーンアップエラー:', jsonCleanupErr);
+      // JSONクリーンアップエラーは処理を続行
+    }
+    
     // 処理完了
     console.log(`ドキュメント削除処理が完了しました: ${docId}`);
     return true;
