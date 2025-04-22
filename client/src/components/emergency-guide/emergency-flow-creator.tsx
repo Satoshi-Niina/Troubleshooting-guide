@@ -744,7 +744,7 @@ const EmergencyFlowCreator: React.FC = () => {
                 {/* 保存済みキャラクター一覧 */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium">保存済みキャラクター一覧</h3>
+                    <h3 className="text-lg font-medium">保存データ一覧</h3>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
                         <RefreshCw className="mr-2 h-4 w-4" />
@@ -760,7 +760,7 @@ const EmergencyFlowCreator: React.FC = () => {
                   {isLoadingFlowList ? (
                     <div className="py-4 text-center text-gray-500">読込中...</div>
                   ) : flowList.length === 0 ? (
-                    <div className="py-4 text-center text-gray-500">保存済みのキャラクターはありません</div>
+                    <div className="py-4 text-center text-gray-500">保存済みのデータはありません</div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {flowList.map(flow => (

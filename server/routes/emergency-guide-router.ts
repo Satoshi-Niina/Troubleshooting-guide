@@ -314,13 +314,6 @@ async function processJsonFile(filePath: string): Promise<any> {
     console.log(`元のファイルパス: ${filePath}`);
     console.log(`元のファイル名: ${path.basename(filePath)}`);
     
-    // 知識ベースJSONディレクトリを確認
-    const jsonDirFiles = fs.readdirSync(kbJsonDir);
-    console.log(`知識ベースJSONディレクトリの内容（処理前）: ${jsonDirFiles.length}件`);
-    
-    // JSONデータを応急処置ガイド形式に変換
-    // この場合は既に応急処置フロー形式のJSONと想定
-    
     // アップロードされた画像パスがある場合、相対パスに変換
     if (jsonData.steps) {
       for (const step of jsonData.steps) {
@@ -330,7 +323,7 @@ async function processJsonFile(filePath: string): Promise<any> {
       }
     }
     
-    // 知識ベースディレクトリに保存（画像パスはナレッジベースの相対パスを使用）
+    // 知識ベースディレクトリに一箇所だけ保存（画像パスはナレッジベースの相対パスを使用）
     const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
     console.log(`保存先ファイルパス: ${kbJsonFilePath}`);
     
@@ -338,31 +331,9 @@ async function processJsonFile(filePath: string): Promise<any> {
     fs.writeFileSync(kbJsonFilePath, JSON.stringify(jsonData, null, 2));
     console.log(`ファイルを保存しました: ${kbJsonFilePath}`);
     
-    // 保存後の確認
-    if (fs.existsSync(kbJsonFilePath)) {
-      console.log(`ファイルが正常に保存されたことを確認: ${kbJsonFilePath}`);
-    } else {
-      console.error(`エラー: ファイルが保存されていません: ${kbJsonFilePath}`);
-    }
-    
-    // トラブルシューティングディレクトリにも保存
-    const troubleshootingDir = path.join(knowledgeBaseDir, 'troubleshooting');
-    if (!fs.existsSync(troubleshootingDir)) {
-      fs.mkdirSync(troubleshootingDir, { recursive: true });
-    }
-    
-    const troubleshootingFilePath = path.join(troubleshootingDir, `${fileId}.json`);
-    fs.writeFileSync(troubleshootingFilePath, JSON.stringify(jsonData, null, 2));
-    console.log(`トラブルシューティング用のJSONも保存: ${troubleshootingFilePath}`);
-    
     // タイトルなどの情報を取得
     const title = jsonData.title || path.basename(filePath, '.json');
     const slideCount = jsonData.steps ? jsonData.steps.length : 0;
-    
-    // 最終確認
-    const jsonDirFilesAfter = fs.readdirSync(kbJsonDir);
-    console.log(`知識ベースJSONディレクトリの内容（処理後）: ${jsonDirFilesAfter.length}件`);
-    console.log(`新規ファイルが追加されたか: ${jsonDirFilesAfter.includes(`${fileId}_metadata.json`)}`);
     
     return {
       id: fileId,
