@@ -113,12 +113,27 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       if (event.detail && event.detail.flowId) {
         console.log('チャットからフローIDを受信:', event.detail.flowId);
         
+        // 自動表示フラグがある場合（検索結果が1件のみの場合）
+        const autoDisplay = event.detail.autoDisplay === true;
+        
         if (event.detail.flowId === id) {
           console.log('既に同じフローを表示中です');
           return;
         }
         
-        // 現在表示中のフローと異なる場合は新しいフローへリダイレクト
+        // 検索結果が複数ある場合は選択リストを表示
+        if (event.detail.results && event.detail.results.length > 1 && !autoDisplay) {
+          // 複数の選択肢がある場合、選択リストを表示するイベントを発火
+          window.dispatchEvent(new CustomEvent('show-troubleshooting-list', { 
+            detail: { 
+              results: event.detail.results,
+              searchText: event.detail.searchText || '検索結果'
+            }
+          }));
+          return;
+        }
+        
+        // 自動表示フラグがある場合、または検索結果が1つだけの場合は直接リダイレクト
         window.location.href = `/emergency-guide/${event.detail.flowId}`;
       }
     };

@@ -107,15 +107,24 @@ function extractAllSteps(flows: TroubleshootingFlow[]): any[] {
   return allSteps;
 }
 
-// テキストからトラブルシューティングフローを検索する関数
-export async function searchTroubleshootingFlow(text: string): Promise<string | null> {
+// 検索結果の型定義
+export interface SearchResult {
+  flowId: string;
+  title: string;
+  score: number;
+  type: 'flow' | 'step';
+  description?: string;
+}
+
+// テキストからトラブルシューティングフローを検索する関数（拡張版）
+export async function searchTroubleshootingFlows(text: string): Promise<SearchResult[]> {
   try {
     // フローデータをロード
     const flows = await loadTroubleshootingFlows();
     
     if (flows.length === 0) {
       console.log('検索対象のフローがありません');
-      return null;
+      return [];
     }
     
     // 全ステップを展開
@@ -139,27 +148,52 @@ export async function searchTroubleshootingFlow(text: string): Promise<string | 
     // 検索実行
     const results = fuse.search(text);
     
-    console.log(`"${text}"の検索結果:`, results.length > 0 ? results[0].score : '該当なし');
+    console.log(`"${text}"の検索結果: ${results.length}件`);
     
     if (results.length > 0) {
-      // 最良の結果を選択
-      const bestMatch = results[0].item;
+      // 検索結果をマッピング
+      const searchResults = results
+        .filter(result => result.score && result.score <= 0.7) // スコアが一定以上のものだけ
+        .map(result => {
+          const item = result.item;
+          return {
+            flowId: item.type === 'flow' ? item.id : item.flowId,
+            title: item.type === 'flow' ? item.title : item.flowTitle,
+            score: result.score || 1.0,
+            type: item.type,
+            description: item.description || item.message || ''
+          } as SearchResult;
+        });
       
-      // スコアが低すぎる場合は該当なしとする
-      if (results[0].score && results[0].score > 0.7) {
-        console.log('検索スコアが低すぎるため該当なしとします:', results[0].score);
-        return null;
+      // flowIdで重複を除去
+      const uniqueResults: SearchResult[] = [];
+      const flowIds = new Set<string>();
+      
+      for (const result of searchResults) {
+        if (!flowIds.has(result.flowId)) {
+          flowIds.add(result.flowId);
+          uniqueResults.push(result);
+        }
       }
       
-      // 結果がフロー全体の場合はそのIDを返す
-      if (bestMatch.type === 'flow') {
-        return bestMatch.id;
-      }
-      
-      // 結果がステップの場合はそのフローIDを返す
-      if (bestMatch.type === 'step') {
-        return bestMatch.flowId || null;
-      }
+      return uniqueResults;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('トラブルシューティングフロー検索エラー:', error);
+    return [];
+  }
+}
+
+// 下位互換性のために残しておく
+export async function searchTroubleshootingFlow(text: string): Promise<string | null> {
+  try {
+    const results = await searchTroubleshootingFlows(text);
+    
+    if (results.length > 0) {
+      // 最良の結果を返す
+      return results[0].flowId;
     }
     
     return null;

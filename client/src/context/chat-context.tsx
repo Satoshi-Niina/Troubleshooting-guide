@@ -21,7 +21,7 @@ import {
 import { syncChat } from '@/lib/sync-api';
 import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
 // トラブルシューティングフロー検索機能
-import { searchTroubleshootingFlow } from '@/lib/troubleshooting-search';
+import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult } from '@/lib/troubleshooting-search';
 
 interface Media {
   id: number;
@@ -620,17 +620,41 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // チャットテキストからトラブルシューティングフローを検索
       // チャットから応急処置ガイドを起動した場合、チャットのテキストをキーワードにして
-      // 最も関連性の高いトラブルシューティングフローID（手順ID）を取得
-      let bestMatchingStepId: string | null = null;
+      // 関連性の高いトラブルシューティングフローID（手順ID）を取得
+      let matchingResults: SearchResult[] = [];
       try {
-        // チャットのテキストを使ってフロー検索
-        bestMatchingStepId = await searchTroubleshootingFlow(guideContent);
-        if (bestMatchingStepId) {
-          console.log('チャットテキストから最適なフローID検出:', bestMatchingStepId);
-          // 関連フローIDをカスタムイベントで通知
-          window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
-            detail: { flowId: bestMatchingStepId }
-          }));
+        // チャットのテキストを使ってフロー検索（複数結果を取得）
+        matchingResults = await searchTroubleshootingFlows(guideContent);
+        
+        if (matchingResults.length > 0) {
+          console.log('チャットテキストから関連フロー検出:', matchingResults.length, '件');
+          
+          // 検索結果が1件のみの場合は自動的に表示
+          if (matchingResults.length === 1) {
+            const bestMatchingStepId = matchingResults[0].flowId;
+            console.log('チャットテキストから最適なフローID検出（自動表示）:', bestMatchingStepId);
+            
+            // 関連フローIDをカスタムイベントで通知して自動的に表示
+            window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
+              detail: { 
+                flowId: bestMatchingStepId,
+                autoDisplay: true // 自動表示フラグ
+              }
+            }));
+          } else if (matchingResults.length > 1) {
+            // 複数の検索結果がある場合、最も関連性の高いものを送信（自動表示はしない）
+            const bestMatchingStepId = matchingResults[0].flowId;
+            console.log('チャットテキストから最適なフローID検出（選択肢あり）:', bestMatchingStepId);
+            
+            // 関連フローIDをカスタムイベントで通知（選択肢あり）
+            window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
+              detail: { 
+                flowId: bestMatchingStepId,
+                results: matchingResults,
+                autoDisplay: false
+              }
+            }));
+          }
         }
       } catch (flowSearchError) {
         console.warn('フロー検索エラー:', flowSearchError);
