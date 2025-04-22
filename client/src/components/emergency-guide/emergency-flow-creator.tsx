@@ -612,6 +612,9 @@ const EmergencyFlowCreator: React.FC = () => {
   const handleCreateNewFlow = () => {
     // 空のフローデータで初期化
     setFlowData({
+      title: '',
+      description: '',
+      fileName: '',
       nodes: [
         {
           id: 'start',
@@ -622,8 +625,14 @@ const EmergencyFlowCreator: React.FC = () => {
       ],
       edges: []
     });
+    // ファイル名も必ずリセット
     setUploadedFileName('');
     setCharacterDesignTab('new');
+    
+    toast({
+      title: "新規作成",
+      description: "新しいフローを作成できます",
+    });
   };
   
   // キャラクター削除確認ダイアログを表示

@@ -229,12 +229,12 @@ interface EmergencyFlowEditorProps {
 
 const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel, initialData }) => {
   const { toast } = useToast();
-  // 初期データがあればそれを使用し、なければデフォルトのinitialNodesを使用
+  // 初期データからノードを取得または初期値を使用
   const nodesToUse = Array.isArray(initialData?.nodes) && initialData.nodes.length > 0 
     ? initialData.nodes 
     : initialNodes;
   
-  // 初期データがあればそれを使用し、なければデフォルトのinitialEdgesを使用
+  // 初期データからエッジを取得または初期値を使用
   const edgesToUse = Array.isArray(initialData?.edges) && initialData.edges.length > 0
     ? initialData.edges
     : initialEdges;
@@ -243,10 +243,15 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgesToUse);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   
-  // フロータイトルと説明
-  const [flowTitle, setFlowTitle] = useState<string>(initialData?.title || '新規応急処置フロー');
-  const [flowDescription, setFlowDescription] = useState<string>(initialData?.description || '');
-  const [fileName, setFileName] = useState<string>(initialData?.fileName || '');
+  // フロータイトルと説明の初期値
+  // 新規作成の場合はデフォルト値、読み込みの場合は既存データを使用
+  const defaultTitle = initialData?.title === '' ? '新規応急処置フロー' : (initialData?.title || '新規応急処置フロー');
+  const defaultDescription = initialData?.description || '';
+  const defaultFileName = initialData?.fileName || '';
+  
+  const [flowTitle, setFlowTitle] = useState<string>(defaultTitle);
+  const [flowDescription, setFlowDescription] = useState<string>(defaultDescription);
+  const [fileName, setFileName] = useState<string>(defaultFileName);
   
   // ノードドラッグ参照
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
