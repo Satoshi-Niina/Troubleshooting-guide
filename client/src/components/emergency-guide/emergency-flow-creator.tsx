@@ -331,6 +331,24 @@ const EmergencyFlowCreator: React.FC = () => {
         // フローリストを更新
         fetchFlowList();
         
+        // 保存後にデータをリセット
+        setFlowData({
+          title: '',
+          description: '',
+          fileName: '',
+          nodes: [
+            {
+              id: 'start',
+              type: 'start',
+              position: { x: 250, y: 50 },
+              data: { label: '開始' }
+            }
+          ],
+          edges: []
+        });
+        // ファイル名も必ずリセット
+        setUploadedFileName('');
+        
         // ファイル編集タブに戻る
         setCharacterDesignTab('file');
       } else {
@@ -348,7 +366,31 @@ const EmergencyFlowCreator: React.FC = () => {
   
   // フロー作成キャンセルハンドラー
   const handleCancelFlow = () => {
+    // データをリセット
+    setFlowData({
+      title: '',
+      description: '',
+      fileName: '',
+      nodes: [
+        {
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }
+      ],
+      edges: []
+    });
+    // アップロードファイル名もリセット
+    setUploadedFileName('');
+    
+    // ファイル編集タブに戻る
     setCharacterDesignTab('file');
+    
+    toast({
+      title: "編集キャンセル",
+      description: "フローの編集をキャンセルしました",
+    });
   };
   
   /**
