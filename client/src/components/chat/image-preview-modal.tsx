@@ -198,11 +198,12 @@ export default function ImagePreviewModal() {
       <DialogContent 
         className="max-w-5xl bg-black bg-opacity-90 border border-blue-400 flex flex-col items-center justify-center p-0 rounded-xl"
         aria-labelledby="dialog-title"
-        aria-describedby="dialog-description"
+        aria-describedby="dialog-description image-preview-description"
       >
         <div className="sr-only">
           <h2 id="dialog-title">{metadataJson?.metadata?.タイトル || title}</h2>
           <p id="dialog-description">拡大画像ビューワー</p>
+          <p id="image-preview-description">画像のプレビュー表示と関連情報の確認ができます</p>
         </div>
         <div className="w-full flex justify-between items-center p-2 bg-blue-700 text-white">
           <h3 className="text-sm font-medium ml-2">
