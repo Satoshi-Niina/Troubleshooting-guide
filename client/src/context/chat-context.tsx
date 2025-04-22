@@ -726,9 +726,47 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const userMessageData = await userMessageResponse.json();
       
-      // AI応答メッセージを作成
+      // 応急処置ガイドの内容を日本語に変換
+      const translateGuideContent = (content: string): string => {
+        // 英語から日本語への変換マッピング
+        const translationMap: Record<string, string> = {
+          "Brake Spring Lock Emergency Procedure": "ブレーキスプリングロック緊急対応手順",
+          "Emergency Response": "緊急対応",
+          "Safety Precautions": "安全上の注意",
+          "Required Tools": "必要な工具",
+          "Procedure": "作業手順",
+          "Follow-up Actions": "事後対応",
+          "Reporting": "報告",
+          "brake spring lock": "ブレーキスプリングロック",
+          "Never attempt to operate": "絶対に操作しないでください",
+          "Contact technical support": "技術サポートに連絡してください",
+          "Do not attempt to release manually": "手動で解除しようとしないでください",
+          "Emergency brake system": "緊急ブレーキシステム",
+          "Lock mechanism": "ロック機構",
+          "Safety system": "安全システム",
+          "Maintenance vehicle": "保守用車",
+          "Technical assistance": "技術的支援",
+          "Hydraulic pressure": "油圧",
+          "Mechanical override": "機械的な解除"
+        };
+        
+        // 翻訳マッピングを適用（単純な置換）
+        let translatedContent = content;
+        Object.entries(translationMap).forEach(([english, japanese]) => {
+          // 大文字・小文字を区別しない正規表現で置換
+          const regex = new RegExp(english, 'gi');
+          translatedContent = translatedContent.replace(regex, japanese);
+        });
+        
+        return translatedContent;
+      };
+      
+      // 日本語に変換したコンテンツ
+      const translatedContent = translateGuideContent(guideContent);
+      
+      // AI応答メッセージを作成（翻訳後のコンテンツを使用）
       const aiMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, { 
-        content: guideContent,
+        content: translatedContent,
         isUserMessage: false
       });
       
