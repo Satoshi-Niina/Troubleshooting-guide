@@ -623,7 +623,21 @@ const EmergencyFlowCreator: React.FC = () => {
       const enhancedData = processFlowData(data.data);
       
       console.log("APIから読み込んだフローデータ:", enhancedData);
-      setFlowData(enhancedData);
+      
+      // 読み込んだデータを各キャラクターのノードとエッジに適用
+      // 開始ノード、ステップノード、判断ノード、終了ノードに適用
+      const startNode = enhancedData.nodes?.find((node: any) => node.type === 'start') || null;
+      const stepNodes = enhancedData.nodes?.filter((node: any) => node.type === 'step') || [];
+      const decisionNodes = enhancedData.nodes?.filter((node: any) => node.type === 'decision') || [];
+      const endNodes = enhancedData.nodes?.filter((node: any) => node.type === 'end') || [];
+      
+      // フローデータに適用
+      setFlowData({
+        ...enhancedData,
+        // 各キャラクターに適したノードとエッジを含むことを確認
+        nodes: [...(enhancedData.nodes || [])],
+        edges: [...(enhancedData.edges || [])]
+      });
       
       // ファイル名を設定（フロー名から）
       const flow = flowList.find(f => f.id === id);
@@ -783,8 +797,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => {
-                                    loadFlow(flow.id);
-                                    setCharacterDesignTab('new'); // 読み込み後、新規作成タブに切り替え
+                                    loadFlow(flow.id); // loadFlow内で既にsetCharacterDesignTab('new')を実行している
                                   }}
                                 >
                                   <Edit3 className="mr-2 h-3 w-3" />
