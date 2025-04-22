@@ -174,7 +174,7 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
               <div className="flex justify-center items-center w-full bg-transparent border border-blue-200 rounded-lg">
                 <div className="relative w-full h-24 flex-shrink-0 overflow-hidden">
                   {/* バックアップ画像がある場合は先にロードして隠しておく（互換性のために残す） */}
-                  {result.pngFallbackUrl && (
+                  {result.pngFallbackUrl && result.pngFallbackUrl.trim() !== '' && (
                     <img 
                       src={fixImagePath(result.pngFallbackUrl)}
                       alt="バックアップ画像"
@@ -185,34 +185,92 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                     />
                   )}
                   
+                  {/* 画像読み込み中のプレースホルダー - サムネイルサイズに最適化 */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+                  </div>
+                  
                   {/* メイン画像表示 - 用途に応じた適切な画像形式を使用 */}
                   <img 
-                    src={fixImagePath(result.url)} 
+                    src={fixImagePath(result.url || '')} 
                     alt={result.title || "応急復旧サポート"} 
-                    className="w-full h-full object-contain bg-white p-1"
+                    className="w-full h-full object-contain bg-white p-1 z-10 relative"
                     style={{ minHeight: '96px', minWidth: '96px' }} // 最小サイズを設定して白い画像問題を防止
                     loading="eager" // 急いで読み込んで点滅を防止
                     decoding="async" // 非同期デコードで表示を高速化
-                    // 画像読み込みエラー時の自動フォールバック
+                    // 画像読み込みエラー時の包括的なフォールバック処理
                     onError={(e) => {
                       const imgElement = e.currentTarget;
-                      const originalSrc = imgElement.src;
+                      const originalSrc = imgElement.src || '';
                       
-                      // 専用フォールバックURLが指定されている場合はそちらを優先
-                      if (result.pngFallbackUrl) {
-                        console.log('画像読み込みエラー、指定されたフォールバックに切り替え:', result.pngFallbackUrl);
-                        imgElement.src = fixImagePath(result.pngFallbackUrl);
-                        return;
-                      }
+                      console.log(`画像読み込みエラー (${result.id}): ${originalSrc}`);
                       
-                      // JPEG/JPG形式のみフォールバックを提供
-                      if (originalSrc.includes('.jpeg') || originalSrc.includes('.jpg')) {
-                        // JPEGが読み込めない場合はPNGに変更
-                        console.log('JPEG読み込みエラー、PNG代替に切り替え:', originalSrc);
-                        const pngPath = originalSrc.replace(/\.(jpeg|jpg)$/, '.png');
-                        imgElement.src = pngPath;
+                      try {
+                        // 1. 専用フォールバックURLが指定されている場合はそちらを優先
+                        if (result.pngFallbackUrl && result.pngFallbackUrl.trim() !== '') {
+                          console.log('指定されたフォールバックに切り替え:', result.pngFallbackUrl);
+                          imgElement.src = fixImagePath(result.pngFallbackUrl);
+                          return;
+                        }
+                        
+                        // 2. 拡張子ベースのフォールバック（SVG→PNG、JPEG→PNG）
+                        if (originalSrc.includes('.svg')) {
+                          // SVGが読み込めない場合はPNGに変更
+                          console.log('SVG読み込みエラー、PNG代替に切り替え');
+                          const pngPath = originalSrc.replace(/\.svg$/, '.png');
+                          imgElement.src = pngPath;
+                          return;
+                        }
+                        
+                        if (originalSrc.includes('.jpeg') || originalSrc.includes('.jpg')) {
+                          // JPEGが読み込めない場合はPNGに変更
+                          console.log('JPEG読み込みエラー、PNG代替に切り替え');
+                          const pngPath = originalSrc.replace(/\.(jpeg|jpg)$/, '.png');
+                          imgElement.src = pngPath;
+                          return;
+                        }
+                        
+                        // 3. パスの修正を試みる（knowledge-baseパスが含まれていない場合）
+                        if (!originalSrc.includes('/knowledge-base/')) {
+                          const fileName = originalSrc.split('/').pop();
+                          if (fileName) {
+                            console.log('パス形式エラー、knowledge-baseパスに修正');
+                            imgElement.src = `/knowledge-base/images/${fileName}`;
+                            return;
+                          }
+                        }
+                        
+                        // 4. 最終手段: エラー表示用のデフォルト画像を表示
+                        console.log('フォールバック失敗、エラー表示に切り替え');
+                        imgElement.style.display = 'none'; // 画像を非表示
+                        
+                        // エラー表示をコンテナに追加
+                        const container = imgElement.parentElement;
+                        if (container) {
+                          const errorElement = document.createElement('div');
+                          errorElement.className = 'flex items-center justify-center h-full w-full bg-gray-100 text-gray-500';
+                          errorElement.textContent = '画像を読み込めません';
+                          container.appendChild(errorElement);
+                        }
+                      } catch (errorHandlingErr) {
+                        console.error('エラー処理中に例外が発生:', errorHandlingErr);
                       }
-                      // PNGファイルの場合はフォールバックなし
+                    }}
+                    onLoad={(e) => {
+                      // 画像が正常に読み込まれたらクラスを調整
+                      const imgElement = e.currentTarget;
+                      imgElement.classList.add('loaded');
+                      
+                      // プレースホルダーを非表示
+                      const container = imgElement.parentElement;
+                      if (container) {
+                        const placeholders = container.querySelectorAll('.animate-spin');
+                        placeholders.forEach(ph => {
+                          if (ph.parentElement) {
+                            ph.parentElement.style.display = 'none';
+                          }
+                        });
+                      }
                     }}
                   />
                   {/* 画像説明タイトルは非表示に変更（ユーザー要求により） */}

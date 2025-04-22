@@ -56,10 +56,34 @@ async function loadImageSearchData() {
     if (metadata && metadata.slides && Array.isArray(metadata.slides)) {
       console.log(`メタデータJSONを読み込みました: ${metadata.slides.length}件のスライド`);
       
-      // スライドからImageSearchItem形式に変換（PNGまたはSVGファイルを優先）
+      // メタデータの検証とデータ品質チェック用カウンター
+      let validSlideCount = 0;
+      let invalidPathCount = 0;
+      let missingTitleCount = 0;
+      
+      // スライドからImageSearchItem形式に変換（PNGファイルを優先）
       const slidesData = metadata.slides.map((slide: any) => {
-        // 画像パスを取得
-        let imagePath = slide['画像テキスト'] && slide['画像テキスト'][0] ? slide['画像テキスト'][0]['画像パス'] : "";
+        // 検証: スライド番号が存在するか確認
+        if (!slide['スライド番号'] && slide['スライド番号'] !== 0) {
+          console.warn(`スライド番号が欠落しているスライドがあります`);
+          // 欠落している場合は代替IDを生成
+          slide['スライド番号'] = `unknown_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        }
+        
+        // 画像パスを取得し、検証
+        let imagePath = "";
+        if (slide['画像テキスト'] && Array.isArray(slide['画像テキスト']) && slide['画像テキスト'].length > 0) {
+          const imageText = slide['画像テキスト'][0];
+          if (imageText && typeof imageText === 'object' && '画像パス' in imageText) {
+            imagePath = imageText['画像パス'] || "";
+          }
+        }
+        
+        // 画像パスがない場合はログ
+        if (!imagePath) {
+          invalidPathCount++;
+          console.warn(`スライド ${slide['スライド番号']} に有効な画像パスがありません`);
+        }
         
         // 画像パスの参照を knowledge-base/images に統一
         if (imagePath) {
@@ -71,37 +95,95 @@ async function loadImageSearchData() {
           }
         }
         
-        // JPEG画像の場合はPNGに置き換える
-        if (imagePath.toLowerCase().endsWith('.jpeg') || imagePath.toLowerCase().endsWith('.jpg')) {
-          // 既にPNGバージョンがあるか確認する処理を追加
-          const basePath = imagePath.substring(0, imagePath.lastIndexOf('.'));
-          const pngPath = `${basePath}.png`;
-          const svgPath = `${basePath}.svg`;
-          // ここではPNGをデフォルトとして使用
-          imagePath = pngPath;
+        // 画像を常にPNG形式に変換する
+        if (imagePath && !imagePath.toLowerCase().endsWith('.png')) {
+          // PNGパスに変換
+          const basePath = imagePath.substring(0, imagePath.lastIndexOf('.') !== -1 ? 
+                                              imagePath.lastIndexOf('.') : imagePath.length);
+          imagePath = `${basePath}.png`;
         }
+        
+        // タイトルの検証
+        const slideTitle = slide['タイトル'] || `スライド ${slide['スライド番号']}`;
+        if (!slide['タイトル']) {
+          missingTitleCount++;
+        }
+        
+        // キーワードを生成（本文とタイトルから）- 検証付き
+        const keywords = [];
+        
+        // タイトルをキーワードに追加
+        if (slideTitle && typeof slideTitle === 'string' && slideTitle.trim() !== '') {
+          keywords.push(slideTitle.trim());
+        }
+        
+        // 本文をキーワードに追加
+        if (slide['本文'] && Array.isArray(slide['本文'])) {
+          slide['本文'].forEach((text: any) => {
+            if (text && typeof text === 'string' && text.trim() !== '') {
+              keywords.push(text.trim());
+            }
+          });
+        }
+        
+        // 検索を容易にするための追加の検索テキストフィールド
+        const searchTextParts = [
+          slideTitle,
+          ...(slide['本文'] || []),
+          "保守用車マニュアル" // カテゴリも検索できるように
+        ].filter(Boolean);
+        
+        validSlideCount++;
         
         return {
           id: `slide_${slide['スライド番号']}`,
           file: imagePath,
-          title: slide['タイトル'] || `スライド ${slide['スライド番号']}`,
+          title: slideTitle,
           category: "保守用車マニュアル",
-          keywords: [...(slide['本文'] || []), slide['タイトル'] || ""].filter(Boolean),
+          keywords: keywords,
           description: "", // テキスト表示を削除
-          details: "" // テキスト表示を削除
+          details: "", // テキスト表示を削除
+          searchText: searchTextParts.join(' ') // 検索用の追加フィールド
         };
       });
       
-      // 有効な画像パスを持つスライドのみを追加
-      slidesData.filter((item: any) => item.file && item.file.length > 0)
+      // 品質チェック結果をログ
+      console.log(`スライド処理結果: 有効=${validSlideCount}, 無効なパス=${invalidPathCount}, タイトル欠落=${missingTitleCount}`);
+      
+      // 有効な画像パスを持つスライドのみを追加し、データの整合性を確保
+      slidesData
+        .filter((item: any) => {
+          const hasValidPath = item.file && typeof item.file === 'string' && item.file.length > 0;
+          const hasValidTitle = item.title && typeof item.title === 'string';
+          const hasValidKeywords = Array.isArray(item.keywords) && item.keywords.length > 0;
+          
+          return hasValidPath && hasValidTitle && hasValidKeywords;
+        })
         .forEach((item: any) => imageSearchData.push(item));
       
-      // 埋め込み画像もデータに追加 (PNGを優先)
+      // 埋め込み画像もデータに追加 (PNGを優先) - 強化版
       if (metadata.embeddedImages && Array.isArray(metadata.embeddedImages)) {
         console.log(`${metadata.embeddedImages.length}件の埋め込み画像を処理します`);
         
+        // 画像処理の統計を追跡
+        let validImageCount = 0;
+        let invalidPathCount = 0;
+        
+        // 埋め込み画像の検証とマッピング
         const embeddedImages = metadata.embeddedImages
-          .filter((img: any) => img['抽出パス'] && typeof img['抽出パス'] === 'string')
+          // 有効な抽出パスを持つ画像のみフィルタリング
+          .filter((img: any) => {
+            const isValid = img && typeof img === 'object' && 
+                           '抽出パス' in img && 
+                           img['抽出パス'] && 
+                           typeof img['抽出パス'] === 'string';
+            
+            if (!isValid) {
+              invalidPathCount++;
+            }
+            
+            return isValid;
+          })
           .map((img: any, index: number) => {
             let imagePath = img['抽出パス'];
             
@@ -114,29 +196,83 @@ async function loadImageSearchData() {
               }
             }
             
-            // JPEG/SVGなど他の画像形式の場合はPNGに置き換え
+            // すべての画像形式をPNGに統一
             if (!imagePath.toLowerCase().endsWith('.png')) {
-              const basePath = imagePath.substring(0, imagePath.lastIndexOf('.'));
+              const basePath = imagePath.substring(0, 
+                imagePath.lastIndexOf('.') !== -1 ? 
+                imagePath.lastIndexOf('.') : imagePath.length);
               const pngPath = `${basePath}.png`;
-              // 最終的には表示時にフォールバックする
               imagePath = pngPath;
             }
+            
+            // メタデータから追加情報を抽出（あれば）
+            let title = `部品画像 ${index+1}`;
+            let category = "部品写真";
+            let additionalKeywords: string[] = [];
+            
+            // 元のファイル名から情報を抽出
+            if (img['元のファイル名'] && typeof img['元のファイル名'] === 'string') {
+              const originalName = img['元のファイル名'];
+              
+              // ファイル名からより具体的なタイトルを生成
+              if (originalName.includes('エンジン') || originalName.includes('engine')) {
+                title = `エンジン部品 ${index+1}`;
+                category = "エンジン部品";
+                additionalKeywords.push("エンジン", "動力系", "駆動部");
+              } else if (originalName.includes('冷却') || originalName.includes('ラジエーター')) {
+                title = `冷却系統 ${index+1}`;
+                category = "冷却系統";
+                additionalKeywords.push("冷却", "ラジエーター", "水冷");
+              } else if (originalName.includes('ブレーキ') || originalName.includes('brake')) {
+                title = `ブレーキ部品 ${index+1}`;
+                category = "ブレーキ系統";
+                additionalKeywords.push("ブレーキ", "制動装置");
+              } else if (originalName.includes('ホイール') || originalName.includes('wheel')) {
+                title = `車輪部品 ${index+1}`;
+                category = "足回り";
+                additionalKeywords.push("ホイール", "車輪", "タイヤ");
+              }
+            }
+            
+            // 基本キーワードと追加キーワードを結合
+            const keywords = ["保守用車", "部品", "写真", ...additionalKeywords];
+            
+            // 検索用の統合テキスト
+            const searchText = [title, category, ...keywords].join(' ');
+            
+            validImageCount++;
             
             return {
               id: `img_${index+1}`,
               file: imagePath,
-              title: `画像 ${index+1}`,
-              category: "部品写真",
-              keywords: ["保守用車", "部品", "写真"],
+              title: title,
+              category: category,
+              keywords: keywords,
               description: "", // テキスト表示を削除
-              details: "" // テキスト表示を削除
+              details: "", // テキスト表示を削除
+              searchText: searchText // 検索用の統合テキスト
             };
           });
+        
+        console.log(`埋め込み画像処理結果: 有効=${validImageCount}, 無効パス=${invalidPathCount}`);
           
-        // PNG画像のみを追加（PNG形式に統一）
+        // 有効な画像のみを追加（PNG形式に統一）
         embeddedImages
-          .filter((item: any) => 
-            item.file.toLowerCase().endsWith('.png'))
+          .filter((item: any) => {
+            // 有効なパスであることを確認
+            const hasValidPath = item.file && 
+                                typeof item.file === 'string' && 
+                                item.file.length > 0 &&
+                                item.file.toLowerCase().endsWith('.png');
+            
+            // 有効なタイトルがあることを確認
+            const hasValidTitle = item.title && typeof item.title === 'string';
+            
+            // 有効なキーワードがあることを確認
+            const hasValidKeywords = Array.isArray(item.keywords) && item.keywords.length > 0;
+            
+            return hasValidPath && hasValidTitle && hasValidKeywords;
+          })
           .forEach((item: any) => imageSearchData.push(item));
       }
       
@@ -449,16 +585,44 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         console.log(`検索用サンプルデータ:`, sampleData);
       }
       
-      // キーワードを分割して検索
-      const keywords = text.split(/\s+/).filter(k => k.length > 0);
+      // キーワードを分割して検索（改善版：より厳密なフィルタリング）
+      // 最小キーワード長を設定（日本語の場合は1文字でも意味を持つので1を許容）
+      const MIN_KEYWORD_LENGTH = 1;
+      // 無意味な単語や助詞のブラックリスト（検索対象から除外）
+      const KEYWORD_BLACKLIST = [
+        'の', 'に', 'は', 'を', 'が', 'と', 'も', 'や', 'な', 'で', 'へ',
+        'から', 'まで', 'より', 'だけ', 'など', 'について'
+      ];
+      
+      // キーワード分割と前処理
+      const rawKeywords = text.split(/\s+/);
+      const keywords = rawKeywords
+        .filter(k => 
+          // 空でなく、最小長さを超えていること
+          k.length >= MIN_KEYWORD_LENGTH &&
+          // ブラックリストに含まれていないこと
+          !KEYWORD_BLACKLIST.includes(k)
+        )
+        // 重複を除去
+        .filter((v, i, a) => a.indexOf(v) === i);
+      
+      // 有効なキーワードがなければ、元のテキスト全体で検索
+      if (keywords.length === 0 && text.trim().length > 0) {
+        console.log('有効なキーワードが抽出できなかったため、全体のテキストで検索します');
+        keywords.push(text.trim());
+      }
+      
+      console.log(`前処理後のキーワード: ${keywords.join(', ')} (${keywords.length}件)`);
       let searchResults: any[] = [];
       
       if (keywords.length > 1) {
         console.log(`複数キーワード検索: ${keywords.join(', ')}`);
         // 複数のキーワードがある場合、各キーワードで検索
         for (const keyword of keywords) {
-          const results = fuse.search(keyword);
-          searchResults.push(...results);
+          if (keyword.length >= MIN_KEYWORD_LENGTH) {
+            const results = fuse.search(keyword);
+            searchResults.push(...results);
+          }
         }
         
         // 重複を除去（IDをキーとして使用）
@@ -471,9 +635,12 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
         });
         
         searchResults = Array.from(uniqueResults.values());
+      } else if (keywords.length === 1) {
+        console.log(`単一キーワード検索: ${keywords[0]}`);
+        searchResults = fuse.search(keywords[0]);
       } else {
-        console.log(`単一キーワード検索: ${text}`);
-        searchResults = fuse.search(text);
+        console.log(`検索キーワードが抽出できなかったため検索をスキップします`);
+        searchResults = [];
       }
       
       console.log(`検索結果: ${searchResults.length}件見つかりました`);
