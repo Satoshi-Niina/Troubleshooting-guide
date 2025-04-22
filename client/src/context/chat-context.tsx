@@ -730,6 +730,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const translateGuideContent = (content: string): string => {
         // 英語から日本語への変換マッピング
         const translationMap: Record<string, string> = {
+          // ガイドタイトルと見出し
           "Brake Spring Lock Emergency Procedure": "ブレーキスプリングロック緊急対応手順",
           "Emergency Response": "緊急対応",
           "Safety Precautions": "安全上の注意",
@@ -737,7 +738,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           "Procedure": "作業手順",
           "Follow-up Actions": "事後対応",
           "Reporting": "報告",
+          
+          // エンジン関連
+          "engine trouble": "エンジン故障",
+          "Engine Trouble": "エンジン故障",
+          "engine_001": "エンジン_001",
+          "engine_002": "エンジン_002",
+          "engine_003": "エンジン_003",
+          "starter motor": "スターターモーター",
+          "starter does not rotate": "スターターが回転しない",
+          "engine does not start": "エンジンが始動しない",
+          "Is the starter motor rotating?": "スターターモーターが回転していますか？",
+          "Check the battery connection": "バッテリー接続を確認してください",
+          "Check fuel supply": "燃料供給を確認してください",
+          "current procedure": "現在の手順",
+          "Related images": "関連画像",
+          
+          // ブレーキ関連
           "brake spring lock": "ブレーキスプリングロック",
+          "Brake System": "ブレーキシステム",
+          "brake_001": "ブレーキ_001",
+          "brake_002": "ブレーキ_002",
+          "brake_003": "ブレーキ_003",
+          
+          // 共通フレーズ
           "Never attempt to operate": "絶対に操作しないでください",
           "Contact technical support": "技術サポートに連絡してください",
           "Do not attempt to release manually": "手動で解除しようとしないでください",
@@ -747,7 +771,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           "Maintenance vehicle": "保守用車",
           "Technical assistance": "技術的支援",
           "Hydraulic pressure": "油圧",
-          "Mechanical override": "機械的な解除"
+          "Mechanical override": "機械的な解除",
+          
+          // ファイル参照関連の翻訳
+          "/knowledge-base/images/engine_": "/knowledge-base/images/エンジン_",
+          "/knowledge-base/images/brake_": "/knowledge-base/images/ブレーキ_",
+          "/knowledge-base/images/hydraulic_": "/knowledge-base/images/油圧_",
+          ".svg": ".svg",
+          ".png": ".png"
         };
         
         // 翻訳マッピングを適用（単純な置換）
