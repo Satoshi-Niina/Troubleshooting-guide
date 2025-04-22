@@ -297,7 +297,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   const handleComplete = useCallback(() => {
     toast({
       title: '完了',
-      description: 'トラブルシューティングが完了しました',
+      description: '応急処置ガイドの手順が完了しました',
     });
     onComplete?.();
   }, [toast, onComplete]);
@@ -444,7 +444,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           <CardTitle>エラー</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>トラブルシューティングデータが見つかりませんでした。</p>
+          <p>応急処置ガイドのデータが見つかりませんでした。</p>
         </CardContent>
         <CardFooter>
           <Button onClick={handleExit} variant="outline">戻る</Button>
@@ -479,7 +479,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
               
               <img
                 src={handleImagePath(currentStep.image || currentStep.imageUrl || '')}
-                alt="トラブルシューティング図"
+                alt="応急処置ガイド図"
                 className="max-h-80 object-contain rounded-md cursor-pointer z-10 relative"
                 onLoad={(e) => {
                   setImageLoading(false);
