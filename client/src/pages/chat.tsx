@@ -244,6 +244,7 @@ export default function Chat() {
   
   // 応急処置モーダルの状態管理
   const [emergencyGuideOpen, setEmergencyGuideOpen] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   return (
     <div className="flex flex-col w-full h-full overflow-auto bg-blue-50 chat-layout-container overflow-scroll-container" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
