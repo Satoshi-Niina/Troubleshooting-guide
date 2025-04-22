@@ -20,6 +20,8 @@ import {
 } from '@/lib/offline-storage';
 import { syncChat } from '@/lib/sync-api';
 import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
+// トラブルシューティングフロー検索機能
+import { searchTroubleshootingFlow } from '@/lib/troubleshooting-search';
 
 interface Media {
   id: number;
@@ -615,6 +617,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const sendEmergencyGuide = async (guideTitle: string, guideContent: string) => {
     try {
       setIsLoading(true);
+      
+      // チャットテキストからトラブルシューティングフローを検索
+      // チャットから応急処置ガイドを起動した場合、チャットのテキストをキーワードにして
+      // 最も関連性の高いトラブルシューティングフローID（手順ID）を取得
+      let bestMatchingStepId: string | null = null;
+      try {
+        // チャットのテキストを使ってフロー検索
+        bestMatchingStepId = await searchTroubleshootingFlow(guideContent);
+        if (bestMatchingStepId) {
+          console.log('チャットテキストから最適なフローID検出:', bestMatchingStepId);
+          // 関連フローIDをカスタムイベントで通知
+          window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
+            detail: { flowId: bestMatchingStepId }
+          }));
+        }
+      } catch (flowSearchError) {
+        console.warn('フロー検索エラー:', flowSearchError);
+      }
       
       // チャットID取得またはチャット初期化
       let currentChatId = chatId;

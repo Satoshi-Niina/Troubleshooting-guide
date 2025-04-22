@@ -46,6 +46,26 @@ export function registerTroubleshootingRoutes(app: Express) {
   // ディレクトリの存在を確認
   ensureDirectoryExists(TROUBLESHOOTING_DIR);
   
+  // トラブルシューティングフロー一覧を取得する新しいAPIエンドポイント
+  app.get('/api/troubleshooting/flows', (req: Request, res: Response) => {
+    try {
+      const files = fs.readdirSync(TROUBLESHOOTING_DIR);
+      const troubleshootingFlows = files
+        .filter(file => file.endsWith('.json'))
+        .map(file => {
+          const data = loadTroubleshootingFile(file);
+          if (!data) return null;
+          return data;
+        })
+        .filter(Boolean); // nullを除外
+      
+      res.json(troubleshootingFlows);
+    } catch (error) {
+      console.error('トラブルシューティングフロー一覧の取得に失敗しました:', error);
+      res.status(500).json({ error: 'トラブルシューティングフロー一覧の取得に失敗しました' });
+    }
+  });
+  
   // トラブルシューティングリストを取得
   app.get('/api/troubleshooting', (req: Request, res: Response) => {
     try {

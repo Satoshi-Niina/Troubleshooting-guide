@@ -105,6 +105,32 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   useEffect(() => {
     fetchFlowData();
   }, [fetchFlowData]);
+  
+  // チャットからのフロー選択イベントを受け取るリスナー
+  useEffect(() => {
+    // チャットから送信されたメッセージ内容からフローIDを取得するイベントリスナー
+    const handleSelectFlow = (event: CustomEvent) => {
+      if (event.detail && event.detail.flowId) {
+        console.log('チャットからフローIDを受信:', event.detail.flowId);
+        
+        if (event.detail.flowId === id) {
+          console.log('既に同じフローを表示中です');
+          return;
+        }
+        
+        // 現在表示中のフローと異なる場合は新しいフローへリダイレクト
+        window.location.href = `/emergency-guide/${event.detail.flowId}`;
+      }
+    };
+    
+    // イベントリスナーを登録
+    window.addEventListener('select-troubleshooting-flow', handleSelectFlow as EventListener);
+    
+    // クリーンアップ
+    return () => {
+      window.removeEventListener('select-troubleshooting-flow', handleSelectFlow as EventListener);
+    };
+  }, [id]);
 
   // チェックリストアイテム状態を管理
   useEffect(() => {
