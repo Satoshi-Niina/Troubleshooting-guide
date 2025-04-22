@@ -12,11 +12,15 @@ interface TroubleshootingFlow {
   trigger?: string[];
 }
 
-export default function TroubleshootingSelector() {
+interface TroubleshootingSelectorProps {
+  initialSearchKeyword?: string;
+}
+
+export default function TroubleshootingSelector({ initialSearchKeyword = "" }: TroubleshootingSelectorProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [flows, setFlows] = useState<TroubleshootingFlow[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchKeyword || '');
   const [filteredFlows, setFilteredFlows] = useState<TroubleshootingFlow[]>([]);
   const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
   
@@ -48,6 +52,28 @@ export default function TroubleshootingSelector() {
     fetchFlows();
   }, [toast]);
   
+  // 初期キーワードがある場合は自動検索を実行
+  useEffect(() => {
+    if (initialSearchKeyword && initialSearchKeyword.trim() && flows.length > 0) {
+      // 自動検索を実行
+      const term = initialSearchKeyword.toLowerCase();
+      const filtered = flows.filter(flow => 
+        flow.id.toLowerCase().includes(term) || 
+        flow.description.toLowerCase().includes(term) ||
+        (flow.trigger && flow.trigger.some(trigger => 
+          trigger.toLowerCase().includes(term)
+        ))
+      );
+      
+      setFilteredFlows(filtered);
+      
+      // 検索結果が1つだけの場合は自動選択
+      if (filtered.length === 1) {
+        setSelectedFlow(filtered[0].id);
+      }
+    }
+  }, [initialSearchKeyword, flows]);
+
   // 検索条件でフローをフィルタリング
   useEffect(() => {
     if (!searchTerm.trim()) {

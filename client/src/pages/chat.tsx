@@ -295,7 +295,17 @@ export default function Chat() {
         <Button
           variant="default"
           size="lg"
-          onClick={() => setEmergencyGuideOpen(true)}
+          onClick={() => {
+            // 現在のテキストボックスの内容を取得
+            const messageInput = document.querySelector('textarea, input[type="text"]') as HTMLInputElement | HTMLTextAreaElement;
+            if (messageInput) {
+              const inputText = messageInput.value.trim();
+              setSearchKeyword(inputText);
+            } else {
+              setSearchKeyword("");
+            }
+            setEmergencyGuideOpen(true);
+          }}
           className="flex items-center gap-2 border-2 border-white bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 shadow-md rounded-lg"
         >
           <Heart className="h-6 w-6 text-white" />
@@ -563,7 +573,7 @@ export default function Chat() {
             </DialogDescription>
           </DialogHeader>
           <div className={`overflow-y-auto py-2 ${isMobile ? 'max-h-[70vh]' : 'max-h-[75vh]'}`}>
-            <TroubleshootingSelector />
+            <TroubleshootingSelector initialSearchKeyword={searchKeyword} />
           </div>
           <DialogFooter>
             <Button 
