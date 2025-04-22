@@ -618,6 +618,27 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setIsLoading(true);
       
+      // 日本語のファイル名に変換するためのマッピング
+      const fileNameMapping: Record<string, string> = {
+        "no electrical power": "電源が入らない",
+        "engine will not start": "エンジンが始動しない",
+        "hydraulic system failure": "油圧システム故障",
+        "brake system issue": "ブレーキシステム問題",
+        "control system unresponsive": "制御システム無反応",
+        "overheating engine": "エンジンオーバーヒート",
+        "transmission failure": "変速機故障",
+        "track alignment problem": "軌道アライメント問題",
+        "emergency stop procedure": "緊急停止手順"
+      };
+      
+      // 英語ファイル名を日本語に変換
+      const japaneseGuideTitle = fileNameMapping[guideTitle.toLowerCase()] || guideTitle;
+      
+      // 日本語タイトルでチャットメッセージを送信
+      if (japaneseGuideTitle !== guideTitle) {
+        console.log(`ガイドタイトルを変換しました: ${guideTitle} → ${japaneseGuideTitle}`);
+      }
+      
       // チャットテキストからトラブルシューティングフローを検索
       // チャットから応急処置ガイドを起動した場合、チャットのテキストをキーワードにして
       // 関連性の高いトラブルシューティングフローID（手順ID）を取得
@@ -704,7 +725,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       // ユーザーメッセージを作成
-      const userMessageText = `「${guideTitle}」の応急処置手順を教えてください。`;
+      const userMessageText = `「${japaneseGuideTitle}」の応急処置手順を教えてください。`;
       
       const userMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, { 
         content: userMessageText,
@@ -753,7 +774,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       toast({
         title: '応急処置ガイドを表示しました',
-        description: `${guideTitle}の対応手順が表示されました`,
+        description: `${japaneseGuideTitle}の対応手順が表示されました`,
         duration: 3000,
       });
     } catch (error) {
