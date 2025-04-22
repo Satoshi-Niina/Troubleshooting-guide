@@ -1,209 +1,148 @@
 import Fuse from 'fuse.js';
 import { apiRequest } from './queryClient';
 
-// トラブルシューティングフローの検索用インターフェース
-interface TroubleshootingStep {
-  id: string;
-  message: string;
-  imageKeywords?: string[]; 
-  keywords?: string[];
-  options?: {
-    text?: string;
-    label?: string;
-    next?: string;
-    nextStep?: string;
-  }[];
-  next?: string;
-  nextStep?: string;
-  checklist?: string[];
-  end?: boolean;
-}
-
-interface TroubleshootingFlow {
-  id: string;
-  title: string;
-  description?: string;
-  steps: TroubleshootingStep[];
-}
-
-// キャッシュされたフローデータ
-let cachedFlows: TroubleshootingFlow[] = [];
-
-// フローデータをロードする関数
-async function loadTroubleshootingFlows(): Promise<TroubleshootingFlow[]> {
-  try {
-    // キャッシュがあればそれを使用
-    if (cachedFlows.length > 0) {
-      return cachedFlows;
-    }
-    
-    // API経由でフロー一覧を取得
-    const response = await apiRequest('GET', '/api/troubleshooting/flows');
-    
-    if (!response.ok) {
-      throw new Error(`トラブルシューティングフロー取得エラー: ${response.status}`);
-    }
-    
-    const flows = await response.json();
-    
-    // キャッシュに保存
-    cachedFlows = flows;
-    console.log(`${flows.length}件のトラブルシューティングフローを読み込みました`);
-    
-    return flows;
-  } catch (error) {
-    console.error('トラブルシューティングフロー読み込みエラー:', error);
-    return [];
-  }
-}
-
-// フロー検索用に全ステップを展開する関数
-function extractAllSteps(flows: TroubleshootingFlow[]): any[] {
-  const allSteps: any[] = [];
-  
-  flows.forEach(flow => {
-    // フロー全体の情報を抽出
-    const flowInfo = {
-      id: flow.id,
-      title: flow.title,
-      description: flow.description || '',
-      type: 'flow',
-      searchText: `${flow.title} ${flow.description || ''}`
-    };
-    
-    allSteps.push(flowInfo);
-    
-    // 各ステップの情報を抽出
-    flow.steps.forEach(step => {
-      // ステップのオプションからテキストを抽出
-      const optionsText = step.options?.map(option => 
-        `${option.label || ''} ${option.text || ''}`
-      ).join(' ') || '';
-      
-      // チェックリストからテキストを抽出
-      const checklistText = step.checklist?.join(' ') || '';
-      
-      // 検索用テキストを作成
-      const searchText = `${flow.title} ${flow.description || ''} ${step.message} ${optionsText} ${checklistText}`;
-      
-      // キーワードを作成（imageKeywords + オプションのキーワード）
-      const keywords = [
-        ...(step.imageKeywords || []),
-        ...(step.keywords || [])
-      ];
-      
-      allSteps.push({
-        id: step.id,
-        flowId: flow.id,
-        flowTitle: flow.title,
-        message: step.message,
-        type: 'step',
-        searchText,
-        keywords
-      });
-    });
-  });
-  
-  return allSteps;
-}
-
 // 検索結果の型定義
 export interface SearchResult {
-  flowId: string;
+  id: string;
   title: string;
-  score: number;
-  type: 'flow' | 'step';
-  description?: string;
+  description: string;
+  content: string;
+  score?: number;
+  highlights?: {
+    key: string;
+    indices: number[][];
+    value: string;
+  }[];
 }
 
-// テキストからトラブルシューティングフローを検索する関数（拡張版）
-export async function searchTroubleshootingFlows(text: string): Promise<SearchResult[]> {
+// トラブルシューティング検索用の設定
+const fuseOptions = {
+  includeScore: true,
+  keys: [
+    { name: 'id', weight: 0.5 },
+    { name: 'description', weight: 1.0 },
+    { name: 'trigger', weight: 0.8 }
+  ],
+  threshold: 0.4,
+  ignoreLocation: true,
+  useExtendedSearch: true,
+  minMatchCharLength: 1,
+  distance: 1000,
+  findAllMatches: true,
+  isCaseSensitive: false,
+  shouldSort: true,
+  tokenize: true,
+  matchAllTokens: false,
+};
+
+// 日本語タイトルにマッピングするためのディクショナリ
+export const japaneseGuideTitles: { [key: string]: string } = {
+  'no_electrical_power': '電源が入らない',
+  'engine_wont_start': 'エンジンが始動しない',
+  'overheating': 'オーバーヒート',
+  'oil_pressure_warning': 'オイル圧力警告',
+  'brake_failure': 'ブレーキ故障',
+  'transmission_failure': '変速機故障',
+  'hydraulic_system_failure': '油圧システム故障',
+  'fuel_system_problem': '燃料システム問題',
+  'electrical_short': '電気回路ショート',
+  'battery_dead': 'バッテリー上がり',
+  // ここに必要に応じて追加
+};
+
+/**
+ * 特定のトラブルシューティングフローを検索
+ * @param id フローID
+ * @returns 検索結果または未定義
+ */
+export const searchTroubleshootingFlow = async (id: string): Promise<SearchResult | undefined> => {
   try {
-    // フローデータをロード
-    const flows = await loadTroubleshootingFlows();
-    
-    if (flows.length === 0) {
-      console.log('検索対象のフローがありません');
+    const response = await apiRequest('GET', `/api/troubleshooting/${id}`);
+    if (response.ok) {
+      const flow = await response.json();
+      return {
+        id: flow.id,
+        title: japaneseGuideTitles[flow.id] || flow.id,
+        description: flow.description,
+        content: flow.content || ''
+      };
+    }
+    return undefined;
+  } catch (error) {
+    console.error('トラブルシューティングフロー検索エラー:', error);
+    return undefined;
+  }
+};
+
+/**
+ * テキストに基づいてトラブルシューティングフローを検索
+ * @param query 検索クエリ
+ * @returns 検索結果の配列
+ */
+export const searchTroubleshootingFlows = async (query: string): Promise<SearchResult[]> => {
+  if (!query || query.trim() === '') {
+    // クエリが空の場合、すべてのフローを返す
+    try {
+      const response = await apiRequest('GET', '/api/troubleshooting');
+      if (response.ok) {
+        const flows = await response.json();
+        return flows.map((flow: any) => ({
+          id: flow.id,
+          title: japaneseGuideTitles[flow.id] || flow.id,
+          description: flow.description,
+          content: flow.content || ''
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('トラブルシューティングフロー取得エラー:', error);
       return [];
     }
+  }
+
+  try {
+    // クライアントサイドで検索を行う場合
+    const response = await apiRequest('GET', '/api/troubleshooting');
+    if (response.ok) {
+      const flows = await response.json();
+      
+      // Fuse.jsを使用してクライアントサイド検索
+      const fuse = new Fuse(flows, fuseOptions);
+      const results = fuse.search(query);
+      
+      return results.map(result => {
+        const item = result.item as any;
+        return {
+          id: item.id,
+          title: japaneseGuideTitles[item.id] || item.id,
+          description: item.description,
+          content: item.content || '',
+          score: result.score
+        };
+      });
+    }
     
-    // 全ステップを展開
-    const allSteps = extractAllSteps(flows);
-    
-    // Fuseインスタンスを作成
-    const fuse = new Fuse(allSteps, {
-      includeScore: true,
-      keys: [
-        { name: 'searchText', weight: 1.0 },
-        { name: 'keywords', weight: 1.5 },  // キーワードの重みを高く
-        { name: 'message', weight: 0.8 },
-        { name: 'flowTitle', weight: 0.7 }
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      useExtendedSearch: true,
-      findAllMatches: true
+    // サーバーサイドで検索を行う場合
+    /*
+    const searchResponse = await apiRequest('POST', '/api/troubleshooting/search', {
+      query
     });
     
-    // 検索実行
-    const results = fuse.search(text);
-    
-    console.log(`"${text}"の検索結果: ${results.length}件`);
-    
-    if (results.length > 0) {
-      // 検索結果をマッピング
-      const searchResults = results
-        .filter(result => result.score && result.score <= 0.7) // スコアが一定以上のものだけ
-        .map(result => {
-          const item = result.item;
-          return {
-            flowId: item.type === 'flow' ? item.id : item.flowId,
-            title: item.type === 'flow' ? item.title : item.flowTitle,
-            score: result.score || 1.0,
-            type: item.type,
-            description: item.description || item.message || ''
-          } as SearchResult;
-        });
-      
-      // flowIdで重複を除去
-      const uniqueResults: SearchResult[] = [];
-      const flowIds = new Set<string>();
-      
-      for (const result of searchResults) {
-        if (!flowIds.has(result.flowId)) {
-          flowIds.add(result.flowId);
-          uniqueResults.push(result);
-        }
-      }
-      
-      return uniqueResults;
+    if (searchResponse.ok) {
+      const results = await searchResponse.json();
+      return results.map((result: any) => ({
+        id: result.id,
+        title: japaneseGuideTitles[result.id] || result.id,
+        description: result.description,
+        content: result.content || '',
+        score: result.score
+      }));
     }
+    */
     
     return [];
   } catch (error) {
-    console.error('トラブルシューティングフロー検索エラー:', error);
+    console.error('トラブルシューティング検索エラー:', error);
     return [];
   }
-}
-
-// 下位互換性のために残しておく
-export async function searchTroubleshootingFlow(text: string): Promise<string | null> {
-  try {
-    const results = await searchTroubleshootingFlows(text);
-    
-    if (results.length > 0) {
-      // 最良の結果を返す
-      return results[0].flowId;
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('トラブルシューティングフロー検索エラー:', error);
-    return null;
-  }
-}
-
-// キャッシュをクリアする関数
-export function clearTroubleshootingFlowCache() {
-  cachedFlows = [];
-}
+};

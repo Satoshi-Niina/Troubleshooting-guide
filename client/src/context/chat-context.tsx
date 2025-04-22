@@ -21,7 +21,7 @@ import {
 import { syncChat } from '@/lib/sync-api';
 import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
 // トラブルシューティングフロー検索機能
-import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult } from '@/lib/troubleshooting-search';
+import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult, japaneseGuideTitles } from '@/lib/troubleshooting-search';
 
 interface Media {
   id: number;
@@ -618,21 +618,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setIsLoading(true);
       
-      // 日本語のファイル名に変換するためのマッピング
-      const fileNameMapping: Record<string, string> = {
-        "no electrical power": "電源が入らない",
-        "engine will not start": "エンジンが始動しない",
-        "hydraulic system failure": "油圧システム故障",
-        "brake system issue": "ブレーキシステム問題",
-        "control system unresponsive": "制御システム無反応",
-        "overheating engine": "エンジンオーバーヒート",
-        "transmission failure": "変速機故障",
-        "track alignment problem": "軌道アライメント問題",
-        "emergency stop procedure": "緊急停止手順"
-      };
-      
+      // japaneseGuideTitlesからインポートした日本語タイトルのマッピングを使用
       // 英語ファイル名を日本語に変換
-      const japaneseGuideTitle = fileNameMapping[guideTitle.toLowerCase()] || guideTitle;
+      const japaneseGuideTitle = japaneseGuideTitles[guideTitle.toLowerCase()] || guideTitle;
       
       // 日本語タイトルでチャットメッセージを送信
       if (japaneseGuideTitle !== guideTitle) {
