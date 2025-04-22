@@ -95,6 +95,72 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       setChecklistItems(initialState);
     }
   }, [currentStep]);
+  
+  // 画像キーワードが変わったときに検索を実行
+  useEffect(() => {
+    if (!currentStep) return;
+    
+    // 画像検索を実行
+    const performImageSearch = async () => {
+      // 1. ステップに直接画像URLが指定されている場合は検索しない
+      if (currentStep.image || currentStep.imageUrl) {
+        console.log('ステップに直接画像が指定されているため検索は実行しません', currentStep.image || currentStep.imageUrl);
+        return;
+      }
+      
+      // 2. キーワード検索の実行
+      if (currentStep.imageKeywords && currentStep.imageKeywords.length > 0) {
+        console.log('画像キーワードによる検索を実行:', currentStep.imageKeywords);
+        try {
+          // キーワードを文字列に結合して検索
+          const searchText = currentStep.imageKeywords.join(' ');
+          const results = await searchByText(searchText);
+          
+          console.log('検索結果:', results);
+          setSearchResults(results);
+          
+          // 検索結果があれば、最初の画像を表示（Chat UIとの連携）
+          if (results && results.length > 0) {
+            const firstResult = results[0];
+            // ブラウザのイベントディスパッチを使用してChat UIに通知
+            window.dispatchEvent(new CustomEvent('preview-image', { 
+              detail: { 
+                url: firstResult.file || firstResult.url,
+                title: firstResult.title || '関連画像',
+                content: firstResult.description || currentStep.message
+              } 
+            }));
+          }
+        } catch (error) {
+          console.error('画像検索実行エラー:', error);
+        }
+      } else {
+        // キーワードがない場合は現在のステップの内容を使って検索
+        console.log('キーワードがないため、ステップのメッセージから検索を実行');
+        try {
+          const results = await searchByText(currentStep.message);
+          setSearchResults(results);
+          
+          // 検索結果があれば、最初の画像を表示
+          if (results && results.length > 0) {
+            const firstResult = results[0];
+            window.dispatchEvent(new CustomEvent('preview-image', { 
+              detail: { 
+                url: firstResult.file || firstResult.url,
+                title: firstResult.title || '関連画像',
+                content: firstResult.description || currentStep.message
+              } 
+            }));
+          }
+        } catch (error) {
+          console.error('メッセージを使った画像検索エラー:', error);
+        }
+      }
+    };
+    
+    // 検索実行
+    performImageSearch();
+  }, [currentStep]);
 
   // 次のステップに進む
   const goToNextStep = useCallback((nextStepId: string) => {
@@ -235,9 +301,25 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       });
     }
     
-    // 画像がある場合は画像へのリンクも追加
+    // 画像情報の追加
     if (currentStep.image || currentStep.imageUrl) {
+      // 直接指定された画像がある場合
       guideContent += `\n**関連画像**: ${currentStep.image || currentStep.imageUrl}\n`;
+    } else if (searchResults && searchResults.length > 0) {
+      // 検索結果から画像情報を追加
+      const firstResult = searchResults[0];
+      guideContent += `\n**関連画像**: ${firstResult.file || firstResult.url}\n`;
+      guideContent += `\n**画像説明**: ${firstResult.title || '関連画像'}\n`;
+      
+      // 他の検索結果があれば、追加情報として表示
+      if (searchResults.length > 1) {
+        guideContent += `\n**その他の関連画像**: ${searchResults.length - 1}件\n`;
+      }
+      
+      // キーワード情報も追加
+      if (currentStep.imageKeywords && currentStep.imageKeywords.length > 0) {
+        guideContent += `\n**検索キーワード**: ${currentStep.imageKeywords.join(', ')}\n`;
+      }
     }
     
     // チャットへガイドを送信
@@ -252,7 +334,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     
     // ガイドを表示後、トラブルシューティング画面を閉じる
     onExit?.();
-  }, [flowData, currentStep, sendEmergencyGuide, onExit, user, toast]);
+  }, [flowData, currentStep, sendEmergencyGuide, onExit, user, toast, searchResults]);
 
   // トラブルシューティングを終了して戻る
   // 終了時に応急処置ガイドの内容をチャットに自動的に送信
@@ -269,7 +351,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       });
     }
     onExit?.();
-  }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast]);
+  }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast, searchResults]);
 
   // ローディング中の表示
   if (loading) {
@@ -316,7 +398,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           <p className="whitespace-pre-line">{currentStep.message}</p>
         </div>
         
-        {/* 画像（ある場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
+        {/* 画像（直接指定された場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
         {(currentStep.image || currentStep.imageUrl) && (
           <div className="mb-4 flex justify-center">
             {/* 画像読み込み中プレースホルダー - 常に表示して読み込み完了時に非表示化 */}
@@ -391,6 +473,54 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 }}
               />
             </div>
+          </div>
+        )}
+        
+        {/* 検索結果から表示される画像（直接指定がない場合のみ） */}
+        {!currentStep.image && !currentStep.imageUrl && searchResults && searchResults.length > 0 && (
+          <div className="mb-4">
+            {/* 検索結果ヘッダー */}
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-medium text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image inline-block mr-1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                キーワードに基づく関連画像
+              </p>
+              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                {searchResults.length}件の画像
+              </span>
+            </div>
+            
+            {/* 最初の検索結果を表示 */}
+            <div className="flex justify-center">
+              <div className="relative flex justify-center items-center min-h-[200px] min-w-[200px] w-full max-w-md">
+                <img
+                  src={searchResults[0].file || searchResults[0].url}
+                  alt={searchResults[0].title || "関連画像"}
+                  className="max-h-80 object-contain rounded-md cursor-pointer border border-blue-100 shadow-sm"
+                  onClick={() => {
+                    // Chat UIに通知
+                    window.dispatchEvent(new CustomEvent('preview-image', { 
+                      detail: { 
+                        url: searchResults[0].file || searchResults[0].url,
+                        title: searchResults[0].title || '関連画像',
+                        content: searchResults[0].description || currentStep.message
+                      } 
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+            
+            {/* キーワード表示 */}
+            {currentStep.imageKeywords && currentStep.imageKeywords.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {currentStep.imageKeywords.map((keyword, idx) => (
+                  <span key={idx} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
         
