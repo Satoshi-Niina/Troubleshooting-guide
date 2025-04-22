@@ -21,7 +21,7 @@ import {
 import { syncChat } from '@/lib/sync-api';
 import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
 // トラブルシューティングフロー検索機能
-import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult, japaneseGuideTitles } from '@/lib/troubleshooting-search';
+import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult, japaneseGuideTitles } from '../lib/troubleshooting-search';
 
 interface Media {
   id: number;
@@ -640,25 +640,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           // 検索結果が1件のみの場合は自動的に表示
           if (matchingResults.length === 1) {
-            const bestMatchingStepId = matchingResults[0].flowId;
-            console.log('チャットテキストから最適なフローID検出（自動表示）:', bestMatchingStepId);
+            const bestMatchingFlowId = matchingResults[0].id;
+            console.log('チャットテキストから最適なフローID検出（自動表示）:', bestMatchingFlowId);
             
             // 関連フローIDをカスタムイベントで通知して自動的に表示
             window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
               detail: { 
-                flowId: bestMatchingStepId,
+                flowId: bestMatchingFlowId,
                 autoDisplay: true // 自動表示フラグ
               }
             }));
           } else if (matchingResults.length > 1) {
             // 複数の検索結果がある場合、最も関連性の高いものを送信（自動表示はしない）
-            const bestMatchingStepId = matchingResults[0].flowId;
-            console.log('チャットテキストから最適なフローID検出（選択肢あり）:', bestMatchingStepId);
+            const bestMatchingFlowId = matchingResults[0].id;
+            console.log('チャットテキストから最適なフローID検出（選択肢あり）:', bestMatchingFlowId);
             
             // 関連フローIDをカスタムイベントで通知（選択肢あり）
             window.dispatchEvent(new CustomEvent('select-troubleshooting-flow', { 
               detail: { 
-                flowId: bestMatchingStepId,
+                flowId: bestMatchingFlowId,
                 results: matchingResults,
                 autoDisplay: false
               }
