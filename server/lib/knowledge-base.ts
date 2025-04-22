@@ -1290,6 +1290,11 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
     console.log(`削除対象ドキュメント: ${docPath}`);
     console.log(`ドキュメントタイトル: ${docTitle}, タイプ: ${docType}`);
     
+    // 画像検索用データの場合の特別処理
+    if (docType === 'image_search_data') {
+      return removeImageSearchData(docId, docPath, index, docIndex);
+    }
+    
     // インデックスから削除
     index.documents.splice(docIndex, 1);
     saveKnowledgeBaseIndex(index);
