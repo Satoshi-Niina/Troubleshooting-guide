@@ -169,10 +169,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           // 検索結果があれば、最初の画像を表示（Chat UIとの連携）
           if (results && results.length > 0) {
             const firstResult = results[0];
+            // パスを正しく解決
+            const imageUrl = handleImagePath(firstResult.file || firstResult.url);
+            console.log('画像表示: キーワード検索結果の画像を表示', imageUrl);
+            
             // ブラウザのイベントディスパッチを使用してChat UIに通知
             window.dispatchEvent(new CustomEvent('preview-image', { 
               detail: { 
-                url: firstResult.file || firstResult.url,
+                url: imageUrl,
                 title: firstResult.title || '関連画像',
                 content: firstResult.description || currentStep.message
               } 
@@ -191,9 +195,13 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           // 検索結果があれば、最初の画像を表示
           if (results && results.length > 0) {
             const firstResult = results[0];
+            // パスを正しく解決
+            const imageUrl = handleImagePath(firstResult.file || firstResult.url);
+            console.log('画像表示: メッセージからの検索結果の画像を表示', imageUrl);
+            
             window.dispatchEvent(new CustomEvent('preview-image', { 
               detail: { 
-                url: firstResult.file || firstResult.url,
+                url: imageUrl,
                 title: firstResult.title || '関連画像',
                 content: firstResult.description || currentStep.message
               } 
