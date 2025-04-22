@@ -9,6 +9,27 @@ import { useChat } from '@/context/chat-context';
 import { useAuth } from '@/context/auth-context';
 import { searchByText } from '@/lib/image-search';
 
+// 画像パスを修正するヘルパー関数
+function handleImagePath(imagePath: string): string {
+  if (!imagePath) return '';
+  
+  // すでに絶対URLの場合はそのまま返す
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // 相対パスの場合、先頭の/を削除してoriginを追加
+  // replit環境では、先頭の/を含む相対パスが正しく解決されないことがある
+  let path = imagePath;
+  if (path.startsWith('/')) {
+    path = path.substring(1);
+  }
+  
+  // 現在のオリジンと結合
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/${path}`;
+}
+
 interface TroubleshootingStep {
   id?: string;
   message: string;
@@ -408,7 +429,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
               </div>
               
               <img
-                src={currentStep.image || currentStep.imageUrl || ''}
+                src={handleImagePath(currentStep.image || currentStep.imageUrl || '')}
                 alt="トラブルシューティング図"
                 className="max-h-80 object-contain rounded-md cursor-pointer z-10 relative"
                 onLoad={(e) => {
@@ -494,14 +515,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
             <div className="flex justify-center">
               <div className="relative flex justify-center items-center min-h-[200px] min-w-[200px] w-full max-w-md">
                 <img
-                  src={searchResults[0].file || searchResults[0].url}
+                  src={handleImagePath(searchResults[0].file || searchResults[0].url)}
                   alt={searchResults[0].title || "関連画像"}
                   className="max-h-80 object-contain rounded-md cursor-pointer border border-blue-100 shadow-sm"
                   onClick={() => {
                     // Chat UIに通知
                     window.dispatchEvent(new CustomEvent('preview-image', { 
                       detail: { 
-                        url: searchResults[0].file || searchResults[0].url,
+                        url: handleImagePath(searchResults[0].file || searchResults[0].url),
                         title: searchResults[0].title || '関連画像',
                         content: searchResults[0].description || currentStep.message
                       } 
