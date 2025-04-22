@@ -316,38 +316,78 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
         {/* 画像（ある場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
         {(currentStep.image || currentStep.imageUrl) && (
           <div className="mb-4 flex justify-center">
-            {imageLoading && (
-              <div className="animate-pulse h-48 w-48 bg-gray-200 rounded-md"></div>
-            )}
-            <img
-              src={currentStep.image || currentStep.imageUrl}
-              alt="トラブルシューティング図"
-              className={`max-h-80 object-contain rounded-md ${imageLoading ? 'hidden' : 'block'} cursor-pointer`}
-              onLoad={() => {
-                setImageLoading(false);
-                // 関係画像エリアにこの画像を表示するためのイベントを発火
-                const imageTitle = flowData?.id || "応急処置ガイド";
-                window.dispatchEvent(new CustomEvent('preview-image', { 
-                  detail: { 
-                    url: currentStep.image || currentStep.imageUrl,
-                    title: imageTitle,
-                    content: currentStep.message || "トラブルシューティング画像"
-                  } 
-                }));
-              }}
-              onError={() => setImageLoading(false)}
-              // クリックでもプレビューを表示
-              onClick={() => {
-                const imageTitle = flowData?.id || "応急処置ガイド";
-                window.dispatchEvent(new CustomEvent('preview-image', { 
-                  detail: { 
-                    url: currentStep.image || currentStep.imageUrl,
-                    title: imageTitle,
-                    content: currentStep.message || "トラブルシューティング画像"
-                  } 
-                }));
-              }}
-            />
+            {/* 画像読み込み中プレースホルダー - 常に表示して読み込み完了時に非表示化 */}
+            <div className="relative flex justify-center items-center min-h-[200px] min-w-[200px] w-full max-w-md">
+              <div className="loading-placeholder absolute inset-0 flex items-center justify-center z-0 bg-gray-100 rounded-md">
+                <div className="w-12 h-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+              </div>
+              
+              <img
+                src={currentStep.image || currentStep.imageUrl || ''}
+                alt="トラブルシューティング図"
+                className="max-h-80 object-contain rounded-md cursor-pointer z-10 relative"
+                onLoad={(e) => {
+                  setImageLoading(false);
+                  
+                  // 画像読み込みが完了したらプレースホルダーを非表示にする
+                  const imgElement = e.currentTarget;
+                  const parent = imgElement.parentElement;
+                  if (parent) {
+                    const placeholders = parent.querySelectorAll('.loading-placeholder');
+                    placeholders.forEach(placeholder => {
+                      placeholder.classList.add('hidden');
+                    });
+                  }
+                  
+                  // 関係画像エリアにこの画像を表示するためのイベントを発火
+                  const imageTitle = flowData?.id || "応急処置ガイド";
+                  window.dispatchEvent(new CustomEvent('preview-image', { 
+                    detail: { 
+                      url: currentStep.image || currentStep.imageUrl,
+                      title: imageTitle,
+                      content: currentStep.message || "トラブルシューティング画像"
+                    } 
+                  }));
+                }}
+                onError={(e) => {
+                  setImageLoading(false);
+                  
+                  const imgElement = e.currentTarget;
+                  const parent = imgElement.parentElement;
+                  
+                  // エラー時の表示
+                  if (parent) {
+                    // プレースホルダーを非表示
+                    const placeholders = parent.querySelectorAll('.loading-placeholder');
+                    placeholders.forEach(placeholder => {
+                      placeholder.classList.add('hidden');
+                    });
+                    
+                    // エラーメッセージを表示
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-red-50 text-red-600 rounded-md border border-red-200 z-20';
+                    errorDiv.innerHTML = `
+                      <div class="text-center p-4">
+                        <p class="font-medium">画像を読み込めませんでした</p>
+                        <p class="text-sm mt-2">別の方法でご確認ください</p>
+                      </div>
+                    `;
+                    parent.appendChild(errorDiv);
+                  }
+                }}
+                // クリックでもプレビューを表示
+                onClick={() => {
+                  const imageTitle = flowData?.id || "応急処置ガイド";
+                  window.dispatchEvent(new CustomEvent('preview-image', { 
+                    detail: { 
+                      url: currentStep.image || currentStep.imageUrl,
+                      title: imageTitle,
+                      content: currentStep.message || "トラブルシューティング画像"
+                    } 
+                  }));
+                }}
+              />
+            </div>
           </div>
         )}
         
