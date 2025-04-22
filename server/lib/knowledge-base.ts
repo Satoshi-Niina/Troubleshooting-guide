@@ -840,6 +840,7 @@ export async function generateSystemPromptWithKnowledge(query: string): Promise<
 /**
  * 知識ベース内のすべてのドキュメントを一覧表示
  * ディレクトリをスキャンして実際に存在するファイルからインデックスを更新
+ * 画像検索用データファイルも含める
  */
 export function listKnowledgeBaseDocuments(): { id: string, title: string, type: string, addedAt: string }[] {
   try {
@@ -855,6 +856,67 @@ export function listKnowledgeBaseDocuments(): { id: string, title: string, type:
       index.documents = [];
     }
     console.log('既存インデックス:', index);
+    
+    // 画像検索用データファイルも追加
+    try {
+      // JSONファイル一覧を取得
+      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+      if (fs.existsSync(jsonDir)) {
+        const jsonFiles = fs.readdirSync(jsonDir)
+          .filter(file => file.endsWith('_metadata.json'))
+          .filter(file => {
+            // guide_1744876404679_metadata.json などを除外
+            return !file.includes('guide_1744876404679') && file !== 'guide_metadata.json';
+          });
+        
+        console.log(`JSONディレクトリから${jsonFiles.length}件のメタデータファイルを発見`);
+        
+        // 各JSONファイルをドキュメントとしてインデックスに追加
+        for (const jsonFile of jsonFiles) {
+          // すでに同じファイルがインデックスに存在するかチェック
+          const jsonFilePath = path.join(jsonDir, jsonFile);
+          const existingDoc = index.documents.find(doc => doc.path === jsonFilePath);
+          
+          if (!existingDoc) {
+            // ファイル情報を取得
+            const fileStats = fs.statSync(jsonFilePath);
+            const addedAt = fileStats.mtime.toISOString();
+            
+            // ファイル名からIDとタイトルを抽出
+            // 例: mc_1745232652990_metadata.json => mc_1745232652990
+            const fileId = jsonFile.replace('_metadata.json', '');
+            let fileTitle = fileId;
+            
+            // JSONファイルの内容からタイトル情報を取得（可能であれば）
+            try {
+              const jsonContent = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+              if (jsonContent && jsonContent.metadata && jsonContent.metadata.タイトル) {
+                fileTitle = jsonContent.metadata.タイトル;
+              } else if (jsonContent && jsonContent.title) {
+                fileTitle = jsonContent.title;
+              }
+            } catch (e) {
+              console.error(`JSONファイル解析エラー ${jsonFile}:`, e);
+            }
+            
+            // インデックスに追加
+            index.documents.push({
+              id: fileId,
+              title: fileTitle,
+              path: jsonFilePath,
+              type: 'image_search_data',
+              chunkCount: 1,
+              addedAt
+            });
+            
+            console.log(`画像検索データファイルをインデックスに追加: ${fileTitle}`);
+          }
+        }
+      }
+    } catch (jsonError) {
+      console.error('画像検索データファイル処理エラー:', jsonError);
+      // エラーが発生しても処理を続行
+    }
     
     // 実際にファイルシステムをスキャンして、ファイルが存在するかチェック
     // ルートディレクトリにある保守用車ナレッジ.txtなどのファイルも検出
