@@ -377,8 +377,88 @@ const EmergencyFlowCreator: React.FC = () => {
     // ステップノードマップ（id -> ノードインデックス）
     const stepNodeMap: {[key: string]: number} = {};
     
-    // 各ステップをノードに変換
-    if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
+    // スライドデータがある場合はスライドからノードを生成
+    if (troubleshootingData.slides && troubleshootingData.slides.length > 0) {
+      // スライドの総数を取得
+      const slidesCount = troubleshootingData.slides.length;
+      
+      troubleshootingData.slides.forEach((slide: any, index: number) => {
+        // 最後のスライドは終了ノードにする
+        let nodeType = index === slidesCount - 1 ? 'end' : 'step';
+        
+        // 選択肢を持つスライドは判断ノードにする（仮実装）
+        const slideTitle = slide.タイトル || '';
+        if (slideTitle.includes('判断') || slideTitle.includes('選択') || slideTitle.includes('チェック')) {
+          nodeType = 'decision';
+        }
+        
+        // ノードのID（スライド番号を使用）
+        const nodeId = `slide_${index + 1}`;
+        
+        // ノードの作成
+        const node = {
+          id: nodeId,
+          type: nodeType,
+          position: { x: nodeXPosition, y: nodeYPosition },
+          data: { 
+            label: slide.タイトル || `スライド ${index + 1}`, 
+            message: Array.isArray(slide.本文) ? slide.本文.join('\n') : (slide.本文 || '')
+          }
+        };
+        
+        // ノードの追加
+        generatedNodes.push(node);
+        // ノードのインデックスを記録
+        stepNodeMap[nodeId] = generatedNodes.length - 1;
+        
+        // 前のノードとの接続
+        if (index === 0) {
+          // 最初のスライドはスタートノードと接続
+          generatedEdges.push({
+            id: `edge-start-${nodeId}`,
+            source: 'start',
+            target: nodeId,
+            animated: true,
+            type: 'smoothstep'
+          });
+        } else {
+          // それ以外は前のスライドとの接続
+          const prevNodeId = `slide_${index}`;
+          generatedEdges.push({
+            id: `edge-${prevNodeId}-${nodeId}`,
+            source: prevNodeId,
+            target: nodeId,
+            animated: true,
+            type: 'smoothstep'
+          });
+        }
+        
+        // Y座標を更新
+        nodeYPosition += yIncrementStep;
+      });
+      
+      // 位置の調整（ノードが重ならないように）
+      const adjustNodePositions = () => {
+        // 同じレベルのノードのX座標を調整（左右に分散）
+        const levelNodes: any[] = [];
+        generatedNodes.forEach(node => {
+          if (node.id !== 'start') {
+            levelNodes.push(node);
+          }
+        });
+        
+        // 各レベルのノードを縦に整列
+        levelNodes.forEach((node, index) => {
+          const yPos = 50 + (index + 1) * yIncrementStep;
+          node.position.y = yPos;
+        });
+      };
+      
+      // ノード位置の調整を実行
+      adjustNodePositions();
+    }
+    // 通常のステップデータがある場合
+    else if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
       troubleshootingData.steps.forEach((step: any, index: number) => {
         // ステップノードのタイプを判定
         let nodeType = 'step';
@@ -561,8 +641,23 @@ const EmergencyFlowCreator: React.FC = () => {
     // フローデータを設定
     let enhancedData;
     
+    // slidesフィールドがある場合は、スライドデータからノードを生成
+    if (jsonData.slides && jsonData.slides.length > 0) {
+      // スライドデータからノードとエッジを生成
+      const { generatedNodes, generatedEdges } = generateNodesFromTroubleshooting(jsonData);
+      
+      enhancedData = {
+        ...jsonData,
+        title: jsonData.metadata?.タイトル || jsonData.title || '無題のフロー',
+        description: jsonData.metadata?.説明 || jsonData.description || '',
+        nodes: generatedNodes,
+        edges: generatedEdges
+      };
+      
+      console.log("スライドデータからノードを生成:", enhancedData);
+    }
     // stepsフィールドがある場合は、トラブルシューティングデータからノードを生成
-    if (jsonData.steps && jsonData.steps.length > 0) {
+    else if (jsonData.steps && jsonData.steps.length > 0) {
       // トラブルシューティングデータからノードとエッジを生成
       const { generatedNodes, generatedEdges } = generateNodesFromTroubleshooting(jsonData);
       
@@ -573,8 +668,8 @@ const EmergencyFlowCreator: React.FC = () => {
       };
       
       console.log("トラブルシューティングデータからノードを生成:", enhancedData);
-    } else {
-      // 従来の処理: データに nodes や edges がない場合は、空の配列を設定
+    } else if (jsonData.nodes && jsonData.nodes.length > 0) {
+      // 既存のノードとエッジがある場合はそれを使用
       let nodes = jsonData.nodes || [];
       let edges = jsonData.edges || [];
       
@@ -603,6 +698,22 @@ const EmergencyFlowCreator: React.FC = () => {
       };
       
       console.log("既存のノードを処理:", enhancedData);
+    } else {
+      // 何もデータがない場合は、デフォルトのノードとエッジを設定
+      enhancedData = {
+        ...jsonData,
+        nodes: [
+          {
+            id: 'start',
+            type: 'start',
+            position: { x: 250, y: 50 },
+            data: { label: '開始' }
+          }
+        ],
+        edges: []
+      };
+      
+      console.log("デフォルトノードを作成:", enhancedData);
     }
     
     return enhancedData;
