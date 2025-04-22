@@ -1595,3 +1595,176 @@ export function removeDocumentFromKnowledgeBase(docId: string): boolean {
     return false;
   }
 }
+
+/**
+ * 画像検索用データファイルとその関連ファイルを削除する
+ * @param docId ドキュメントID
+ * @param docPath ドキュメントパス
+ * @param index ナレッジベースインデックス
+ * @param docIndex ドキュメントのインデックス位置
+ */
+function removeImageSearchData(docId: string, docPath: string, index: KnowledgeBaseIndex, docIndex: number): boolean {
+  try {
+    console.log(`画像検索用データファイル削除を開始します: ${docId}`);
+    
+    // ドキュメントをインデックスから削除
+    index.documents.splice(docIndex, 1);
+    saveKnowledgeBaseIndex(index);
+    console.log(`インデックスから削除しました: ${docId}`);
+    
+    // JSONメタデータファイルを削除
+    if (fs.existsSync(docPath) && !docPath.includes('..')) {
+      try {
+        fs.unlinkSync(docPath);
+        console.log(`JSONメタデータファイルを削除しました: ${docPath}`);
+      } catch (err) {
+        console.error(`JSONファイル削除エラー: ${docPath}`, err);
+      }
+    }
+    
+    // image_search_data.jsonから関連エントリを削除
+    const imageSearchDataPath = path.join(process.cwd(), 'knowledge-base', 'data', 'image_search_data.json');
+    if (fs.existsSync(imageSearchDataPath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(imageSearchDataPath, 'utf8'));
+        if (Array.isArray(data)) {
+          // 元のデータサイズを保存
+          const originalSize = data.length;
+          
+          // ドキュメントIDに関連するすべてのエントリを検索
+          const imagesToDelete = data.filter((item: any) => {
+            // メタデータを確認
+            return (item.metadata && 
+                  (item.metadata.documentId === docId || 
+                   item.metadata.fileId === docId)) ||
+                  (item.id && item.id.toString().includes(docId));
+          });
+          
+          console.log(`image_search_data.jsonから削除対象: ${imagesToDelete.length}件`);
+          
+          // 対応する画像ファイルを削除
+          for (const item of imagesToDelete) {
+            if (item.file) {
+              const imagePath = path.join(process.cwd(), item.file.replace(/^\//, ''));
+              if (fs.existsSync(imagePath)) {
+                try {
+                  fs.unlinkSync(imagePath);
+                  console.log(`関連画像ファイルを削除しました: ${imagePath}`);
+                } catch (fileErr) {
+                  console.error(`画像ファイル削除エラー: ${imagePath}`, fileErr);
+                }
+              }
+              
+              // SVGとPNGの両方のバージョンがある場合は両方削除
+              if (imagePath.toLowerCase().endsWith('.svg')) {
+                const pngPath = imagePath.replace(/\.svg$/i, '.png');
+                if (fs.existsSync(pngPath)) {
+                  try {
+                    fs.unlinkSync(pngPath);
+                    console.log(`関連PNG画像も削除しました: ${pngPath}`);
+                  } catch (pngErr) {
+                    console.error(`PNG画像削除エラー: ${pngPath}`, pngErr);
+                  }
+                }
+              } else if (imagePath.toLowerCase().endsWith('.png')) {
+                const svgPath = imagePath.replace(/\.png$/i, '.svg');
+                if (fs.existsSync(svgPath)) {
+                  try {
+                    fs.unlinkSync(svgPath);
+                    console.log(`関連SVG画像も削除しました: ${svgPath}`);
+                  } catch (svgErr) {
+                    console.error(`SVG画像削除エラー: ${svgPath}`, svgErr);
+                  }
+                }
+              }
+            }
+          }
+          
+          // 残りのエントリのみを保持
+          const updatedData = data.filter((item: any) => {
+            // メタデータを確認し、ドキュメントIDに関連しないものだけを残す
+            return !((item.metadata && 
+                    (item.metadata.documentId === docId || 
+                     item.metadata.fileId === docId)) ||
+                    (item.id && item.id.toString().includes(docId)));
+          });
+          
+          // 更新したデータを保存
+          fs.writeFileSync(imageSearchDataPath, JSON.stringify(updatedData, null, 2));
+          console.log(`image_search_data.jsonを更新しました（${data.length - updatedData.length}件削除）`);
+        }
+      } catch (jsonErr) {
+        console.error('image_search_data.json更新エラー:', jsonErr);
+      }
+    }
+    
+    // index.jsonから対応するエントリを削除
+    const indexJsonPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+    if (fs.existsSync(indexJsonPath)) {
+      try {
+        const indexData = JSON.parse(fs.readFileSync(indexJsonPath, 'utf8'));
+        
+        // guidesエントリがある場合、ドキュメントIDに関連するエントリを削除
+        if (indexData.guides && Array.isArray(indexData.guides)) {
+          const originalLength = indexData.guides.length;
+          indexData.guides = indexData.guides.filter((item: any) => item.id !== docId);
+          
+          if (originalLength !== indexData.guides.length) {
+            // カウントも更新
+            if (typeof indexData.fileCount === 'number') {
+              indexData.fileCount = indexData.guides.length;
+            }
+            fs.writeFileSync(indexJsonPath, JSON.stringify(indexData, null, 2));
+            console.log(`index.jsonからエントリを削除しました: ${docId}`);
+          }
+        }
+      } catch (indexErr) {
+        console.error('index.json更新エラー:', indexErr);
+      }
+    }
+    
+    // 同じIDを持つ他のファイルを検索して削除
+    try {
+      // JSONディレクトリパス
+      const jsonDir = path.join(KNOWLEDGE_BASE_DIR, 'json');
+      
+      if (fs.existsSync(jsonDir)) {
+        // JSONディレクトリ内のファイル一覧を取得
+        const jsonFiles = fs.readdirSync(jsonDir);
+        
+        // 当該IDのプレフィックスと同じJSONファイルをすべて削除
+        const jsonPrefix = docId.split('_')[0]; // mc_ や guide_ などのプレフィックス
+        const jsonTimestamp = docId.split('_')[1]; // タイムスタンプ部分
+        
+        if (jsonPrefix && jsonTimestamp) {
+          console.log(`関連JSONファイル検索: プレフィックス=${jsonPrefix}, タイムスタンプ=${jsonTimestamp}`);
+          
+          let relatedFilesRemoved = 0;
+          for (const jsonFile of jsonFiles) {
+            if (jsonFile.startsWith(jsonPrefix) && jsonFile.includes(jsonTimestamp)) {
+              // 削除対象と同じプレフィックスとタイムスタンプを持つファイル
+              const relatedFilePath = path.join(jsonDir, jsonFile);
+              try {
+                fs.unlinkSync(relatedFilePath);
+                console.log(`関連JSONファイルを削除しました: ${relatedFilePath}`);
+                relatedFilesRemoved++;
+              } catch (fileErr) {
+                console.error(`関連JSONファイル削除エラー: ${relatedFilePath}`, fileErr);
+              }
+            }
+          }
+          
+          console.log(`${relatedFilesRemoved}件の関連JSONファイルを削除しました`);
+        }
+      }
+    } catch (relErr) {
+      console.error('関連ファイル削除エラー:', relErr);
+    }
+    
+    console.log(`画像検索用データファイル削除が完了しました: ${docId}`);
+    return true;
+  } catch (error) {
+    console.error('画像検索用データ削除エラー:', error);
+    return false;
+  }
+}
