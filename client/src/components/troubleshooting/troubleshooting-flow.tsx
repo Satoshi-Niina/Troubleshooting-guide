@@ -7,12 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useChat } from '@/context/chat-context';
 import { useAuth } from '@/context/auth-context';
+import { searchByText } from '@/lib/image-search';
 
 interface TroubleshootingStep {
   id?: string;
   message: string;
   image?: string;
   imageUrl?: string; // imageUrlも追加
+  imageKeywords?: string[]; // 検索キーワードの配列を追加
   options?: {
     text?: string;
     label?: string;
@@ -44,6 +46,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   const [stepHistory, setStepHistory] = useState<string[]>([]);
   const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>({});
   const [imageLoading, setImageLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // フローデータを取得
   const fetchFlowData = useCallback(async () => {

@@ -42,6 +42,7 @@ interface TroubleshootingStep {
   id: string;
   message: string;
   image?: string;
+  imageKeywords?: string[]; // 画像検索用キーワード配列
   options?: {
     label: string;
     next: string;
@@ -847,6 +848,47 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
                       </div>
                       
                       <Accordion type="single" collapsible className="w-full">
+                        {/* 画像設定 */}
+                        <AccordionItem value="images">
+                          <AccordionTrigger>画像設定</AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-4 pt-2">
+                              <div className="grid gap-2">
+                                <Label htmlFor={`step-image-${activeStepData.id}`}>画像URL</Label>
+                                <Input
+                                  id={`step-image-${activeStepData.id}`}
+                                  value={activeStepData.image || ''}
+                                  onChange={(e) => handleStepChange(activeStepData.id, 'image', e.target.value)}
+                                  placeholder="画像のURLを入力 (例: /images/device.png)"
+                                />
+                              </div>
+                              
+                              {/* 画像検索キーワード入力欄 */}
+                              <div className="grid gap-2 mt-2">
+                                <Label htmlFor={`step-image-keywords-${activeStepData.id}`}>
+                                  画像検索キーワード（カンマ区切りで複数入力可）
+                                </Label>
+                                <Input
+                                  id={`step-image-keywords-${activeStepData.id}`}
+                                  value={activeStepData.imageKeywords?.join(', ') || ''}
+                                  onChange={(e) => {
+                                    // カンマ区切りの文字列を配列に変換
+                                    const keywords = e.target.value
+                                      .split(',')
+                                      .map(k => k.trim())
+                                      .filter(k => k.length > 0);
+                                    handleStepChange(activeStepData.id, 'imageKeywords', keywords);
+                                  }}
+                                  placeholder="例: 燃料カットソレノイド, 冷却ポンプ"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  関連する部品や装置の名前を入力すると、自動的に関連画像が表示されます
+                                </p>
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                        
                         {/* チェックリスト設定 */}
                         <AccordionItem value="checklist">
                           <AccordionTrigger>チェックリスト</AccordionTrigger>
