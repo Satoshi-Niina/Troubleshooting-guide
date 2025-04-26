@@ -682,16 +682,12 @@ const EmergencyGuideEdit: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                // タブを切り替えてからフロー編集画面に移動
-                                window.dispatchEvent(new CustomEvent('switch-to-flow-tab', { 
-                                  detail: { 
-                                    guideId: file.id,
-                                    guideTitle: file.title
-                                  } 
-                                }));
+                                // ファイル選択から直接テキスト編集状態に移動
+                                setSelectedGuideId(file.id);
+                                setIsEditing(true);
                                 
-                                // フローIDプレフィックスを追加してからエディタを開く (ts_ はトラブルシューティングデータを示す)
-                                window.location.href = `/emergency-guide?tab=flow&guideId=ts_${file.id}`;
+                                // ファイル読み込み開始
+                                fetchGuideData(file.id);
                               }}
                             >
                               <Pencil className="h-4 w-4 mr-1" />
@@ -722,8 +718,8 @@ const EmergencyGuideEdit: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* ガイド編集エリア - 新しいウィンドウで開くため、このエリアは非表示にする */}
-        {false && selectedGuideId && guideData && (
+        {/* ガイド編集エリア */}
+        {selectedGuideId && guideData && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
@@ -1044,6 +1040,13 @@ const EmergencyGuideEdit: React.FC = () => {
                           <p className="whitespace-pre-line mb-4">
                             {isEditing ? editedGuideData?.metadata.説明 : guideData?.data.metadata.説明 || "説明はありません"}
                           </p>
+                          
+                          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                            <h4 className="font-medium text-blue-800 mb-2">応急処置ガイドプレビュー</h4>
+                            <p className="text-sm text-blue-700">
+                              このプレビューは実際の応急処置ガイドの表示形式です。
+                            </p>
+                          </div>
                           
                           <h3 className="text-lg font-medium mt-6 mb-2">スライド内容</h3>
                           <div className="space-y-6">
