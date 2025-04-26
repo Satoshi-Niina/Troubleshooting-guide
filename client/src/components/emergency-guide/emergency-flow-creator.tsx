@@ -21,12 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import EmergencyFlowEditor from './emergency-flow-editor';
 
-// URLのguideIdパラメータを利用できるようにpropsを追加
-interface EmergencyFlowCreatorProps {
-  initialGuideId?: string | null;
-}
-
-const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuideId }) => {
+const EmergencyFlowCreator: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   // activeTabは使用しなくなったため削除
@@ -92,59 +87,10 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
     }
   };
   
-  // コンポーネントマウント時にフローリストを取得し、initialGuideIdがあれば該当データをロード
+  // コンポーネントマウント時にフローリストを取得
   useEffect(() => {
     fetchFlowList();
-    
-    // initialGuideIdが指定されていて、トラブルシューティングIDの場合はデータをロード
-    if (initialGuideId && initialGuideId.startsWith('ts_')) {
-      console.log(`初期ガイドID=${initialGuideId}が指定されました。データをロードします...`);
-      
-      // 新規作成タブにフォーカス
-      setCharacterDesignTab('new');
-      
-      // トラブルシューティングデータをロード
-      fetch(`/api/troubleshooting/detail/${initialGuideId.replace('ts_', '')}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`APIエラー: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(troubleshootingData => {
-          console.log("URL指定された初期ガイドIDからデータ取得:", troubleshootingData);
-          
-          // ノードとエッジデータを構築
-          const { nodes, edges } = troubleshootingToFlowData(troubleshootingData);
-          
-          // 最終データを構築
-          const flowData = {
-            id: initialGuideId,
-            title: troubleshootingData.title || 'エラー対応フロー',
-            description: troubleshootingData.description || '',
-            fileName: troubleshootingData.fileName || 'troubleshooting.json',
-            nodes: nodes,
-            edges: edges
-          };
-          
-          console.log("URLから生成したフローデータ:", flowData);
-          setFlowData(flowData);
-          
-          toast({
-            title: "データ読込み完了",
-            description: `${flowData.title} のフローを読み込みました`,
-          });
-        })
-        .catch(error => {
-          console.error("初期ガイドID読込エラー:", error);
-          toast({
-            title: "エラー",
-            description: "指定されたガイドデータの読込に失敗しました",
-            variant: "destructive"
-          });
-        });
-    }
-  }, [initialGuideId]);
+  }, []);
   
   // ファイル選択のハンドラー
   const handleFileClick = () => {
@@ -738,90 +684,12 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
     });
     // ファイル名も必ずリセット
     setUploadedFileName('');
-    
-    // 新規作成タブに切り替え
     setCharacterDesignTab('new');
-  };
-  
-  /**
-   * トラブルシューティングデータからノードとエッジを生成する関数
-   * @param troubleshootingData トラブルシューティングデータ
-   * @returns 生成されたノードとエッジ
-   */
-  const troubleshootingToFlowData = (troubleshootingData: any) => {
-    if (!troubleshootingData) {
-      console.error("troubleshootingToFlowData - データがありません");
-      return { 
-        nodes: [{
-          id: 'start',
-          type: 'start',
-          position: { x: 250, y: 50 },
-          data: { label: '開始' }
-        }], 
-        edges: [] 
-      };
-    }
     
-    console.log("troubleshootingToFlowData - 入力データ:", troubleshootingData);
-    
-    // 基本ノードを作成（開始ノード）
-    const nodes = [
-      {
-        id: 'start',
-        type: 'start',
-        position: { x: 250, y: 50 },
-        data: { label: '開始' }
-      }
-    ];
-    
-    // ステップデータがある場合はそれらを追加
-    if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
-      troubleshootingData.steps.forEach((step: any, index: number) => {
-        nodes.push({
-          id: `step_${index + 1}`,
-          type: 'step',
-          position: { x: 250, y: 150 + (index * 100) },
-          data: { 
-            label: `ステップ ${index + 1}: ${step.title || '手順'}`, 
-            content: step.content || '詳細なし'
-          }
-        });
-      });
-    } else {
-      // ステップがない場合はデフォルトステップを追加
-      nodes.push({
-        id: 'step_1',
-        type: 'step',
-        position: { x: 250, y: 150 },
-        data: { 
-          label: `${troubleshootingData.title || 'ステップ'} 1`, 
-          content: `${troubleshootingData.fileName || '不明'} のデータです。内容を編集してください。` 
-        }
-      });
-    }
-    
-    // 終了ノードを追加
-    nodes.push({
-      id: 'end',
-      type: 'end',
-      position: { x: 250, y: 250 + ((nodes.length-2) * 100) },
-      data: { label: '終了' }
+    toast({
+      title: "新規作成",
+      description: "新しいフローを作成できます",
     });
-    
-    // エッジを生成
-    const edges = [];
-    for (let i = 0; i < nodes.length - 1; i++) {
-      edges.push({
-        id: `edge-${nodes[i].id}-${nodes[i+1].id}`,
-        source: nodes[i].id,
-        target: nodes[i+1].id,
-        animated: true,
-        type: 'smoothstep'
-      });
-    }
-    
-    console.log("troubleshootingToFlowData - 生成結果:", { nodes, edges });
-    return { nodes, edges };
   };
   
   // キャラクター削除確認ダイアログを表示
