@@ -110,7 +110,7 @@ const TroubleshootingPreview: React.FC<TroubleshootingPreviewProps> = ({
           </Badge>
         </div>
         <CardDescription>
-          これはフローの表示イメージです。実際の画面と異なる場合があります。
+          現在編集中の内容をリアルタイムでプレビューします。編集内容がすぐに反映されます。
         </CardDescription>
       </CardHeader>
       

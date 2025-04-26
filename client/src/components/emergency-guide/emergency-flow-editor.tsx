@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Save, X, Check, Trash, Copy, Download } from 'lucide-react';
 
@@ -509,118 +510,89 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
               <CardTitle>{selectedNode ? "ノード編集" : "フロー情報"}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="edit" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="edit">編集</TabsTrigger>
-                  <TabsTrigger value="preview">プレビュー</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="edit">
-                  {selectedNode ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="node-label">ラベル</Label>
-                        <Input
-                          id="node-label"
-                          value={selectedNode.data.label || ''}
-                          onChange={(e) => updateNodeData('label', e.target.value)}
-                          placeholder="ノードラベル"
-                        />
-                      </div>
-                      
-                      {selectedNode.type !== 'start' && selectedNode.type !== 'end' && (
-                        <div>
-                          <Label htmlFor="node-message">内容</Label>
-                          <Textarea
-                            id="node-message"
-                            value={selectedNode.data.message || ''}
-                            onChange={(e) => updateNodeData('message', e.target.value)}
-                            placeholder="ステップの内容"
-                            rows={4}
-                          />
-                        </div>
-                      )}
-                      
-                      {selectedNode.id !== 'start' && (
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={deleteSelectedNode}
-                        >
-                          <Trash className="mr-1 h-4 w-4" />ノードを削除
-                        </Button>
-                      )}
+              {selectedNode ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="node-label">ラベル</Label>
+                    <Input
+                      id="node-label"
+                      value={selectedNode.data.label || ''}
+                      onChange={(e) => updateNodeData('label', e.target.value)}
+                      placeholder="ノードラベル"
+                    />
+                  </div>
+                  
+                  {selectedNode.type !== 'start' && selectedNode.type !== 'end' && (
+                    <div>
+                      <Label htmlFor="node-message">内容</Label>
+                      <Textarea
+                        id="node-message"
+                        value={selectedNode.data.message || ''}
+                        onChange={(e) => updateNodeData('message', e.target.value)}
+                        placeholder="ステップの内容"
+                        rows={4}
+                      />
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="flow-title">フロータイトル</Label>
-                        <Input
-                          id="flow-title"
-                          value={flowTitle}
-                          onChange={(e) => setFlowTitle(e.target.value)}
-                          placeholder="フローのタイトルを入力"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="flow-description">説明</Label>
-                        <Textarea
-                          id="flow-description"
-                          value={flowDescription}
-                          onChange={(e) => setFlowDescription(e.target.value)}
-                          placeholder="フローの説明を入力"
-                          rows={4}
-                        />
+                  )}
+                  
+                  {/* プレビュー表示 - リアルタイム更新 */}
+                  {selectedNode.type !== 'start' && selectedNode.type !== 'end' && selectedNode.data.message && (
+                    <div className="mt-4 border rounded-lg p-3 bg-slate-50">
+                      <div className="text-xs text-blue-600 mb-2">プレビュー（リアルタイム更新）</div>
+                      <div className="whitespace-pre-line text-gray-700">
+                        {selectedNode.data.message}
                       </div>
                     </div>
                   )}
-                </TabsContent>
-                
-                <TabsContent value="preview">
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                      <h3 className="font-medium mb-2 text-blue-700">プレビュー表示</h3>
-                      <p className="text-sm text-blue-700">
-                        現在編集中の内容をプレビューします。編集内容はリアルタイムに反映されます。
-                      </p>
-                    </div>
-                    
-                    {selectedNode ? (
-                      <div className="border rounded-lg p-4 bg-gray-50">
-                        <h3 className="font-medium mb-2">ノードプレビュー</h3>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Badge variant="outline">{selectedNode.type}</Badge>
-                          <span className="font-bold">{selectedNode.data.label || 'ラベルなし'}</span>
-                        </div>
-                        
-                        {selectedNode.type !== 'start' && selectedNode.type !== 'end' && selectedNode.data.message && (
-                          <div className="whitespace-pre-line text-gray-700 border-t pt-2 mt-2">
-                            {selectedNode.data.message}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="border rounded-lg p-4 bg-gray-50">
-                        <h3 className="font-medium mb-2">フロー概要</h3>
-                        <h4 className="text-lg font-bold mb-2">{flowTitle || 'タイトルなし'}</h4>
-                        <p className="whitespace-pre-line text-gray-700">
-                          {flowDescription || '説明はありません'}
-                        </p>
-                        <div className="mt-3 border-t pt-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline">{nodes.length}</Badge>
-                            <span>ノード</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{edges.length}</Badge>
-                            <span>接続</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                  
+                  {selectedNode.id !== 'start' && (
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={deleteSelectedNode}
+                    >
+                      <Trash className="mr-1 h-4 w-4" />ノードを削除
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="flow-title">フロータイトル</Label>
+                    <Input
+                      id="flow-title"
+                      value={flowTitle}
+                      onChange={(e) => setFlowTitle(e.target.value)}
+                      placeholder="フローのタイトルを入力"
+                    />
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div>
+                    <Label htmlFor="flow-description">説明</Label>
+                    <Textarea
+                      id="flow-description"
+                      value={flowDescription}
+                      onChange={(e) => setFlowDescription(e.target.value)}
+                      placeholder="フローの説明を入力"
+                      rows={4}
+                    />
+                  </div>
+                  
+                  {/* フロー情報プレビュー - リアルタイム更新 */}
+                  {(flowTitle || flowDescription) && (
+                    <div className="mt-4 border rounded-lg p-3 bg-slate-50">
+                      <div className="text-xs text-blue-600 mb-2">プレビュー（リアルタイム更新）</div>
+                      {flowTitle && (
+                        <h3 className="font-bold mb-1">{flowTitle}</h3>
+                      )}
+                      {flowDescription && (
+                        <p className="whitespace-pre-line text-gray-700 text-sm">
+                          {flowDescription}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </CardContent>
