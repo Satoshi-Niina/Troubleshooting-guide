@@ -1,8 +1,9 @@
-import { Chat, Message, ChatExport } from "@shared/schema";
+import { Chat, ChatExport, Message } from '@shared/schema';
 import OpenAI from "openai";
 
-// OpenAI クライアントを初期化
+// OpenAIクライアントの初期化
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 
 /**
  * 保守用車車両モデルのデータ
@@ -13,33 +14,12 @@ interface VehicleModel {
   keywords: string[];
 }
 
-// 保守用車の車両モデルデータベース
+// 車両モデルのサンプルデータ
 const vehicleModels: VehicleModel[] = [
-  {
-    id: "mc3000",
-    name: "モータカー3000",
-    keywords: ["モータカー3000", "MC3000", "mc3000", "モーターカー3000"]
-  },
-  {
-    id: "mc5000",
-    name: "モータカー5000",
-    keywords: ["モータカー5000", "MC5000", "mc5000", "モーターカー5000"]
-  },
-  {
-    id: "mc7000",
-    name: "モータカー7000",
-    keywords: ["モータカー7000", "MC7000", "mc7000", "モーターカー7000"]
-  },
-  {
-    id: "mt2000",
-    name: "マルチプルタイタンパー2000",
-    keywords: ["マルチプルタイタンパー", "MT2000", "mt2000", "タイタンパー"]
-  },
-  {
-    id: "bb1000",
-    name: "バラストブラシ1000",
-    keywords: ["バラストブラシ", "BB1000", "bb1000", "ブラシ車"]
-  }
+  { id: 'mt-100', name: 'MT-100型保線車', keywords: ['MT-100', 'MT100', 'MT 100'] },
+  { id: 'mr-400', name: 'MR-400シリーズ', keywords: ['MR-400', 'MR400', 'MR 400'] },
+  { id: 'tc-250', name: 'TC-250作業車', keywords: ['TC-250', 'TC250', 'TC 250'] },
+  { id: 'ss-750', name: 'SS-750重機', keywords: ['SS-750', 'SS750', 'SS 750'] },
 ];
 
 /**
@@ -51,43 +31,13 @@ interface Symptom {
   keywords: string[];
 }
 
-// 症状データベース
+// 症状のサンプルデータ
 const symptoms: Symptom[] = [
-  {
-    id: "engine_stop",
-    description: "エンジン停止",
-    keywords: ["エンジン停止", "エンジンが止まる", "エンストール", "停止した", "切れた"]
-  },
-  {
-    id: "engine_slow",
-    description: "エンジン出力低下",
-    keywords: ["出力低下", "パワーダウン", "力が出ない", "回転が落ちる", "弱くなった"]
-  },
-  {
-    id: "engine_overheat",
-    description: "エンジンオーバーヒート",
-    keywords: ["オーバーヒート", "温度上昇", "熱くなった", "高温", "温度警告"]
-  },
-  {
-    id: "brake_failure",
-    description: "ブレーキ故障",
-    keywords: ["ブレーキ故障", "効かない", "ブレーキ不良", "制動不良", "止まらない"]
-  },
-  {
-    id: "hydraulic_leak",
-    description: "油圧漏れ",
-    keywords: ["油圧漏れ", "オイル漏れ", "漏油", "油圧低下", "油が漏れる"]
-  },
-  {
-    id: "electrical_problem",
-    description: "電気系統の問題",
-    keywords: ["電気系統", "通電しない", "電気が来ない", "ショート", "電気故障"]
-  },
-  {
-    id: "control_system",
-    description: "制御システムの問題",
-    keywords: ["制御系", "コントローラー", "操作不能", "反応しない", "パネル表示"]
-  }
+  { id: 'engine-stop', description: 'エンジン停止', keywords: ['エンジン停止', 'エンジンが止まる', 'エンジン切れ'] },
+  { id: 'engine-noise', description: '異音', keywords: ['異音', '変な音', '音がする'] },
+  { id: 'brake-failure', description: 'ブレーキ不良', keywords: ['ブレーキ不良', 'ブレーキが効かない', 'ブレーキ故障'] },
+  { id: 'hydraulic-leak', description: '油圧漏れ', keywords: ['油圧漏れ', 'オイル漏れ', '漏油'] },
+  { id: 'electrical-failure', description: '電気系統故障', keywords: ['電気系統', '電装品', '電気不良'] },
 ];
 
 /**
@@ -99,48 +49,13 @@ interface Component {
   keywords: string[];
 }
 
-// コンポーネントデータベース
+// コンポーネントのサンプルデータ
 const components: Component[] = [
-  {
-    id: "engine",
-    name: "エンジン",
-    keywords: ["エンジン", "機関", "モーター", "駆動系", "原動機"]
-  },
-  {
-    id: "fuel_system",
-    name: "燃料系統",
-    keywords: ["燃料", "ガソリン", "軽油", "燃料ポンプ", "インジェクター", "燃料タンク"]
-  },
-  {
-    id: "cooling_system",
-    name: "冷却系統",
-    keywords: ["冷却", "ラジエーター", "冷却水", "サーモスタット", "ウォーターポンプ"]
-  },
-  {
-    id: "brake_system",
-    name: "ブレーキ系統",
-    keywords: ["ブレーキ", "制動", "ブレーキパッド", "ブレーキディスク", "ブレーキロック"]
-  },
-  {
-    id: "hydraulic_system",
-    name: "油圧系統",
-    keywords: ["油圧", "ポンプ", "油圧シリンダー", "作動油", "バルブ"]
-  },
-  {
-    id: "electrical_system",
-    name: "電気系統",
-    keywords: ["電気", "電装", "バッテリー", "配線", "発電機", "スターター"]
-  },
-  {
-    id: "control_system",
-    name: "制御系統",
-    keywords: ["制御", "コントローラー", "ECU", "操作パネル", "センサー"]
-  },
-  {
-    id: "transmission",
-    name: "トランスミッション",
-    keywords: ["ミッション", "変速機", "ギア", "クラッチ", "デフ"]
-  }
+  { id: 'engine', name: 'エンジン', keywords: ['エンジン', 'engine', 'モーター'] },
+  { id: 'brake', name: 'ブレーキ', keywords: ['ブレーキ', 'brake', '制動装置'] },
+  { id: 'hydraulic', name: '油圧系統', keywords: ['油圧', 'hydraulic', 'オイル', '油'] },
+  { id: 'electrical', name: '電気系統', keywords: ['電気', 'electrical', '電装', '配線'] },
+  { id: 'transmission', name: '変速機', keywords: ['変速機', 'transmission', 'ギア', 'トランスミッション'] },
 ];
 
 /**
@@ -149,13 +64,14 @@ const components: Component[] = [
 export function extractComponentKeywords(text: string): string[] {
   const foundComponents: string[] = [];
   
-  components.forEach(component => {
-    component.keywords.forEach(keyword => {
+  for (const component of components) {
+    for (const keyword of component.keywords) {
       if (text.includes(keyword) && !foundComponents.includes(component.name)) {
         foundComponents.push(component.name);
+        break;
       }
-    });
-  });
+    }
+  }
   
   return foundComponents;
 }
@@ -166,13 +82,14 @@ export function extractComponentKeywords(text: string): string[] {
 export function extractSymptomKeywords(text: string): string[] {
   const foundSymptoms: string[] = [];
   
-  symptoms.forEach(symptom => {
-    symptom.keywords.forEach(keyword => {
+  for (const symptom of symptoms) {
+    for (const keyword of symptom.keywords) {
       if (text.includes(keyword) && !foundSymptoms.includes(symptom.description)) {
         foundSymptoms.push(symptom.description);
+        break;
       }
-    });
-  });
+    }
+  }
   
   return foundSymptoms;
 }
@@ -183,13 +100,14 @@ export function extractSymptomKeywords(text: string): string[] {
 export function detectPossibleModels(text: string): string[] {
   const foundModels: string[] = [];
   
-  vehicleModels.forEach(model => {
-    model.keywords.forEach(keyword => {
+  for (const model of vehicleModels) {
+    for (const keyword of model.keywords) {
       if (text.includes(keyword) && !foundModels.includes(model.name)) {
         foundModels.push(model.name);
+        break;
       }
-    });
-  });
+    }
+  }
   
   return foundModels;
 }
@@ -203,94 +121,104 @@ export async function formatChatHistoryForExternalSystem(
   messageMedia: Record<number, any[]>,
   lastExport: ChatExport | null
 ): Promise<any> {
-  // チャット全体から抽出したメタデータ
-  const allText = messages.map(msg => msg.content).join(' ');
+  // メッセージからテキスト全体を取得
+  const allText = messages.map(m => m.content).join(' ');
   
-  // 主要なメタデータ抽出
-  const mentionedComponents = extractComponentKeywords(allText);
-  const mentionedSymptoms = extractSymptomKeywords(allText);
+  // コンポーネント、症状、モデルを抽出
+  const extractedComponents = extractComponentKeywords(allText);
+  const extractedSymptoms = extractSymptomKeywords(allText);
   const possibleModels = detectPossibleModels(allText);
   
-  // 会話履歴からの重要情報の抽出（必要に応じてOpenAI APIを使用）
-  let primaryProblem = "";
-  let problemDescription = "";
-  let vehicleContext = "";
+  // 会話の概要をAIで分析（主要な問題と説明を抽出）
+  let primaryProblem = '';
+  let problemDescription = '';
   
   try {
-    // 最新のOpenAIモデルを使って追加コンテキストを抽出
+    // OpenAIを使用して会話から問題を抽出
+    const userMessages = messages.filter(m => !m.isAiResponse).map(m => m.content).join('\n');
+    const prompt = `
+以下は鉄道保守用車両のトラブルシューティングに関する会話です。
+この会話から、主要な問題と問題の詳細な説明を日本語で抽出してください。
+抽出結果は以下のJSONフォーマットで返してください：
+{
+  "primary_problem": "簡潔な問題のタイトル（15-20文字程度）",
+  "problem_description": "問題の詳細説明（50-100文字程度）"
+}
+
+会話：
+${userMessages}
+`;
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: "system",
-          content: `あなたは保守用車の故障診断エキスパートです。以下のチャット履歴から重要な情報を抽出し、JSONフォーマットで返してください。
-          抽出すべき情報：
-          1. primary_problem: 主要な問題・故障（簡潔に）
-          2. problem_description: 問題の説明（詳細に）
-          3. vehicle_context: 車両の状況や環境に関する情報（できるだけ多く）`
-        },
-        {
-          role: "user",
-          content: messages.map(msg => 
-            `${msg.isAiResponse ? "サポート: " : "ユーザー: "}${msg.content}`
-          ).join('\n\n')
-        }
-      ],
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }
     });
-    
-    try {
-      const aiExtractedData = JSON.parse(response.choices[0].message.content || "{}");
-      primaryProblem = aiExtractedData.primary_problem || "";
-      problemDescription = aiExtractedData.problem_description || "";
-      vehicleContext = aiExtractedData.vehicle_context || "";
-    } catch (parseError) {
-      console.error("AIレスポンスのJSONパース失敗:", parseError);
-    }
-  } catch (aiError) {
-    console.warn("AIによる情報抽出エラー:", aiError);
-    // エラー時のフォールバック: キーワードベースの単純抽出
+
+    const result = JSON.parse(response.choices[0].message.content);
+    primaryProblem = result.primary_problem;
+    problemDescription = result.problem_description;
+  } catch (error) {
+    console.error('OpenAI APIでの分析中にエラーが発生しました:', error);
+    // エラーが発生した場合は単純な抽出結果を使用
+    primaryProblem = extractedComponents.length > 0 ? 
+      `${extractedComponents[0]}に関する問題` : '不明な問題';
+    problemDescription = extractedSymptoms.length > 0 ?
+      `${extractedSymptoms.join('と')}の症状が報告されています。` : '詳細な症状は報告されていません。';
   }
   
-  // 会話履歴を適切なフォーマットに変換
-  const conversationHistory = messages.map(msg => {
-    // メッセージに紐づくメディア情報
-    const media = messageMedia[msg.id] || [];
-    
+  // 環境情報をAIで生成
+  let environmentContext = '';
+  try {
+    const contextPrompt = `
+以下は鉄道保守用車両のトラブルシューティングに関する会話です。
+この会話から、車両の現在の状況や環境に関する情報を50-80文字程度で簡潔にまとめてください。
+例えば「車両は〇〇の状態で△△の症状が発生している」といった形式です。
+
+会話：
+${messages.slice(0, 10).map(m => m.content).join('\n')}
+`;
+
+    const contextResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: contextPrompt }],
+    });
+
+    environmentContext = contextResponse.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('環境情報の生成中にエラーが発生しました:', error);
+    environmentContext = '会話から環境情報を抽出できませんでした。';
+  }
+  
+  // 会話の履歴をフォーマット
+  const conversationHistory = messages.map(message => {
     return {
-      id: msg.id,
-      timestamp: msg.timestamp.toISOString(),
-      role: msg.isAiResponse ? "assistant" : "user",
-      content: msg.content,
-      media: media.map((m: any) => ({
-        type: m.type,
-        url: m.url,
-        thumbnail: m.thumbnail
-      }))
+      id: message.id,
+      timestamp: message.createdAt,
+      role: message.isAiResponse ? 'assistant' : 'user',
+      content: message.content,
+      media: messageMedia[message.id] || []
     };
   });
   
-  // 診断情報ブロック
-  const diagnostics = {
-    components: mentionedComponents,
-    symptoms: mentionedSymptoms,
-    possible_models: possibleModels,
-    primary_problem: primaryProblem,
-    problem_description: problemDescription
-  };
-  
-  // 最終的なフォーマット済みデータ
-  const formattedData = {
+  // 最終的なフォーマット済みデータを構築
+  return {
     session_id: chat.id,
     timestamp: new Date().toISOString(),
     user_id: chat.userId,
     device_context: {
       detected_models: possibleModels,
-      environment: vehicleContext,
-      last_export: lastExport ? new Date(lastExport.timestamp).toISOString() : null
+      environment: environmentContext,
+      last_export: lastExport ? lastExport.timestamp.toISOString() : null
     },
     conversation_history: conversationHistory,
-    diagnostics: diagnostics,
+    diagnostics: {
+      components: extractedComponents,
+      symptoms: extractedSymptoms,
+      possible_models: possibleModels,
+      primary_problem: primaryProblem,
+      problem_description: problemDescription
+    },
     metadata: {
       message_count: messages.length,
       has_images: Object.values(messageMedia).some(media => media.length > 0),
@@ -298,6 +226,4 @@ export async function formatChatHistoryForExternalSystem(
       version: "1.0.0"
     }
   };
-  
-  return formattedData;
 }

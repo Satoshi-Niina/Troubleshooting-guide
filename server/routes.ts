@@ -454,6 +454,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // チャットのエクスポートレコードを保存
       await storage.saveChatExport(chatId, userId, exportTimestamp);
       
+      // メッセージが存在する場合、フォーマット済みデータも自動的に生成・保存
+      if (messages.length > 0) {
+        try {
+          // フォーマット済みデータを生成（外部システム向け）
+          const allMessages = await storage.getMessagesForChat(chatId);
+          
+          // メッセージIDごとにメディアを取得
+          const messageMedia: Record<number, any[]> = {};
+          for (const message of allMessages) {
+            messageMedia[message.id] = await storage.getMediaForMessage(message.id);
+          }
+          
+          // 最新のエクスポート記録を取得
+          const lastExport = await storage.getLastChatExport(chatId);
+          
+          // 外部システム用にフォーマット
+          const formattedData = await formatChatHistoryForExternalSystem(
+            chat,
+            allMessages,
+            messageMedia,
+            lastExport
+          );
+          
+          // ファイルとして保存
+          const { exportFileManager } = await import('./lib/export-file-manager');
+          exportFileManager.saveFormattedExport(chatId, formattedData);
+          
+          console.log(`チャット ${chatId} のフォーマット済みデータを自動生成しました`);
+        } catch (formatError) {
+          console.error("フォーマット済みデータの生成中にエラーが発生しました:", formatError);
+          // フォーマット処理の失敗はメインの応答に影響しないようにするため、エラーをキャッチするだけ
+        }
+      }
+      
       res.json({ 
         success: true, 
         exportTimestamp,
