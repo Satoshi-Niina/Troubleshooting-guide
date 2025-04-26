@@ -1102,7 +1102,7 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
               </TabsTrigger>
               <TabsTrigger value="file">
                 <FolderOpen className="mr-2 h-4 w-4" />
-                キャラクター編集
+                ファイル編集
               </TabsTrigger>
             </TabsList>
             
@@ -1156,7 +1156,7 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
                         この機能は現在作成中です
                       </p>
                       <p className="text-xs text-yellow-700 mt-1">
-                        ファイル編集機能は準備中です。現在は保存済みキャラクターの管理のみ利用可能です。
+                        ファイル編集機能は準備中です。現在は保存済みファイルの管理のみ利用可能です。
                       </p>
                     </div>
                   </div>
