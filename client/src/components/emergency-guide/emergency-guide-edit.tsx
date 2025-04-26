@@ -810,6 +810,28 @@ const EmergencyGuideEdit: React.FC = () => {
                           disabled={!isEditing}
                         />
                       </div>
+                      
+                      {/* メタデータのリアルタイムプレビュー */}
+                      {isEditing && (
+                        <div className="mt-4 border rounded-lg p-4 bg-slate-50">
+                          <div className="text-xs text-blue-600 mb-2">メタデータプレビュー（リアルタイム更新）</div>
+                          <div className="space-y-2">
+                            {editedGuideData.metadata.タイトル && (
+                              <h3 className="font-bold text-lg">{editedGuideData.metadata.タイトル}</h3>
+                            )}
+                            {editedGuideData.metadata.作成者 && (
+                              <div className="text-sm">
+                                <span className="text-gray-500">作成者:</span> {editedGuideData.metadata.作成者}
+                              </div>
+                            )}
+                            {editedGuideData.metadata.説明 && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <p className="text-gray-700 whitespace-pre-line">{editedGuideData.metadata.説明}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TabsContent>
@@ -862,6 +884,27 @@ const EmergencyGuideEdit: React.FC = () => {
                               disabled={!isEditing}
                             />
                           </div>
+                          
+                          {/* リアルタイムプレビュー */}
+                          {isEditing && (
+                            <div className="mt-4 border rounded-lg p-4 bg-slate-50">
+                              <div className="text-xs text-blue-600 mb-2">スライドプレビュー（リアルタイム更新）</div>
+                              <div className="space-y-3">
+                                {slide.タイトル && (
+                                  <h3 className="font-bold text-lg">{slide.タイトル}</h3>
+                                )}
+                                {slide.本文.map((text: string, textIdx: number) => (
+                                  <p key={textIdx} className="text-gray-700 whitespace-pre-line">{text}</p>
+                                ))}
+                                {slide.ノート && (
+                                  <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <span className="text-xs text-gray-500">ノート:</span>
+                                    <p className="text-sm text-gray-600 italic">{slide.ノート}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                           
                           {slide.画像テキスト && slide.画像テキスト.length > 0 && (
                             <div className="grid gap-2">
