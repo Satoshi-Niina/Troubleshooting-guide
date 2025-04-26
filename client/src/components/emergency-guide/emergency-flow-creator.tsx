@@ -969,7 +969,7 @@ const EmergencyFlowCreator: React.FC = () => {
                 新規作成
               </TabsTrigger>
               <TabsTrigger value="flowEditor">
-                <PenLine className="mr-2 h-4 w-4" />
+                <Edit3 className="mr-2 h-4 w-4" />
                 フロー編集
               </TabsTrigger>
               <TabsTrigger value="file">
@@ -1013,7 +1013,7 @@ const EmergencyFlowCreator: React.FC = () => {
                   }} 
                   className="w-full"
                 >
-                  <FileSymlink className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 h-4 w-4" />
                   フローエディタを開く
                 </Button>
               </div>
