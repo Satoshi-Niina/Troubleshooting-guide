@@ -497,9 +497,9 @@ const EmergencyGuideEdit: React.FC = () => {
           description: `「${data.flowData.title}」フローが生成されました`,
         });
         
-        // フロー編集画面に遷移
-        const flowId = data.flowData.id;
-        window.location.href = `/troubleshooting?flowId=${flowId}`;
+        // フロー編集画面に遷移 (ts_ プレフィックスを追加してトラブルシューティングデータを示す)
+        const guideIdPrefix = 'ts_';
+        window.location.href = `/emergency-guide?tab=flow&guideId=${guideIdPrefix}${guideId}`;
       } else {
         throw new Error(data.error || 'フロー生成に失敗しました');
       }
@@ -690,8 +690,8 @@ const EmergencyGuideEdit: React.FC = () => {
                                   } 
                                 }));
                                 
-                                // 編集タブに切り替え
-                                window.location.href = `/emergency-guide?tab=flow&guideId=${file.id}`;
+                                // フローIDプレフィックスを追加してからエディタを開く (ts_ はトラブルシューティングデータを示す)
+                                window.location.href = `/emergency-guide?tab=flow&guideId=ts_${file.id}`;
                               }}
                             >
                               <Pencil className="h-4 w-4 mr-1" />
