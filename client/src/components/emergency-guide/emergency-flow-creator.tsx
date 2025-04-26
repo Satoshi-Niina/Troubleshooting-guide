@@ -962,15 +962,11 @@ const EmergencyFlowCreator: React.FC = () => {
         </CardHeader>
         
         <CardContent className="overflow-y-auto pb-24">
-          <Tabs defaultValue="flowEditor" value={characterDesignTab} onValueChange={setCharacterDesignTab}>
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="new" value={characterDesignTab} onValueChange={setCharacterDesignTab}>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="new">
                 <Plus className="mr-2 h-4 w-4" />
                 新規作成
-              </TabsTrigger>
-              <TabsTrigger value="flowEditor">
-                <Edit3 className="mr-2 h-4 w-4" />
-                フロー編集
               </TabsTrigger>
               <TabsTrigger value="file">
                 <FolderOpen className="mr-2 h-4 w-4" />
@@ -987,40 +983,8 @@ const EmergencyFlowCreator: React.FC = () => {
               className="hidden"
             />
 
-            {/* 新規作成タブ */}
+            {/* 新規作成タブ - フローチャート作成用のReactFlowコンポーネント */}
             <TabsContent value="new" className="h-full">
-              <div className="p-4 space-y-4">
-                <h2 className="text-xl font-bold">新規フローを作成</h2>
-                <p className="text-gray-600">新しいフローチャートを作成するには、以下のボタンをクリックしてください。</p>
-                <Button 
-                  onClick={() => {
-                    // 新しいフローデータを作成して、フローエディタタブに切り替え
-                    const newFlow = {
-                      id: `flow_${Date.now()}`,
-                      title: '新規応急処置フロー',
-                      description: '',
-                      fileName: '',
-                      nodes: [{
-                        id: 'start',
-                        type: 'start',
-                        position: { x: 250, y: 50 },
-                        data: { label: '開始' }
-                      }],
-                      edges: []
-                    };
-                    setFlowData(newFlow);
-                    setCharacterDesignTab('flowEditor');
-                  }} 
-                  className="w-full"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  フローエディタを開く
-                </Button>
-              </div>
-            </TabsContent>
-            
-            {/* フロー編集タブ - フローチャート作成用のReactFlowコンポーネント */}
-            <TabsContent value="flowEditor" className="h-full">
               <EmergencyFlowEditor 
                 onSave={handleSaveFlow}
                 onCancel={handleCancelFlow}
@@ -1116,7 +1080,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                       console.log(`トラブルシューティングID: ${flow.id}を読み込み中...`);
                                       
                                       // 既存ロード関数を実行しつつ、タブ変更を先にトリガー
-                                      setCharacterDesignTab('flowEditor');
+                                      setCharacterDesignTab('new');
                                       
                                       // トラブルシューティングデータをロード
                                       fetch(`/api/troubleshooting/detail/${flow.id.replace('ts_', '')}`)
@@ -1265,7 +1229,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                         });
                                     } else {
                                       // IDがない場合は空のフローを生成
-                                      setCharacterDesignTab('flowEditor');
+                                      setCharacterDesignTab('new');
                                       
                                       const emptyFlow = {
                                         id: `flow_${Date.now()}`,
