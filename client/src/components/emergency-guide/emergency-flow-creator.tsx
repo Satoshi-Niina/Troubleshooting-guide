@@ -1030,7 +1030,7 @@ const EmergencyFlowCreator: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* 保存済みキャラクター一覧 */}
+                {/* 保存済みファイル一覧 */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium">保存データ一覧</h3>
