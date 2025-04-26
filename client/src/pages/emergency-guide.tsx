@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmergencyGuideUploader from "@/components/emergency-guide/emergency-guide-uploader";
 import EmergencyGuideEdit from "@/components/emergency-guide/emergency-guide-edit";
@@ -6,10 +6,37 @@ import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-cr
 import { Helmet } from "react-helmet";
 
 const EmergencyGuidePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("edit");
+  // URLからクエリパラメータを取得
+  const getQueryParam = (name: string): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  };
+
+  // 初期タブをURLから設定
+  const initialTab = getQueryParam('tab') || "edit";
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [targetGuideId, setTargetGuideId] = useState<string | null>(
+    getQueryParam('guideId')
+  );
   const [lastUploadedGuideId, setLastUploadedGuideId] = useState<string | null>(
     null,
   );
+
+  // タブ切り替えイベントのリスナー
+  useEffect(() => {
+    const handleSwitchToFlowTab = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.guideId) {
+        setTargetGuideId(customEvent.detail.guideId);
+        setActiveTab("flow");
+      }
+    };
+
+    window.addEventListener('switch-to-flow-tab', handleSwitchToFlowTab as EventListener);
+    return () => {
+      window.removeEventListener('switch-to-flow-tab', handleSwitchToFlowTab as EventListener);
+    };
+  }, []);
 
   // アップロード成功時のハンドラー
   const handleUploadSuccess = (guideId: string) => {

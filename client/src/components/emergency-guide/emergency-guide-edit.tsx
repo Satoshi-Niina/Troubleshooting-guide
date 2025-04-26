@@ -681,7 +681,18 @@ const EmergencyGuideEdit: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => window.location.href = `/troubleshooting?guideId=${file.id}`}
+                              onClick={() => {
+                                // タブを切り替えてからフロー編集画面に移動
+                                window.dispatchEvent(new CustomEvent('switch-to-flow-tab', { 
+                                  detail: { 
+                                    guideId: file.id,
+                                    guideTitle: file.title
+                                  } 
+                                }));
+                                
+                                // 編集タブに切り替え
+                                window.location.href = `/emergency-guide?tab=flow&guideId=${file.id}`;
+                              }}
                             >
                               <Pencil className="h-4 w-4 mr-1" />
                               編集

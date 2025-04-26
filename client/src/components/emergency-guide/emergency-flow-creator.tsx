@@ -21,7 +21,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import EmergencyFlowEditor from './emergency-flow-editor';
 
-const EmergencyFlowCreator: React.FC = () => {
+// URLのguideIdパラメータを利用できるようにpropsを追加
+interface EmergencyFlowCreatorProps {
+  initialGuideId?: string | null;
+}
+
+const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuideId }) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   // activeTabは使用しなくなったため削除
@@ -87,10 +92,59 @@ const EmergencyFlowCreator: React.FC = () => {
     }
   };
   
-  // コンポーネントマウント時にフローリストを取得
+  // コンポーネントマウント時にフローリストを取得し、initialGuideIdがあれば該当データをロード
   useEffect(() => {
     fetchFlowList();
-  }, []);
+    
+    // initialGuideIdが指定されていて、トラブルシューティングIDの場合はデータをロード
+    if (initialGuideId && initialGuideId.startsWith('ts_')) {
+      console.log(`初期ガイドID=${initialGuideId}が指定されました。データをロードします...`);
+      
+      // 新規作成タブにフォーカス
+      setCharacterDesignTab('new');
+      
+      // トラブルシューティングデータをロード
+      fetch(`/api/troubleshooting/detail/${initialGuideId.replace('ts_', '')}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`APIエラー: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(troubleshootingData => {
+          console.log("URL指定された初期ガイドIDからデータ取得:", troubleshootingData);
+          
+          // ノードとエッジデータを構築
+          const { nodes, edges } = generateFlowDataFromTroubleshooting(troubleshootingData);
+          
+          // 最終データを構築
+          const flowData = {
+            id: initialGuideId,
+            title: troubleshootingData.title || 'エラー対応フロー',
+            description: troubleshootingData.description || '',
+            fileName: troubleshootingData.fileName || 'troubleshooting.json',
+            nodes: nodes,
+            edges: edges
+          };
+          
+          console.log("URLから生成したフローデータ:", flowData);
+          setFlowData(flowData);
+          
+          toast({
+            title: "データ読込み完了",
+            description: `${flowData.title} のフローを読み込みました`,
+          });
+        })
+        .catch(error => {
+          console.error("初期ガイドID読込エラー:", error);
+          toast({
+            title: "エラー",
+            description: "指定されたガイドデータの読込に失敗しました",
+            variant: "destructive"
+          });
+        });
+    }
+  }, [initialGuideId]);
   
   // ファイル選択のハンドラー
   const handleFileClick = () => {
