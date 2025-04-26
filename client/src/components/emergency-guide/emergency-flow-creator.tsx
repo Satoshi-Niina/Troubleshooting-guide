@@ -669,7 +669,7 @@ const EmergencyFlowCreator: React.FC = () => {
   const handleCreateNewFlow = () => {
     // 空のフローデータで初期化
     setFlowData({
-      title: '',
+      title: '新規応急処置フロー',
       description: '',
       fileName: '',
       nodes: [
