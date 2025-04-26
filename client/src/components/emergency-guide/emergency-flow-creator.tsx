@@ -53,13 +53,27 @@ const EmergencyFlowCreator: React.FC = () => {
   const fetchFlowList = async () => {
     try {
       setIsLoadingFlowList(true);
-      const response = await fetch('/api/emergency-guide/list');
+      console.log('応急処置データ一覧の取得を開始します');
+      
+      // キャッシュを防止するためにタイムスタンプパラメータを追加
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/emergency-flow/list?t=${timestamp}`);
       
       if (!response.ok) {
-        throw new Error('フロー一覧の取得に失敗しました');
+        console.error(`応急処置データ一覧の取得に失敗: ${response.status} ${response.statusText}`);
+        throw new Error('応急処置データ一覧の取得に失敗しました');
       }
       
       const data = await response.json();
+      console.log('取得したフロー一覧データ:', data);
+      
+      // データが配列でない場合は空の配列に変換
+      if (!Array.isArray(data)) {
+        console.warn('応急処置データ一覧が配列形式ではありません。空の配列を使用します。');
+        setFlowList([]);
+        return;
+      }
+      
       setFlowList(data);
     } catch (error) {
       console.error('フロー一覧取得エラー:', error);
@@ -307,8 +321,9 @@ const EmergencyFlowCreator: React.FC = () => {
   // フロー保存ハンドラー
   const handleSaveFlow = async (data: any) => {
     try {
+      console.log("保存するフローデータ:", data);
       // ここで実際のデータをJSONに変換して保存APIを呼び出す
-      const response = await fetch('/api/emergency-guide/save-flow', {
+      const response = await fetch('/api/emergency-flow/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -792,7 +807,10 @@ const EmergencyFlowCreator: React.FC = () => {
   const loadFlow = async (id: string) => {
     try {
       console.log(`フローデータの取得開始: ID=${id}`);
-      const response = await fetch(`/api/emergency-guide/detail/${id}`);
+      
+      // キャッシュを防止するためにタイムスタンプパラメータを追加
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/emergency-flow/detail/${id}?t=${timestamp}`);
       
       if (!response.ok) {
         console.error(`API応答エラー: ${response.status} ${response.statusText}`);
@@ -906,7 +924,8 @@ const EmergencyFlowCreator: React.FC = () => {
     if (!flowToDelete) return;
     
     try {
-      const response = await fetch(`/api/emergency-guide/delete/${flowToDelete}`, {
+      console.log(`応急処置データの削除を開始: ID=${flowToDelete}`);
+      const response = await fetch(`/api/emergency-flow/delete/${flowToDelete}`, {
         method: 'DELETE',
       });
       
@@ -975,9 +994,21 @@ const EmergencyFlowCreator: React.FC = () => {
                   title: flowData.title || '',
                   description: flowData.description || '',
                   fileName: uploadedFileName || flowData.fileName || '',
-                  nodes: flowData.nodes || [],
-                  edges: flowData.edges || []
-                } : undefined}
+                  nodes: Array.isArray(flowData.nodes) ? flowData.nodes : [],
+                  edges: Array.isArray(flowData.edges) ? flowData.edges : []
+                } : {
+                  id: `flow_${Date.now()}`,
+                  title: '新規応急処置フロー',
+                  description: '',
+                  fileName: '',
+                  nodes: [{
+                    id: 'start',
+                    type: 'start',
+                    position: { x: 250, y: 50 },
+                    data: { label: '開始' }
+                  }],
+                  edges: []
+                }}
               />
             </TabsContent>
             
