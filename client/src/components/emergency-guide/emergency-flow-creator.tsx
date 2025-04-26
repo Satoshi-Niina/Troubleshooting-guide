@@ -786,6 +786,17 @@ const EmergencyFlowCreator: React.FC = () => {
       
       console.log("APIから読み込んだフローデータ:", enhancedData);
       
+      // データが有効かチェック
+      if (!enhancedData || typeof enhancedData !== 'object') {
+        console.error("読み込んだフローデータが無効です。", enhancedData);
+        toast({
+          title: "データエラー",
+          description: "フローデータの形式が正しくありません",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // 読み込んだデータを各キャラクターのノードとエッジに適用
       // 開始ノード、ステップノード、判断ノード、終了ノードに適用
       const startNode = enhancedData.nodes?.find((node: any) => node.type === 'start') || null;
