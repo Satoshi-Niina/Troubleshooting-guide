@@ -67,20 +67,20 @@ const EmergencyGuidePage: React.FC = () => {
       >
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
-          <TabsTrigger value="flow">キャラクター編集</TabsTrigger>
           <TabsTrigger value="edit">テキスト編集</TabsTrigger>
+          <TabsTrigger value="flow">キャラクター編集</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4 h-full overflow-auto">
           <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
         </TabsContent>
         
-        <TabsContent value="flow" className="space-y-4 h-full overflow-auto">
-          <EmergencyFlowCreator />
-        </TabsContent>
-
         <TabsContent value="edit" className="space-y-4 h-full overflow-auto">
           <EmergencyGuideEdit />
+        </TabsContent>
+
+        <TabsContent value="flow" className="space-y-4 h-full overflow-auto">
+          <EmergencyFlowCreator />
         </TabsContent>
       </Tabs>
     </div>
