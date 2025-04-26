@@ -27,7 +27,7 @@ const EmergencyFlowCreator: React.FC = () => {
   // activeTabは使用しなくなったため削除
   
   // ファイル編集タブ内のサブタブ
-  const [characterDesignTab, setCharacterDesignTab] = useState<string>('new');
+  const [characterDesignTab, setCharacterDesignTab] = useState<string>('flowEditor');
   
   // アップロード関連の状態
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -232,8 +232,8 @@ const EmergencyFlowCreator: React.FC = () => {
             console.log("アップロードで読み込んだフローデータ:", enhancedData);
             setFlowData(enhancedData);
             
-            // 読み込み成功したら、キャラクター編集用に「新規作成」タブに切り替え
-            setCharacterDesignTab('new');
+            // 読み込み成功したら、キャラクター編集用にフローエディタタブに切り替え
+            setCharacterDesignTab('flowEditor');
             setUploadSuccess(true);
             toast({
               title: "JSONファイル読込み成功",
@@ -1229,7 +1229,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                         });
                                     } else {
                                       // IDがない場合は空のフローを生成
-                                      setCharacterDesignTab('new');
+                                      setCharacterDesignTab('flowEditor');
                                       
                                       const emptyFlow = {
                                         id: `flow_${Date.now()}`,
