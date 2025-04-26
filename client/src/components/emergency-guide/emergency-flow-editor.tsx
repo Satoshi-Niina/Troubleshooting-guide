@@ -518,32 +518,34 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row h-[70vh]">
           {/* フローエディタ部分 */}
-          <div className="flex-1 border rounded-md" ref={reactFlowWrapper}>
+          <div className="flex-1 border rounded-md h-full" style={{ height: '80vh', minHeight: '500px' }} ref={reactFlowWrapper}>
             <ReactFlowProvider>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeClick={onNodeClick}
-                onPaneClick={onPaneClick}
-                connectionMode={ConnectionMode.Loose}
-                nodeTypes={nodeTypes}
-                fitView
-                onInit={setReactFlowInstance}
-              >
-                <Background />
-                <Controls />
-                <MiniMap />
-                <Panel position="top-right">
-                  <div className="bg-white p-2 rounded-md shadow-md flex flex-col gap-2">
-                    <Button size="sm" onClick={() => addNode('step')}>ステップ追加</Button>
-                    <Button size="sm" onClick={() => addNode('decision')}>判断追加</Button>
-                    <Button size="sm" onClick={() => addNode('end')}>終了追加</Button>
-                  </div>
-                </Panel>
-              </ReactFlow>
+              <div style={{ width: '100%', height: '100%' }}>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  onNodeClick={onNodeClick}
+                  onPaneClick={onPaneClick}
+                  connectionMode={ConnectionMode.Loose}
+                  nodeTypes={nodeTypes}
+                  fitView
+                  onInit={setReactFlowInstance}
+                >
+                  <Background />
+                  <Controls />
+                  <MiniMap />
+                  <Panel position="top-right">
+                    <div className="bg-white p-2 rounded-md shadow-md flex flex-col gap-2">
+                      <Button size="sm" onClick={() => addNode('step')}>ステップ追加</Button>
+                      <Button size="sm" onClick={() => addNode('decision')}>判断追加</Button>
+                      <Button size="sm" onClick={() => addNode('end')}>終了追加</Button>
+                    </div>
+                  </Panel>
+                </ReactFlow>
+              </div>
             </ReactFlowProvider>
           </div>
           

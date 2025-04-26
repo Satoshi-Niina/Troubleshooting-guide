@@ -1105,7 +1105,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                           
                                           // ステップデータを追加
                                           if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
-                                            troubleshootingData.steps.forEach((step, index) => {
+                                            troubleshootingData.steps.forEach((step: any, index: number) => {
                                               flowNodes.push({
                                                 id: `step_${index + 1}`,
                                                 type: 'step',
@@ -1113,7 +1113,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                                 data: { 
                                                   label: `ステップ ${index + 1}: ${step.title || '手順'}`, 
                                                   message: step.content || '詳細なし'
-                                                }
+                                                } as any
                                               });
                                             });
                                           } else {
@@ -1125,7 +1125,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                               data: { 
                                                 label: `${flow.title || 'ステップ'} 1`, 
                                                 message: `${flow.fileName || '不明'} のデータです。内容を編集してください。` 
-                                              }
+                                              } as any
                                             });
                                           }
                                           
@@ -1191,7 +1191,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                                 data: { 
                                                   label: `エラー: ${flow.title}`, 
                                                   message: `データの取得に失敗しました。\nエラー: ${error.message}` 
-                                                }
+                                                } as any
                                               },
                                               {
                                                 id: 'end',
@@ -1250,7 +1250,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                             data: { 
                                               label: `${flow.title || 'ステップ'} 1`, 
                                               message: `この内容は編集できます。\n\n${flow.fileName || 'unknown'} ファイルのデータです。` 
-                                            }
+                                            } as any
                                           },
                                           {
                                             id: 'end',
