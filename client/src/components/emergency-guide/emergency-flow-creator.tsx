@@ -983,7 +983,7 @@ const EmergencyFlowCreator: React.FC = () => {
               className="hidden"
             />
 
-            {/* 新規作成タブ */}
+            {/* 新規作成タブ - フローチャート作成用のReactFlowコンポーネント */}
             <TabsContent value="new" className="h-full">
               <EmergencyFlowEditor 
                 onSave={handleSaveFlow}
@@ -991,7 +991,7 @@ const EmergencyFlowCreator: React.FC = () => {
                 initialData={flowData ? {
                   ...flowData,
                   id: flowData.id || undefined,
-                  title: flowData.title || '',
+                  title: flowData.title || '新規応急処置フロー',
                   description: flowData.description || '',
                   fileName: uploadedFileName || flowData.fileName || '',
                   nodes: Array.isArray(flowData.nodes) ? flowData.nodes : [],
