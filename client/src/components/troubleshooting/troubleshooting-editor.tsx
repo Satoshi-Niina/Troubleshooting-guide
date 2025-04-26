@@ -1023,9 +1023,9 @@ const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
             {/* プレビュータブ */}
             <TabsContent value="preview" className="space-y-4">
               <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                <h3 className="font-medium mb-2 text-blue-700">プレビューとは</h3>
+                <h3 className="font-medium mb-2 text-blue-700">プレビュー表示</h3>
                 <p className="text-sm text-blue-700 mb-2">
-                  このフローがユーザーにどのように表示されるかをプレビューできます。実際の表示とは若干異なる場合があります。
+                  現在編集中の内容を実際のフロー表示としてプレビューできます。編集内容はリアルタイムに反映されます。
                 </p>
               </div>
               
