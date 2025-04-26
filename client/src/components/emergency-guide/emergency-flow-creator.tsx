@@ -1102,7 +1102,7 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
               </TabsTrigger>
               <TabsTrigger value="file">
                 <FolderOpen className="mr-2 h-4 w-4" />
-                ファイル編集
+                キャラクター編集
               </TabsTrigger>
             </TabsList>
             
