@@ -230,6 +230,10 @@ interface EmergencyFlowEditorProps {
 
 const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel, initialData }) => {
   const { toast } = useToast();
+  
+  // デバッグ: 初期データをコンソールに表示
+  console.log("EmergencyFlowEditor - 受け取った初期データ:", initialData);
+  
   // 初期データからノードを取得または初期値を使用
   const nodesToUse = Array.isArray(initialData?.nodes) && initialData.nodes.length > 0 
     ? initialData.nodes 
@@ -239,6 +243,9 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   const edgesToUse = Array.isArray(initialData?.edges) && initialData.edges.length > 0
     ? initialData.edges
     : initialEdges;
+    
+  console.log("EmergencyFlowEditor - 使用するノード:", nodesToUse);
+  console.log("EmergencyFlowEditor - 使用するエッジ:", edgesToUse);
   
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesToUse);
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgesToUse);

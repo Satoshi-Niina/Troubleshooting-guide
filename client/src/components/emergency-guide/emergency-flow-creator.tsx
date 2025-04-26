@@ -692,6 +692,24 @@ const EmergencyFlowCreator: React.FC = () => {
     // フローデータを設定
     let enhancedData;
     
+    // 入力データの検証
+    console.log("processFlowData - 入力データ:", jsonData);
+    
+    if (!jsonData) {
+      console.error("processFlowData - 無効な入力データ:", jsonData);
+      return {
+        title: '無効なデータ',
+        description: 'データが正しく読み込めませんでした',
+        nodes: [{
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }],
+        edges: []
+      };
+    }
+    
     // slidesフィールドがある場合は、スライドデータからノードを生成
     if (jsonData.slides && jsonData.slides.length > 0) {
       // スライドデータからノードとエッジを生成
@@ -773,15 +791,30 @@ const EmergencyFlowCreator: React.FC = () => {
   // 特定のフローを読み込む
   const loadFlow = async (id: string) => {
     try {
+      console.log(`フローデータの取得開始: ID=${id}`);
       const response = await fetch(`/api/emergency-guide/detail/${id}`);
       
       if (!response.ok) {
+        console.error(`API応答エラー: ${response.status} ${response.statusText}`);
         throw new Error('フローデータの取得に失敗しました');
       }
       
       const data = await response.json();
+      console.log("APIからの応答データ:", data);
+      
+      // データ構造を確認
+      if (!data || !data.data) {
+        console.error("応答データが無効です:", data);
+        toast({
+          title: "データエラー",
+          description: "フローデータの形式が無効です",
+          variant: "destructive"
+        });
+        return;
+      }
       
       // フローデータを処理
+      console.log("処理前のデータ:", data.data);
       const enhancedData = processFlowData(data.data);
       
       console.log("APIから読み込んだフローデータ:", enhancedData);
@@ -818,17 +851,38 @@ const EmergencyFlowCreator: React.FC = () => {
         fileName: enhancedData.fileName || 'flow.json'
       };
       
-      // フローデータに適用
-      setFlowData({
+      // 設定するデータをログに出力して確認
+      const finalFlowData = {
         ...enhancedData,
         ...flowMetadata,
         // 各キャラクターに適したノードとエッジを含むことを確認
         nodes: [...(enhancedData.nodes || [])],
         edges: [...(enhancedData.edges || [])]
-      });
+      };
+      
+      console.log("設定するフローデータ:", finalFlowData);
+      
+      // ノードとエッジが存在することを確認
+      if (!finalFlowData.nodes || finalFlowData.nodes.length === 0) {
+        console.warn("ノードデータが存在しません。デフォルトノードを追加します。");
+        finalFlowData.nodes = [{
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }];
+      }
+      
+      // フローデータに適用
+      setFlowData(finalFlowData);
       
       // ファイル名を設定
       setUploadedFileName(flowMetadata.fileName);
+      
+      console.log("設定完了:", {
+        flowData: finalFlowData,
+        fileName: flowMetadata.fileName
+      });
       
       // データを読み込み、「新規作成」タブに切り替えてキャラクターを編集できるようにする
       setCharacterDesignTab('new');
