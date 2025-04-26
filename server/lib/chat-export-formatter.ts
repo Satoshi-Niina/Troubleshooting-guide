@@ -200,29 +200,82 @@ ${messages.slice(0, 10).map(m => m.content).join('\n')}
     // コンテンツ内の画像パスを検出
     let updatedContent = message.content;
     
-    // 画像パスを正規表現で抽出
-    const imagePathRegex = /\/knowledge-base\/images\/[^)\s"'\n]+\.(svg|png|jpg|jpeg)/g;
+    // 画像パスを正規表現で抽出 - パターンを拡張して相対パスと絶対パスの両方に対応
+    const imagePathRegex = /(\/|\.\/)?(knowledge-base|public)\/images\/[^)\s"'\n]+\.(svg|png|jpg|jpeg)/g;
     const imagePaths = message.content.match(imagePathRegex) || [];
+    
+    console.log(`メッセージID ${message.id}: ${imagePaths.length}個の画像パスを検出`);
     
     // Base64エンコードした画像データを保持するマップ
     const base64Images: Record<string, string> = {};
     
+    // プロジェクトのルートディレクトリを基準とする絶対パスを取得する関数
+    const resolveImagePath = (imgPath: string): string => {
+      // パスが / で始まる場合は、プロジェクトルートからの絶対パスとして扱う
+      if (imgPath.startsWith('/')) {
+        return path.join(process.cwd(), imgPath.substring(1));
+      }
+      
+      // ./ で始まる場合も同様
+      if (imgPath.startsWith('./')) {
+        return path.join(process.cwd(), imgPath.substring(2));
+      }
+      
+      // それ以外は、相対パスとしてそのままプロジェクトルートから解決
+      return path.join(process.cwd(), imgPath);
+    };
+    
     // 画像をBase64エンコード
     for (const imagePath of imagePaths) {
       try {
+        // 画像ファイルのパスを絶対パスに解決
+        const resolvedPath = resolveImagePath(imagePath);
+        console.log(`画像パス変換: ${imagePath} -> ${resolvedPath}`);
+        
         // 画像ファイルが存在するか確認
-        if (fs.existsSync(imagePath)) {
+        if (fs.existsSync(resolvedPath)) {
+          console.log(`画像ファイルを読み込み中: ${resolvedPath}`);
           // 画像をBase64にエンコード
-          const imageBuffer = fs.readFileSync(imagePath);
-          const extension = path.extname(imagePath).toLowerCase().slice(1);
+          const imageBuffer = fs.readFileSync(resolvedPath);
+          const extension = path.extname(resolvedPath).toLowerCase().slice(1);
           const mimeType = extension === 'svg' ? 'image/svg+xml' : 
                           extension === 'png' ? 'image/png' : 
                           extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
           
           const base64Data = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+          console.log(`画像 ${imagePath} をBase64にエンコードしました (${imageBuffer.length} バイト)`);
           
           // マップに追加
           base64Images[imagePath] = base64Data;
+        } else {
+          // ファイルが存在しない場合の代替パスを試す（knowledgeベースとpublicディレクトリの両方を試す）
+          const alternativePaths = [
+            path.join(process.cwd(), 'knowledge-base', 'images', path.basename(imagePath)),
+            path.join(process.cwd(), 'public', 'images', path.basename(imagePath))
+          ];
+          
+          let found = false;
+          for (const altPath of alternativePaths) {
+            console.log(`代替パスを確認中: ${altPath}`);
+            if (fs.existsSync(altPath)) {
+              const imageBuffer = fs.readFileSync(altPath);
+              const extension = path.extname(altPath).toLowerCase().slice(1);
+              const mimeType = extension === 'svg' ? 'image/svg+xml' : 
+                             extension === 'png' ? 'image/png' : 
+                             extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+              
+              const base64Data = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+              console.log(`代替パス ${altPath} を使用して画像をエンコードしました (${imageBuffer.length} バイト)`);
+              
+              base64Images[imagePath] = base64Data;
+              found = true;
+              break;
+            }
+          }
+          
+          if (!found) {
+            console.warn(`警告: 画像ファイルが見つかりません: ${imagePath}`);
+          }
         }
       } catch (error) {
         console.error(`画像 ${imagePath} のBase64エンコード中にエラーが発生しました:`, error);
@@ -232,18 +285,54 @@ ${messages.slice(0, 10).map(m => m.content).join('\n')}
     // メディア情報も画像をBase64エンコード
     const encodedMedia = (messageMedia[message.id] || []).map(media => {
       // mediaが画像パスを含む場合、Base64エンコード
-      if (media.type === 'image' && media.url && fs.existsSync(media.url)) {
+      if (media.type === 'image' && media.url) {
         try {
-          const imageBuffer = fs.readFileSync(media.url);
-          const extension = path.extname(media.url).toLowerCase().slice(1);
-          const mimeType = extension === 'svg' ? 'image/svg+xml' : 
-                          extension === 'png' ? 'image/png' : 
-                          extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+          // 画像パスの解決
+          const resolvedPath = resolveImagePath(media.url);
+          console.log(`メディア画像パス変換: ${media.url} -> ${resolvedPath}`);
           
-          return {
-            ...media,
-            url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
-          };
+          // 画像ファイルの存在チェック
+          if (fs.existsSync(resolvedPath)) {
+            console.log(`メディア画像を読み込み中: ${resolvedPath}`);
+            const imageBuffer = fs.readFileSync(resolvedPath);
+            const extension = path.extname(resolvedPath).toLowerCase().slice(1);
+            const mimeType = extension === 'svg' ? 'image/svg+xml' : 
+                           extension === 'png' ? 'image/png' : 
+                           extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+            
+            console.log(`メディア画像をBase64エンコードしました (${imageBuffer.length} バイト)`);
+            return {
+              ...media,
+              url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
+            };
+          } else {
+            // 代替パスを試す
+            const alternativePaths = [
+              path.join(process.cwd(), 'knowledge-base', 'images', path.basename(media.url)),
+              path.join(process.cwd(), 'public', 'images', path.basename(media.url)),
+              path.join(process.cwd(), 'uploads', path.basename(media.url))
+            ];
+            
+            for (const altPath of alternativePaths) {
+              console.log(`メディア代替パスを確認中: ${altPath}`);
+              if (fs.existsSync(altPath)) {
+                const imageBuffer = fs.readFileSync(altPath);
+                const extension = path.extname(altPath).toLowerCase().slice(1);
+                const mimeType = extension === 'svg' ? 'image/svg+xml' : 
+                               extension === 'png' ? 'image/png' : 
+                               extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+                
+                console.log(`代替パス ${altPath} を使用してメディア画像をエンコードしました (${imageBuffer.length} バイト)`);
+                return {
+                  ...media,
+                  url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
+                };
+              }
+            }
+            
+            console.warn(`警告: メディア画像ファイルが見つかりません: ${media.url}`);
+            return media;
+          }
         } catch (error) {
           console.error(`メディア画像 ${media.url} のエンコード中にエラーが発生しました:`, error);
           return media;
