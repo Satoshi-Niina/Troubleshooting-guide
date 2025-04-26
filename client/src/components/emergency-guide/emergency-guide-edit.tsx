@@ -771,10 +771,11 @@ const EmergencyGuideEdit: React.FC = () => {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="metadata" className="w-full">
-                <TabsList className="grid grid-cols-3 mb-4">
+                <TabsList className="grid grid-cols-4 mb-4">
                   <TabsTrigger value="metadata">メタデータ</TabsTrigger>
                   <TabsTrigger value="slides">スライド内容</TabsTrigger>
                   <TabsTrigger value="connections">接続番号</TabsTrigger>
+                  <TabsTrigger value="preview">プレビュー</TabsTrigger>
                 </TabsList>
                 
                 {/* メタデータタブ */}
@@ -960,6 +961,77 @@ const EmergencyGuideEdit: React.FC = () => {
                         </TableBody>
                       </Table>
                     )}
+                  </div>
+                </TabsContent>
+                
+                {/* プレビュータブ - 現在編集中の内容を表示 */}
+                <TabsContent value="preview">
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                      <h3 className="font-medium mb-2 text-blue-700">プレビュー表示</h3>
+                      <p className="text-sm text-blue-700">
+                        {isEditing ? "現在編集中の内容をプレビュー表示しています。" : "保存されている内容を表示しています。"}
+                        編集内容はリアルタイムに反映されます。
+                      </p>
+                    </div>
+                    
+                    <Card className="border-green-200">
+                      <CardHeader className="bg-green-50 rounded-t-lg">
+                        <CardTitle>
+                          {isEditing ? editedGuideData?.metadata.タイトル : guideData?.data.metadata.タイトル || "タイトルなし"}
+                        </CardTitle>
+                        <CardDescription>
+                          作成者: {isEditing ? editedGuideData?.metadata.作成者 : guideData?.data.metadata.作成者 || "不明"}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-4">
+                        <div className="prose max-w-none">
+                          <h3 className="text-lg font-medium mb-2">概要</h3>
+                          <p className="whitespace-pre-line mb-4">
+                            {isEditing ? editedGuideData?.metadata.説明 : guideData?.data.metadata.説明 || "説明はありません"}
+                          </p>
+                          
+                          <h3 className="text-lg font-medium mt-6 mb-2">スライド内容</h3>
+                          <div className="space-y-6">
+                            {(isEditing ? editedGuideData?.slides : guideData?.data.slides || []).map((slide: any, idx: number) => (
+                              <div key={idx} className="border rounded-lg p-4 bg-gray-50">
+                                <h4 className="text-lg font-bold mb-2">
+                                  {slide.スライド番号}. {slide.タイトル}
+                                </h4>
+                                
+                                {slide.本文.map((text: string, textIdx: number) => (
+                                  <p key={textIdx} className="mb-2 whitespace-pre-line">
+                                    {text}
+                                  </p>
+                                ))}
+                                
+                                {slide.ノート && (
+                                  <div className="mt-3 p-2 bg-yellow-50 rounded border border-yellow-200">
+                                    <h5 className="text-sm font-medium text-yellow-800 mb-1">ノート:</h5>
+                                    <p className="text-sm text-yellow-800 whitespace-pre-line">{slide.ノート}</p>
+                                  </div>
+                                )}
+                                
+                                {slide.画像テキスト && slide.画像テキスト.length > 0 && (
+                                  <div className="mt-4 grid grid-cols-2 gap-4">
+                                    {slide.画像テキスト.map((imgText: any, imgIdx: number) => (
+                                      <div key={imgIdx} className="flex flex-col items-center">
+                                        <img 
+                                          src={imgText.画像パス} 
+                                          alt={`スライド${slide.スライド番号}の画像${imgIdx + 1}`}
+                                          className="max-w-full h-auto rounded"
+                                        />
+                                        <p className="text-sm text-center mt-1">{imgText.テキスト}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
               </Tabs>
