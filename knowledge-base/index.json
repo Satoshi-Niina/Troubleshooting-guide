@@ -14,55 +14,13 @@
       "fileName": "mc_1745232652990_metadata.json"
     },
     {
-      "id": "mc_1745232661309",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745232661309_metadata.json",
-      "fileName": "mc_1745232661309_metadata.json"
-    },
-    {
-      "id": "mc_1745232661505",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745232661505_metadata.json",
-      "fileName": "mc_1745232661505_metadata.json"
-    },
-    {
-      "id": "mc_1745233987873",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745233987873_metadata.json",
-      "fileName": "mc_1745233987873_metadata.json"
-    },
-    {
-      "id": "mc_1745233997677",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745233997677_metadata.json",
-      "fileName": "mc_1745233997677_metadata.json"
-    },
-    {
-      "id": "mc_1745233997798",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745233997798_metadata.json",
-      "fileName": "mc_1745233997798_metadata.json"
-    },
-    {
-      "id": "mc_1745235520001",
-      "title": "MC応急処置（画像検索用サンプル）_1745235518977.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745235520001_metadata.json",
-      "fileName": "mc_1745235520001_metadata.json"
-    },
-    {
-      "id": "mc_1745235775812",
-      "title": "MC応急処置（画像検索用サンプル）_1745235774370.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745235775812_metadata.json",
-      "fileName": "mc_1745235775812_metadata.json"
-    },
-    {
       "id": "mc_1745235933176",
       "title": "MC応急処置（画像検索用サンプル）_1745235925869.pptx",
       "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745235933176_metadata.json",
       "fileName": "mc_1745235933176_metadata.json"
     }
   ],
-  "fileCount": 10,
+  "fileCount": 3,
   "documents": [
     {
       "id": "doc_1745309609889_255",
@@ -87,62 +45,6 @@
       "type": "image_search_data",
       "chunkCount": 1,
       "addedAt": "2025-04-21T10:50:53.133Z"
-    },
-    {
-      "id": "mc_1745232661309",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745232661309_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T10:51:01.497Z"
-    },
-    {
-      "id": "mc_1745232661505",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745232661505_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T10:51:01.826Z"
-    },
-    {
-      "id": "mc_1745233987873",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745233987873_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T11:13:08.007Z"
-    },
-    {
-      "id": "mc_1745233997677",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745233997677_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T11:13:17.787Z"
-    },
-    {
-      "id": "mc_1745233997798",
-      "title": "MC応急処置（画像検索用サンプル）_1745233986839.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745233997798_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T11:13:17.890Z"
-    },
-    {
-      "id": "mc_1745235520001",
-      "title": "MC応急処置（画像検索用サンプル）_1745235518977.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745235520001_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T11:38:40.169Z"
-    },
-    {
-      "id": "mc_1745235775812",
-      "title": "MC応急処置（画像検索用サンプル）_1745235774370.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745235775812_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T11:42:55.930Z"
     }
   ]
 }
