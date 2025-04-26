@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, memo } from 'react';
+import React, { useState, useCallback, useRef, memo, useEffect } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -281,12 +281,33 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   const [flowDescription, setFlowDescription] = useState<string>(defaultDescription);
   const [fileName, setFileName] = useState<string>(defaultFileName);
   
+  // initialDataの変更を監視して状態を更新
+  useEffect(() => {
+    console.log("initialData変更を検出");
+    if (initialData) {
+      if (initialData.title) {
+        setFlowTitle(initialData.title);
+      }
+      if (initialData.description) {
+        setFlowDescription(initialData.description);
+      }
+      if (initialData.fileName) {
+        setFileName(initialData.fileName);
+      }
+    }
+  }, [initialData]);
+  
   // ノードドラッグ参照
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   
   // フローID
-  const [flowId, setFlowId] = useState<string>(initialData?.id || `flow_${Date.now()}`);
+  const [flowId, setFlowId] = useState<string>(() => {
+    if (initialData?.id) {
+      return initialData.id;
+    }
+    return `flow_${Date.now()}`;
+  });
 
   // 接続処理
   const onConnect = useCallback((connection: Connection) => {
