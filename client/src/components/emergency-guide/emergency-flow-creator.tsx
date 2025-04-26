@@ -1072,63 +1072,58 @@ const EmergencyFlowCreator: React.FC = () => {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => {
-                                    // 完全に新規のデータ構造を使う（APIに依存しない）
-                                    const uniqueId = `flow_${Date.now()}`;
-                                    const testData = {
-                                      id: uniqueId,
-                                      title: flow.title || '応急処置フロー',
-                                      description: flow.description || '',
-                                      fileName: flow.fileName || 'flow.json',
-                                      nodes: [
-                                        {
-                                          id: 'start',
-                                          type: 'start',
-                                          position: { x: 250, y: 50 },
-                                          data: { label: '開始' }
-                                        },
-                                        {
-                                          id: 'step_1',
-                                          type: 'step',
-                                          position: { x: 250, y: 150 },
-                                          data: { 
-                                            label: `${flow.title} ステップ 1`, 
-                                            message: `${flow.fileName || 'デフォルト'} ファイルから読み込んだステップ内容です。\n\nここをクリックして内容を編集できます。` 
-                                          }
-                                        },
-                                        {
-                                          id: 'end',
-                                          type: 'end',
-                                          position: { x: 250, y: 250 },
-                                          data: { label: '終了' }
-                                        }
-                                      ],
-                                      edges: [
-                                        {
-                                          id: 'edge-start-step_1',
-                                          source: 'start',
-                                          target: 'step_1',
-                                          animated: true,
-                                          type: 'smoothstep'
-                                        },
-                                        {
-                                          id: 'edge-step_1-end',
-                                          source: 'step_1',
-                                          target: 'end',
-                                          animated: true,
-                                          type: 'smoothstep'
-                                        }
-                                      ]
-                                    };
+                                    // 完全に新規のデータ構造を使う（APIに依存しない）- 超簡略版
+                                    console.log("編集ボタンが押されました。対象フロー:", flow);
                                     
-                                    console.log("直接設定するテストデータ:", testData);
-                                    setFlowData(testData);
-                                    setUploadedFileName(flow.fileName || 'flow.json');
+                                    // タブ変更を先に行う
                                     setCharacterDesignTab('new');
                                     
-                                    toast({
-                                      title: "フロー読込み完了",
-                                      description: "テストデータをエディタで表示します",
-                                    });
+                                    // 最小限の初期データを設定（少し遅延させる）
+                                    setTimeout(() => {
+                                      // 新しい唯一のIDを生成
+                                      const uniqueId = `flow_${Date.now()}`;
+                                      const minimalData = {
+                                        id: uniqueId,
+                                        title: flow.title || 'フロー' + uniqueId.slice(-4),
+                                        description: "このフローは編集ボタンから読み込まれました。",
+                                        fileName: flow.fileName || 'test.json',
+                                        nodes: [
+                                          {
+                                            id: 'start',
+                                            type: 'start',
+                                            position: { x: 250, y: 50 },
+                                            data: { label: '開始' }
+                                          },
+                                          {
+                                            id: 'step_1',
+                                            type: 'step',
+                                            position: { x: 250, y: 150 },
+                                            data: { 
+                                              label: `${flow.title || 'ステップ'} 1`, 
+                                              message: `この内容は編集できます。\n\n${flow.fileName || 'unknown'} ファイルのデータです。` 
+                                            }
+                                          }
+                                        ],
+                                        edges: [
+                                          {
+                                            id: 'edge-start-step_1',
+                                            source: 'start',
+                                            target: 'step_1',
+                                            animated: true,
+                                            type: 'smoothstep'
+                                          }
+                                        ]
+                                      };
+                                      
+                                      console.log("★★★ データを直接設定します:", minimalData);
+                                      setFlowData(minimalData);
+                                      setUploadedFileName(flow.fileName || 'test.json');
+                                      
+                                      toast({
+                                        title: "データ設定完了",
+                                        description: "編集可能なフローを初期化しました",
+                                      });
+                                    }, 100);
                                   }}
                                 >
                                   <Edit3 className="mr-2 h-3 w-3" />
