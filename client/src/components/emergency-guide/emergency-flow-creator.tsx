@@ -1080,7 +1080,7 @@ const EmergencyFlowCreator: React.FC = () => {
                                       console.log(`トラブルシューティングID: ${flow.id}を読み込み中...`);
                                       
                                       // 既存ロード関数を実行しつつ、タブ変更を先にトリガー
-                                      setCharacterDesignTab('new');
+                                      setCharacterDesignTab('flowEditor');
                                       
                                       // トラブルシューティングデータをロード
                                       fetch(`/api/troubleshooting/detail/${flow.id.replace('ts_', '')}`)
