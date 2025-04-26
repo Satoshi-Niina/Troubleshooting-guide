@@ -15,7 +15,8 @@ import ReactFlow, {
   ReactFlowProvider,
   Handle,
   Position,
-  NodeProps
+  NodeProps,
+  MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Save, X, Check, Trash, Copy, Download } from 'lucide-react';
+import { Plus, Save, X, Check, Trash, Copy, Download, ArrowDown } from 'lucide-react';
 
 // カスタムノードコンポーネント定義
 const StartNode = memo(({ data }: NodeProps) => {
@@ -375,7 +376,7 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     });
   }, [selectedNode, setNodes]);
   
-  // 選択中のノードを削除
+  // 選択中のノードを削除する関数
   const deleteSelectedNode = useCallback(() => {
     if (!selectedNode) return;
     
