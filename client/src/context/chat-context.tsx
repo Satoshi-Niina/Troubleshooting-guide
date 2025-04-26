@@ -581,6 +581,43 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
   
+  // 外部AI分析システム向けにフォーマット済みデータを取得する関数
+  const exportFormattedData = async (): Promise<object> => {
+    if (!chatId) {
+      throw new Error('チャットが初期化されていません');
+    }
+    
+    try {
+      // フォーマット済みデータを取得するAPIを呼び出し
+      const response = await apiRequest(
+        'GET', 
+        `/api/chats/${chatId}/export-formatted`
+      );
+      
+      if (!response.ok) {
+        throw new Error('フォーマット済みデータの取得に失敗しました');
+      }
+      
+      const formattedData = await response.json();
+      
+      // 成功トースト通知
+      toast({
+        title: 'データを取得しました',
+        description: '外部システム向けのフォーマット済みデータを取得しました。',
+      });
+      
+      return formattedData;
+    } catch (error) {
+      console.error('Error exporting formatted data:', error);
+      toast({
+        title: 'データ取得エラー',
+        description: '外部システム向けデータの取得に失敗しました。',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+  
   // 最後のエクスポート履歴を取得
   const fetchLastExport = useCallback(async () => {
     if (!chatId) return;
@@ -981,6 +1018,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearSearchResults,
         captureImage,
         exportChatHistory,
+        exportFormattedData,
         lastExportTimestamp,
         isExporting,
         hasUnexportedMessages,
