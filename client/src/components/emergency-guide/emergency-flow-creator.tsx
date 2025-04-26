@@ -1024,13 +1024,13 @@ const EmergencyFlowCreator: React.FC = () => {
                         この機能は現在作成中です
                       </p>
                       <p className="text-xs text-yellow-700 mt-1">
-                        ファイル編集機能は準備中です。現在は保存済みファイルの管理のみ利用可能です。
+                        キャラクター編集機能は準備中です。現在は保存済みキャラクターの管理のみ利用可能です。
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                {/* 保存済みファイル一覧 */}
+                {/* 保存済みキャラクター一覧 */}
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium">保存データ一覧</h3>
