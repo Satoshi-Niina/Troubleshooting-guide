@@ -625,20 +625,22 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
                     />
                   </div>
                   
-                  {/* フロー情報プレビュー - リアルタイム更新 */}
-                  {(flowTitle || flowDescription) && (
-                    <div className="mt-4 border rounded-lg p-3 bg-slate-50">
-                      <div className="text-xs text-blue-600 mb-2">プレビュー（リアルタイム更新）</div>
-                      {flowTitle && (
-                        <h3 className="font-bold mb-1">{flowTitle}</h3>
-                      )}
-                      {flowDescription && (
-                        <p className="whitespace-pre-line text-gray-700 text-sm">
-                          {flowDescription}
-                        </p>
-                      )}
+                  <div className="my-4">
+                    <h3 className="text-sm font-medium mb-2">ファイル情報</h3>
+                    <div className="bg-gray-100 p-2 rounded text-sm">
+                      <p><span className="font-medium">ID:</span> {flowId}</p>
+                      <p><span className="font-medium">ファイル:</span> {fileName || '未設定'}</p>
                     </div>
-                  )}
+                  </div>
+                  
+                  {/* フロー情報プレビュー - 常に表示 */}
+                  <div className="mt-4 border rounded-lg p-3 bg-slate-50">
+                    <div className="text-xs text-blue-600 mb-2">プレビュー（リアルタイム更新）</div>
+                    <h3 className="font-bold mb-1">{flowTitle || '(タイトル未設定)'}</h3>
+                    <p className="whitespace-pre-line text-gray-700 text-sm">
+                      {flowDescription || '(説明はありません)'}
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>

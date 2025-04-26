@@ -1072,9 +1072,10 @@ const EmergencyFlowCreator: React.FC = () => {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => {
-                                    // 直接ステップを追加したテストデータを使用
+                                    // 完全に新規のデータ構造を使う（APIに依存しない）
+                                    const uniqueId = `flow_${Date.now()}`;
                                     const testData = {
-                                      id: flow.id,
+                                      id: uniqueId,
                                       title: flow.title || '応急処置フロー',
                                       description: flow.description || '',
                                       fileName: flow.fileName || 'flow.json',
@@ -1090,8 +1091,8 @@ const EmergencyFlowCreator: React.FC = () => {
                                           type: 'step',
                                           position: { x: 250, y: 150 },
                                           data: { 
-                                            label: 'ステップ 1', 
-                                            message: 'この手順を実行してください。' 
+                                            label: `${flow.title} ステップ 1`, 
+                                            message: `${flow.fileName || 'デフォルト'} ファイルから読み込んだステップ内容です。\n\nここをクリックして内容を編集できます。` 
                                           }
                                         },
                                         {
