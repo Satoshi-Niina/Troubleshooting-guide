@@ -115,7 +115,7 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
           console.log("URL指定された初期ガイドIDからデータ取得:", troubleshootingData);
           
           // ノードとエッジデータを構築
-          const { nodes, edges } = generateFlowDataFromTroubleshooting(troubleshootingData);
+          const { nodes, edges } = troubleshootingToFlowData(troubleshootingData);
           
           // 最終データを構築
           const flowData = {
@@ -738,12 +738,90 @@ const EmergencyFlowCreator: React.FC<EmergencyFlowCreatorProps> = ({ initialGuid
     });
     // ファイル名も必ずリセット
     setUploadedFileName('');
-    setCharacterDesignTab('new');
     
-    toast({
-      title: "新規作成",
-      description: "新しいフローを作成できます",
+    // 新規作成タブに切り替え
+    setCharacterDesignTab('new');
+  };
+  
+  /**
+   * トラブルシューティングデータからノードとエッジを生成する関数
+   * @param troubleshootingData トラブルシューティングデータ
+   * @returns 生成されたノードとエッジ
+   */
+  const troubleshootingToFlowData = (troubleshootingData: any) => {
+    if (!troubleshootingData) {
+      console.error("troubleshootingToFlowData - データがありません");
+      return { 
+        nodes: [{
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }], 
+        edges: [] 
+      };
+    }
+    
+    console.log("troubleshootingToFlowData - 入力データ:", troubleshootingData);
+    
+    // 基本ノードを作成（開始ノード）
+    const nodes = [
+      {
+        id: 'start',
+        type: 'start',
+        position: { x: 250, y: 50 },
+        data: { label: '開始' }
+      }
+    ];
+    
+    // ステップデータがある場合はそれらを追加
+    if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
+      troubleshootingData.steps.forEach((step: any, index: number) => {
+        nodes.push({
+          id: `step_${index + 1}`,
+          type: 'step',
+          position: { x: 250, y: 150 + (index * 100) },
+          data: { 
+            label: `ステップ ${index + 1}: ${step.title || '手順'}`, 
+            content: step.content || '詳細なし'
+          }
+        });
+      });
+    } else {
+      // ステップがない場合はデフォルトステップを追加
+      nodes.push({
+        id: 'step_1',
+        type: 'step',
+        position: { x: 250, y: 150 },
+        data: { 
+          label: `${troubleshootingData.title || 'ステップ'} 1`, 
+          content: `${troubleshootingData.fileName || '不明'} のデータです。内容を編集してください。` 
+        }
+      });
+    }
+    
+    // 終了ノードを追加
+    nodes.push({
+      id: 'end',
+      type: 'end',
+      position: { x: 250, y: 250 + ((nodes.length-2) * 100) },
+      data: { label: '終了' }
     });
+    
+    // エッジを生成
+    const edges = [];
+    for (let i = 0; i < nodes.length - 1; i++) {
+      edges.push({
+        id: `edge-${nodes[i].id}-${nodes[i+1].id}`,
+        source: nodes[i].id,
+        target: nodes[i+1].id,
+        animated: true,
+        type: 'smoothstep'
+      });
+    }
+    
+    console.log("troubleshootingToFlowData - 生成結果:", { nodes, edges });
+    return { nodes, edges };
   };
   
   // キャラクター削除確認ダイアログを表示
