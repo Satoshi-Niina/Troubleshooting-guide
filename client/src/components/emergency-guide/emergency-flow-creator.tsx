@@ -1072,7 +1072,62 @@ const EmergencyFlowCreator: React.FC = () => {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => {
-                                    loadFlow(flow.id); // loadFlow内で既にsetCharacterDesignTab('new')を実行している
+                                    // 直接ステップを追加したテストデータを使用
+                                    const testData = {
+                                      id: flow.id,
+                                      title: flow.title || '応急処置フロー',
+                                      description: flow.description || '',
+                                      fileName: flow.fileName || 'flow.json',
+                                      nodes: [
+                                        {
+                                          id: 'start',
+                                          type: 'start',
+                                          position: { x: 250, y: 50 },
+                                          data: { label: '開始' }
+                                        },
+                                        {
+                                          id: 'step_1',
+                                          type: 'step',
+                                          position: { x: 250, y: 150 },
+                                          data: { 
+                                            label: 'ステップ 1', 
+                                            message: 'この手順を実行してください。' 
+                                          }
+                                        },
+                                        {
+                                          id: 'end',
+                                          type: 'end',
+                                          position: { x: 250, y: 250 },
+                                          data: { label: '終了' }
+                                        }
+                                      ],
+                                      edges: [
+                                        {
+                                          id: 'edge-start-step_1',
+                                          source: 'start',
+                                          target: 'step_1',
+                                          animated: true,
+                                          type: 'smoothstep'
+                                        },
+                                        {
+                                          id: 'edge-step_1-end',
+                                          source: 'step_1',
+                                          target: 'end',
+                                          animated: true,
+                                          type: 'smoothstep'
+                                        }
+                                      ]
+                                    };
+                                    
+                                    console.log("直接設定するテストデータ:", testData);
+                                    setFlowData(testData);
+                                    setUploadedFileName(flow.fileName || 'flow.json');
+                                    setCharacterDesignTab('new');
+                                    
+                                    toast({
+                                      title: "フロー読込み完了",
+                                      description: "テストデータをエディタで表示します",
+                                    });
                                   }}
                                 >
                                   <Edit3 className="mr-2 h-3 w-3" />

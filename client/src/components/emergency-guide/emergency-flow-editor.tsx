@@ -234,15 +234,35 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   // デバッグ: 初期データをコンソールに表示
   console.log("EmergencyFlowEditor - 受け取った初期データ:", initialData);
   
+  console.log("EmergencyFlowEditor - 受け取ったinitialData構造:", {
+    type: typeof initialData,
+    isNull: initialData === null,
+    isUndefined: initialData === undefined,
+    hasNodes: initialData?.nodes !== undefined,
+    hasEdges: initialData?.edges !== undefined,
+    nodeCount: Array.isArray(initialData?.nodes) ? initialData.nodes.length : 0,
+    edgeCount: Array.isArray(initialData?.edges) ? initialData.edges.length : 0,
+  });
+  
   // 初期データからノードを取得または初期値を使用
-  const nodesToUse = Array.isArray(initialData?.nodes) && initialData.nodes.length > 0 
-    ? initialData.nodes 
-    : initialNodes;
+  let nodesToUse;
+  if (Array.isArray(initialData?.nodes) && initialData.nodes.length > 0) {
+    console.log("既存ノードデータを使用");
+    nodesToUse = initialData.nodes;
+  } else {
+    console.log("デフォルトノードデータを使用");
+    nodesToUse = initialNodes;
+  }
   
   // 初期データからエッジを取得または初期値を使用
-  const edgesToUse = Array.isArray(initialData?.edges) && initialData.edges.length > 0
-    ? initialData.edges
-    : initialEdges;
+  let edgesToUse;
+  if (Array.isArray(initialData?.edges) && initialData.edges.length > 0) {
+    console.log("既存エッジデータを使用");
+    edgesToUse = initialData.edges;
+  } else {
+    console.log("デフォルトエッジデータを使用");
+    edgesToUse = initialEdges;
+  }
     
   console.log("EmergencyFlowEditor - 使用するノード:", nodesToUse);
   console.log("EmergencyFlowEditor - 使用するエッジ:", edgesToUse);
