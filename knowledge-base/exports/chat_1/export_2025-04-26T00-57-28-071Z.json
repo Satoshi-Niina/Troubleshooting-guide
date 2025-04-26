@@ -1,0 +1,51 @@
+{
+  "session_id": 1,
+  "timestamp": "2025-04-26T00:57:28.061Z",
+  "user_id": 1,
+  "device_context": {
+    "detected_models": [],
+    "environment": "車両は安全な場所に停止しており、エンジンに故障が発生しています。",
+    "last_export": "2025-04-26T00:57:26.147Z"
+  },
+  "conversation_history": [
+    {
+      "id": 442,
+      "timestamp": "2025-04-26T00:57:23.917Z",
+      "role": "user",
+      "content": "エンジンに問題があります。",
+      "media": [],
+      "base64_images": {}
+    },
+    {
+      "id": 443,
+      "timestamp": "2025-04-26T00:57:25.569Z",
+      "role": "assistant",
+      "content": "【応急復旧】\n1. 車両を安全な場所に停止させる",
+      "media": [],
+      "base64_images": {}
+    },
+    {
+      "id": 444,
+      "timestamp": "2025-04-26T00:57:25.814Z",
+      "role": "assistant",
+      "content": "**エンジン故障**\n\n確認してください。\n\n**関連画像**: /knowledge-base/images/エンジン_001.svg",
+      "media": [],
+      "base64_images": {}
+    }
+  ],
+  "diagnostics": {
+    "components": [
+      "エンジン"
+    ],
+    "symptoms": [],
+    "possible_models": [],
+    "primary_problem": "エンジントラブル",
+    "problem_description": "鉄道保守用車両で発生したエンジンの故障。具体的な症状や原因は要調査。"
+  },
+  "metadata": {
+    "message_count": 3,
+    "has_images": false,
+    "extracted_timestamp": "2025-04-26T00:57:28.061Z",
+    "version": "1.0.0"
+  }
+}

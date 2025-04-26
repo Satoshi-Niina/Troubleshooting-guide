@@ -1,5 +1,7 @@
 import { Chat, ChatExport, Message } from '@shared/schema';
 import OpenAI from "openai";
+import fs from 'fs';
+import path from 'path';
 
 // OpenAIクライアントの初期化
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -155,7 +157,9 @@ ${userMessages}
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    // null チェックを追加
+    const content = response.choices[0].message.content || '{"primary_problem":"不明な問題","problem_description":"詳細情報なし"}';
+    const result = JSON.parse(content);
     primaryProblem = result.primary_problem;
     problemDescription = result.problem_description;
   } catch (error) {
@@ -184,20 +188,94 @@ ${messages.slice(0, 10).map(m => m.content).join('\n')}
       messages: [{ role: "user", content: contextPrompt }],
     });
 
-    environmentContext = contextResponse.choices[0].message.content.trim();
+    // null チェックを追加
+    environmentContext = contextResponse.choices[0].message.content?.trim() || '会話内容から環境情報を抽出できませんでした。';
   } catch (error) {
     console.error('環境情報の生成中にエラーが発生しました:', error);
     environmentContext = '会話から環境情報を抽出できませんでした。';
   }
   
-  // 会話の履歴をフォーマット
+  // 会話の履歴をフォーマット（画像をBase64でエンコード）
   const conversationHistory = messages.map(message => {
+    // コンテンツ内の画像パスを検出
+    let updatedContent = message.content;
+    
+    // 画像パスを正規表現で抽出
+    const imagePathRegex = /\/knowledge-base\/images\/[^)\s"'\n]+\.(svg|png|jpg|jpeg)/g;
+    const imagePaths = message.content.match(imagePathRegex) || [];
+    
+    // Base64エンコードした画像データを保持するマップ
+    const base64Images: Record<string, string> = {};
+    
+    // 画像をBase64エンコード
+    for (const imagePath of imagePaths) {
+      try {
+        // 画像ファイルが存在するか確認
+        if (fs.existsSync(imagePath)) {
+          // 画像をBase64にエンコード
+          const imageBuffer = fs.readFileSync(imagePath);
+          const extension = path.extname(imagePath).toLowerCase().slice(1);
+          const mimeType = extension === 'svg' ? 'image/svg+xml' : 
+                          extension === 'png' ? 'image/png' : 
+                          extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+          
+          const base64Data = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+          
+          // マップに追加
+          base64Images[imagePath] = base64Data;
+        }
+      } catch (error) {
+        console.error(`画像 ${imagePath} のBase64エンコード中にエラーが発生しました:`, error);
+      }
+    }
+    
+    // メディア情報も画像をBase64エンコード
+    const encodedMedia = (messageMedia[message.id] || []).map(media => {
+      // mediaが画像パスを含む場合、Base64エンコード
+      if (media.type === 'image' && media.url && fs.existsSync(media.url)) {
+        try {
+          const imageBuffer = fs.readFileSync(media.url);
+          const extension = path.extname(media.url).toLowerCase().slice(1);
+          const mimeType = extension === 'svg' ? 'image/svg+xml' : 
+                          extension === 'png' ? 'image/png' : 
+                          extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
+          
+          return {
+            ...media,
+            url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
+          };
+        } catch (error) {
+          console.error(`メディア画像 ${media.url} のエンコード中にエラーが発生しました:`, error);
+          return media;
+        }
+      }
+      return media;
+    });
+
+    // timestamp の型安全な取得
+    let timestamp: string;
+    try {
+      if (message.timestamp && typeof message.timestamp.toISOString === 'function') {
+        timestamp = message.timestamp.toISOString();
+      // @ts-ignore - createdAtが存在する可能性がある
+      } else if (message.createdAt && typeof message.createdAt.toISOString === 'function') {
+        // @ts-ignore
+        timestamp = message.createdAt.toISOString();
+      } else {
+        timestamp = new Date().toISOString(); // フォールバック
+      }
+    } catch (error) {
+      console.warn('タイムスタンプ処理でエラーが発生しました', error);
+      timestamp = new Date().toISOString();
+    }
+
     return {
       id: message.id,
-      timestamp: message.createdAt,
+      timestamp: timestamp,
       role: message.isAiResponse ? 'assistant' : 'user',
-      content: message.content,
-      media: messageMedia[message.id] || []
+      content: updatedContent,
+      media: encodedMedia,
+      base64_images: base64Images // Base64でエンコードした画像を追加
     };
   });
   

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { readFileSync } from 'fs';
 
 /**
  * エクスポートデータをファイルシステムに保存するための管理クラス
