@@ -244,31 +244,9 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     edgeCount: Array.isArray(initialData?.edges) ? initialData.edges.length : 0,
   });
   
-  // 初期データからノードを取得または初期値を使用
-  let nodesToUse;
-  if (Array.isArray(initialData?.nodes) && initialData.nodes.length > 0) {
-    console.log("既存ノードデータを使用");
-    nodesToUse = initialData.nodes;
-  } else {
-    console.log("デフォルトノードデータを使用");
-    nodesToUse = initialNodes;
-  }
-  
-  // 初期データからエッジを取得または初期値を使用
-  let edgesToUse;
-  if (Array.isArray(initialData?.edges) && initialData.edges.length > 0) {
-    console.log("既存エッジデータを使用");
-    edgesToUse = initialData.edges;
-  } else {
-    console.log("デフォルトエッジデータを使用");
-    edgesToUse = initialEdges;
-  }
-    
-  console.log("EmergencyFlowEditor - 使用するノード:", nodesToUse);
-  console.log("EmergencyFlowEditor - 使用するエッジ:", edgesToUse);
-  
-  const [nodes, setNodes, onNodesChange] = useNodesState(nodesToUse);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(edgesToUse);
+  // 初期値としてデフォルトを使用
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   
   // フロータイトルと説明の初期値
@@ -283,8 +261,10 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
   
   // initialDataの変更を監視して状態を更新
   useEffect(() => {
-    console.log("initialData変更を検出");
+    console.log("★★★ initialData変更を検出:", initialData);
+    
     if (initialData) {
+      // メタデータの更新
       if (initialData.title) {
         setFlowTitle(initialData.title);
       }
@@ -294,8 +274,22 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
       if (initialData.fileName) {
         setFileName(initialData.fileName);
       }
+      if (initialData.id) {
+        setFlowId(initialData.id);
+      }
+      
+      // フローデータの更新
+      if (Array.isArray(initialData.nodes) && initialData.nodes.length > 0) {
+        console.log("★★★ ノードデータを更新:", initialData.nodes);
+        setNodes(initialData.nodes);
+      }
+      
+      if (Array.isArray(initialData.edges) && initialData.edges.length > 0) {
+        console.log("★★★ エッジデータを更新:", initialData.edges);
+        setEdges(initialData.edges);
+      }
     }
-  }, [initialData]);
+  }, [initialData, setNodes, setEdges]);
   
   // ノードドラッグ参照
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
