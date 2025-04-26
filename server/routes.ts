@@ -16,6 +16,7 @@ import {
   listKnowledgeBaseDocuments, 
   removeDocumentFromKnowledgeBase 
 } from './lib/knowledge-base';
+import { formatChatHistoryForExternalSystem } from './lib/chat-export-formatter';
 import techSupportRouter from './routes/tech-support';
 import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
@@ -461,6 +462,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting chat history:", error);
       res.status(500).json({ error: "Failed to export chat history" });
+    }
+  });
+  
+  // 外部AI分析システム向けフォーマット済みデータを取得するAPI
+  app.get("/api/chats/:id/export-formatted", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const chatId = parseInt(req.params.id);
+      
+      // チャット情報を取得
+      const chat = await storage.getChat(chatId);
+      if (!chat) {
+        return res.status(404).json({ message: "Chat not found" });
+      }
+      
+      // アクセス権チェック
+      console.log(`フォーマット済みエクスポート: chatId=${chat.id}, chatUserId=${chat.userId}, sessionUserId=${userId}`);
+      if (chat.userId !== userId && req.session.userRole !== 'admin') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // チャットの全メッセージを取得
+      const messages = await storage.getMessagesForChat(chatId);
+      
+      // メッセージIDごとにメディアを取得
+      const messageMedia: Record<number, any[]> = {};
+      for (const message of messages) {
+        messageMedia[message.id] = await storage.getMediaForMessage(message.id);
+      }
+      
+      // 最新のエクスポート記録を取得
+      const lastExport = await storage.getLastChatExport(chatId);
+      
+      // 外部システム用にフォーマット
+      const formattedData = await formatChatHistoryForExternalSystem(
+        chat,
+        messages,
+        messageMedia,
+        lastExport
+      );
+      
+      res.json(formattedData);
+    } catch (error) {
+      console.error("Error formatting chat for external system:", error);
+      res.status(500).json({ error: "Failed to format chat for external system" });
     }
   });
   

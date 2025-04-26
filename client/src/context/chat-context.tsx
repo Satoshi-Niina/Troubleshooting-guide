@@ -57,6 +57,7 @@ interface ChatContextValue {
   clearSearchResults: () => void;
   captureImage: (imageData: string, type: 'image' | 'video') => Promise<void>;
   exportChatHistory: () => Promise<void>;
+  exportFormattedData: () => Promise<object>;
   lastExportTimestamp: Date | null;
   isExporting: boolean;
   hasUnexportedMessages: boolean;
