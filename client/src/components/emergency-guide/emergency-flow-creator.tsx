@@ -793,19 +793,31 @@ const EmergencyFlowCreator: React.FC = () => {
       const decisionNodes = enhancedData.nodes?.filter((node: any) => node.type === 'decision') || [];
       const endNodes = enhancedData.nodes?.filter((node: any) => node.type === 'end') || [];
       
+      // IDを含めたフルデータをセット
+      const flow = flowList.find(f => f.id === id);
+      const flowMetadata = flow ? {
+        id: flow.id,
+        title: flow.title || 'フロー',
+        description: flow.description || '',
+        fileName: flow.fileName || `${flow.title || 'flow'}.json`
+      } : {
+        id,
+        title: enhancedData.title || 'フロー',
+        description: enhancedData.description || '',
+        fileName: enhancedData.fileName || 'flow.json'
+      };
+      
       // フローデータに適用
       setFlowData({
         ...enhancedData,
+        ...flowMetadata,
         // 各キャラクターに適したノードとエッジを含むことを確認
         nodes: [...(enhancedData.nodes || [])],
         edges: [...(enhancedData.edges || [])]
       });
       
-      // ファイル名を設定（フロー名から）
-      const flow = flowList.find(f => f.id === id);
-      if (flow) {
-        setUploadedFileName(flow.fileName || `${flow.title}.json`);
-      }
+      // ファイル名を設定
+      setUploadedFileName(flowMetadata.fileName);
       
       // データを読み込み、「新規作成」タブに切り替えてキャラクターを編集できるようにする
       setCharacterDesignTab('new');
@@ -892,10 +904,15 @@ const EmergencyFlowCreator: React.FC = () => {
               <EmergencyFlowEditor 
                 onSave={handleSaveFlow}
                 onCancel={handleCancelFlow}
-                initialData={{
+                initialData={flowData ? {
                   ...flowData,
-                  fileName: uploadedFileName || (flowData?.fileName || '')
-                }}
+                  id: flowData.id || undefined,
+                  title: flowData.title || '',
+                  description: flowData.description || '',
+                  fileName: uploadedFileName || flowData.fileName || '',
+                  nodes: flowData.nodes || [],
+                  edges: flowData.edges || []
+                } : undefined}
               />
             </TabsContent>
             
