@@ -57,7 +57,20 @@ const EmergencyGuidePage: React.FC = () => {
     // ここで実際に検索を実行する処理を呼び出す
     console.log(`検索キーワード「${keyword}」がクリックされました`);
     
-    // 例: キーワードをカスタムイベントで通知
+    // 検索を実行
+    executeSearch(keyword);
+  };
+  
+  // 検索を実行する関数
+  const executeSearch = (keyword: string) => {
+    if (!keyword.trim()) return;
+    
+    console.log(`検索実行: 「${keyword}」`);
+    
+    // 編集タブに切り替え（検索結果表示のため）
+    setActiveTab("edit");
+    
+    // キーワードをカスタムイベントで通知
     window.dispatchEvent(new CustomEvent('search-emergency-guide', { 
       detail: { keyword }
     }));
@@ -76,6 +89,39 @@ const EmergencyGuidePage: React.FC = () => {
         <p className="text-gray-600">
           PowerPoint、Excel、PDF、JSONファイルをアップロードして応急処置フローを生成・編集できます。
         </p>
+        
+        {/* 検索フォームとキーワード提案 */}
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="応急処置ガイドを検索..."
+                className="pl-9 bg-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    executeSearch(searchQuery);
+                  }
+                }}
+              />
+            </div>
+            <Button 
+              type="button" 
+              onClick={() => executeSearch(searchQuery)}
+              size="sm"
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Search className="h-4 w-4 mr-1" />
+              検索
+            </Button>
+          </div>
+          <KeywordSuggestions onKeywordClick={handleKeywordClick} />
+        </div>
       </div>
 
       <Tabs

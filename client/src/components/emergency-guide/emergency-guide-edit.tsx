@@ -606,6 +606,46 @@ const EmergencyGuideEdit: React.FC = () => {
     }
   }, [selectedGuideId]);
   
+  // 検索イベントリスナーの設定
+  useEffect(() => {
+    const handleSearchEvent = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.keyword) {
+        const keyword = customEvent.detail.keyword;
+        console.log(`応急処置ガイド編集: 検索キーワード「${keyword}」を受信`);
+        
+        // ガイドファイル一覧から検索
+        const matchingGuides = guideFiles.filter(guide => 
+          guide.title.includes(keyword) || 
+          guide.fileName.includes(keyword)
+        );
+        
+        if (matchingGuides.length > 0) {
+          console.log(`検索結果: ${matchingGuides.length}件のガイドが見つかりました`);
+          // 最初の一致するガイドを選択
+          setSelectedGuideId(matchingGuides[0].id);
+          
+          toast({
+            title: "検索結果",
+            description: `${matchingGuides.length}件のガイドが「${keyword}」に一致しました`,
+          });
+        } else {
+          console.log(`検索結果: 「${keyword}」に一致するガイドは見つかりませんでした`);
+          toast({
+            title: "検索結果なし",
+            description: `「${keyword}」に一致するガイドは見つかりませんでした`,
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    window.addEventListener('search-emergency-guide', handleSearchEvent as EventListener);
+    return () => {
+      window.removeEventListener('search-emergency-guide', handleSearchEvent as EventListener);
+    };
+  }, [guideFiles, toast]);
+  
   // 日付のフォーマット
   const formatDate = (dateString: string) => {
     try {
