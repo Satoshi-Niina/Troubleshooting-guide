@@ -3,7 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmergencyGuideUploader from "@/components/emergency-guide/emergency-guide-uploader";
 import EmergencyGuideEdit from "@/components/emergency-guide/emergency-guide-edit";
 import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-creator";
+import KeywordSuggestions from "@/components/emergency-guide/keyword-suggestions";
 import { Helmet } from "react-helmet";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const EmergencyGuidePage: React.FC = () => {
   // URLからクエリパラメータを取得
@@ -21,6 +24,9 @@ const EmergencyGuidePage: React.FC = () => {
   const [lastUploadedGuideId, setLastUploadedGuideId] = useState<string | null>(
     null,
   );
+  
+  // 検索機能の状態
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // タブ切り替えイベントのリスナー
   useEffect(() => {
@@ -43,6 +49,18 @@ const EmergencyGuidePage: React.FC = () => {
     setLastUploadedGuideId(guideId);
     // アップロード成功後に編集タブに切り替え
     setActiveTab("edit");
+  };
+  
+  // 検索キーワードがクリックされたときのハンドラー
+  const handleKeywordClick = (keyword: string) => {
+    setSearchQuery(keyword);
+    // ここで実際に検索を実行する処理を呼び出す
+    console.log(`検索キーワード「${keyword}」がクリックされました`);
+    
+    // 例: キーワードをカスタムイベントで通知
+    window.dispatchEvent(new CustomEvent('search-emergency-guide', { 
+      detail: { keyword }
+    }));
   };
 
   return (
