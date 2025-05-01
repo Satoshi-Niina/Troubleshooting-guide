@@ -6,6 +6,7 @@ import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-cr
 import KeywordSuggestions from "@/components/emergency-guide/keyword-suggestions";
 import { Helmet } from "react-helmet";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
 const EmergencyGuidePage: React.FC = () => {

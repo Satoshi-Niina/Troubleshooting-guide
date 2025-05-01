@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search, Plus, FileText, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import TroubleshootingEditor from '@/components/troubleshooting/troubleshooting-editor';
 import TroubleshootingFlow from '@/components/troubleshooting/troubleshooting-flow';
+import KeywordButtons from '@/components/troubleshooting/keyword-buttons';
 import {
   Dialog,
   DialogContent,
@@ -267,22 +268,32 @@ const TroubleshootingPage: React.FC = () => {
         </p>
       </div>
       
-      <div className="flex items-center justify-between mb-6">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="トラブルシューティングを検索..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="space-y-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="トラブルシューティングを検索..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
+            />
+          </div>
+          
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            新規作成
+          </Button>
         </div>
         
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          新規作成
-        </Button>
+        {/* 代表的な検索キーワードボタン */}
+        <KeywordButtons onKeywordClick={(keyword) => setSearchTerm(keyword)} />
       </div>
       
       {loading ? (
