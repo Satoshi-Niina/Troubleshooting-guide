@@ -179,6 +179,12 @@ export default function TroubleshootingSelector({ initialSearchKeyword = "" }: T
               placeholder="キーワードで検索..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearch();
+                }
+              }}
               className="flex-1"
             />
             <Button variant="outline" onClick={handleClearSearch}>
@@ -187,6 +193,26 @@ export default function TroubleshootingSelector({ initialSearchKeyword = "" }: T
             <Button onClick={handleSearch}>
               検索
             </Button>
+          </div>
+          
+          {/* 代表的なキーワードボタン */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="text-sm text-gray-600 self-center mr-1">代表的なキーワード:</span>
+            {['エンジン', 'トルコン', 'ブレーキ', 'エアー回路'].map((keyword) => (
+              <Button
+                key={keyword}
+                variant="outline"
+                size="sm"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                onClick={() => {
+                  setSearchTerm(keyword);
+                  // キーワード設定後すぐに検索を実行
+                  setTimeout(() => handleSearch(), 0);
+                }}
+              >
+                {keyword}
+              </Button>
+            ))}
           </div>
         </div>
         
