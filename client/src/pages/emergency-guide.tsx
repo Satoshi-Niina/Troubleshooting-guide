@@ -5,9 +5,7 @@ import EmergencyGuideEdit from "@/components/emergency-guide/emergency-guide-edi
 import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-creator";
 import KeywordSuggestions from "@/components/emergency-guide/keyword-suggestions";
 import { Helmet } from "react-helmet";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 
 const EmergencyGuidePage: React.FC = () => {
   // URLからクエリパラメータを取得
@@ -91,36 +89,8 @@ const EmergencyGuidePage: React.FC = () => {
           PowerPoint、Excel、PDF、JSONファイルをアップロードして応急処置フローを生成・編集できます。
         </p>
         
-        {/* 検索フォームとキーワード提案 */}
+        {/* キーワード検索のみ表示 */}
         <div className="mt-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                type="search"
-                placeholder="応急処置ガイドを検索..."
-                className="pl-9 bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    executeSearch(searchQuery);
-                  }
-                }}
-              />
-            </div>
-            <Button 
-              type="button" 
-              onClick={() => executeSearch(searchQuery)}
-              size="sm"
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Search className="h-4 w-4 mr-1" />
-              検索
-            </Button>
-          </div>
           <KeywordSuggestions onKeywordClick={handleKeywordClick} />
         </div>
       </div>
