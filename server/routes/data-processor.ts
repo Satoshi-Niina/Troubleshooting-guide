@@ -27,6 +27,66 @@ function getFileTypeFromExtension(ext: string): string {
   return extMap[ext] || 'unknown';
 }
 
+// ファイル拡張子から最適な処理タイプを決定するヘルパー関数
+function determineOptimalProcessingTypes(ext: string, filename: string): {
+  forKnowledgeBase: boolean;
+  forImageSearch: boolean;
+  forQA: boolean;
+  forEmergencyGuide: boolean;
+} {
+  ext = ext.toLowerCase();
+  filename = filename.toLowerCase();
+  
+  // 基本設定（すべて有効）
+  const result = {
+    forKnowledgeBase: true,
+    forImageSearch: true,
+    forQA: true,
+    forEmergencyGuide: true
+  };
+  
+  // ファイル名に特定のキーワードが含まれている場合、応急処置ガイド向けに優先
+  if (
+    filename.includes('応急') || 
+    filename.includes('emergency') || 
+    filename.includes('guide') || 
+    filename.includes('ガイド') ||
+    filename.includes('手順') ||
+    filename.includes('procedure')
+  ) {
+    result.forEmergencyGuide = true;
+  }
+  
+  // 拡張子による調整
+  switch (ext) {
+    case '.pdf':
+    case '.docx':
+    case '.doc':
+    case '.txt':
+      // テキスト形式のドキュメントはナレッジベースとQ&Aに最適
+      result.forKnowledgeBase = true;
+      result.forQA = true;
+      result.forImageSearch = false; // 画像はあまり重要ではない可能性
+      break;
+      
+    case '.pptx':
+    case '.ppt':
+      // プレゼンテーションは画像検索と応急処置ガイドに最適
+      result.forImageSearch = true;
+      result.forEmergencyGuide = true;
+      break;
+      
+    case '.xlsx':
+    case '.xls':
+      // スプレッドシートはデータ主体なのでナレッジベースに最適
+      result.forKnowledgeBase = true;
+      result.forImageSearch = false;
+      break;
+  }
+  
+  return result;
+}
+
 // ストレージ設定 - knowledge-baseに一元化
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -77,15 +137,20 @@ export function registerDataProcessorRoutes(app: Express) {
 
       const filePath = req.file.path;
       const originalName = req.file.originalname;
+      const fileExt = path.extname(originalName).toLowerCase();
       
-      // 処理オプションの取得
+      // 元ファイル保存オプションのみユーザーから取得
       const keepOriginalFile = req.body.keepOriginalFile === 'true';
-      const extractKnowledgeBase = req.body.extractKnowledgeBase === 'true';
-      const extractImageSearch = req.body.extractImageSearch === 'true';
-      const createQA = req.body.createQA === 'true';
+      
+      // 他の処理オプションはファイルタイプから自動決定
+      const processingTypes = determineOptimalProcessingTypes(fileExt, originalName);
+      const extractKnowledgeBase = processingTypes.forKnowledgeBase;
+      const extractImageSearch = processingTypes.forImageSearch;
+      const createQA = processingTypes.forQA;
+      const createEmergencyGuide = processingTypes.forEmergencyGuide;
       
       log(`データ処理を開始します: ${originalName}`);
-      log(`オプション: 元ファイル保存=${keepOriginalFile}, ナレッジベース=${extractKnowledgeBase}, 画像検索=${extractImageSearch}, Q&A=${createQA}`);
+      log(`自動決定されたオプション: 元ファイル保存=${keepOriginalFile}, ナレッジベース=${extractKnowledgeBase}, 画像検索=${extractImageSearch}, Q&A=${createQA}, 応急処置ガイド=${createEmergencyGuide}`);
       
       // 1. ナレッジベースに追加（テキスト抽出とチャンク生成）
       let docId = '';
@@ -191,6 +256,90 @@ export function registerDataProcessorRoutes(app: Express) {
         }
       }
       
+      // 4. 応急処置ガイド用の処理
+      if (createEmergencyGuide) {
+        try {
+          log(`応急処置ガイド用に処理を開始します: ${originalName}`);
+          
+          // 既に処理されたドキュメントを使用
+          if (processedDocument) {
+            // ドキュメントから抽出された画像がある場合
+            if (processedDocument.images && processedDocument.images.length > 0) {
+              // 応急処置ガイド用のディレクトリ設定
+              const guidesDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+              if (!fs.existsSync(guidesDir)) {
+                fs.mkdirSync(guidesDir, { recursive: true });
+              }
+              
+              // ドキュメント名をベースにガイドIDを生成
+              const timestamp = Date.now();
+              const baseName = path.basename(filePath, path.extname(filePath))
+                .replace(/[\/\\:*?"<>|]/g, '')
+                .replace(/\s+/g, '_');
+              const guideId = `guide_${timestamp}`;
+              
+              // 簡易的なガイド構造を作成
+              const guideData = {
+                id: guideId,
+                title: originalName.split('.')[0] || 'ガイド',
+                createdAt: new Date().toISOString(),
+                steps: processedDocument.images!.map((image: { path: string; alt?: string }, index: number) => {
+                  // 各画像をステップとして登録
+                  return {
+                    id: `${guideId}_step${index + 1}`,
+                    title: `ステップ ${index + 1}`,
+                    description: image.alt || `手順説明 ${index + 1}`,
+                    imageUrl: image.path ? `/knowledge-base/${image.path.split('/knowledge-base/')[1] || image.path}` : '',
+                    order: index + 1
+                  };
+                })
+              };
+              
+              // 応急処置ガイドのJSONファイルとして保存
+              const guideFilePath = path.join(guidesDir, `${baseName}_${timestamp}.json`);
+              fs.writeFileSync(
+                guideFilePath,
+                JSON.stringify(guideData, null, 2)
+              );
+              
+              log(`応急処置ガイドを作成しました: ${guideFilePath} (${guideData.steps.length}ステップ)`);
+              
+              // メタデータファイルも保存
+              const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+              if (!fs.existsSync(jsonDir)) {
+                fs.mkdirSync(jsonDir, { recursive: true });
+              }
+              
+              const metadataFilePath = path.join(jsonDir, `${guideId}_metadata.json`);
+              fs.writeFileSync(
+                metadataFilePath,
+                JSON.stringify({
+                  id: guideId,
+                  title: originalName.split('.')[0] || 'ガイド',
+                  createdAt: new Date().toISOString(),
+                  slides: guideData.steps.map((step: any, idx: number) => ({
+                    slideId: `slide${idx + 1}`,
+                    title: step.title,
+                    content: step.description,
+                    imageUrl: step.imageUrl,
+                    order: step.order
+                  }))
+                }, null, 2)
+              );
+              
+              log(`応急処置ガイドのメタデータを保存しました: ${metadataFilePath}`);
+            } else {
+              log(`応急処置ガイド作成に必要な画像がドキュメントから抽出されませんでした`);
+            }
+          } else {
+            log(`応急処置ガイド生成のためのドキュメント処理が完了していません`);
+          }
+        } catch (guideError) {
+          log(`応急処置ガイド生成中にエラーが発生しました: ${guideError}`);
+          // ガイド生成エラーは処理を継続
+        }
+      }
+      
       // 4. 処理が完了したら、元のファイルを削除するか保存するかの指定により分岐
       if (!keepOriginalFile) {
         try {
@@ -214,7 +363,8 @@ export function registerDataProcessorRoutes(app: Express) {
           keepOriginalFile,
           extractKnowledgeBase,
           extractImageSearch,
-          createQA
+          createQA,
+          createEmergencyGuide
         }
       });
     } catch (error) {

@@ -41,6 +41,12 @@ function ensureDirectoryExists(dir: string) {
 // Interface for processed document
 export interface ProcessedDocument {
   chunks: DocumentChunk[];
+  images?: Array<{
+    path: string;
+    alt?: string;
+    width?: number;
+    height?: number;
+  }>;
   metadata: {
     title: string;
     source: string;
