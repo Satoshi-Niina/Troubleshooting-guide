@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { processOpenAIRequest } from '../lib/openai';
+import { searchKnowledgeBase } from '../lib/knowledge-base';
 
 const router = Router();
 
