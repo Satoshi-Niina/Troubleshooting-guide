@@ -13,10 +13,7 @@ interface KeywordSuggestionsProps {
 const KeywordSuggestions: React.FC<KeywordSuggestionsProps> = ({ onKeywordClick }) => {
   // 代表的なキーワードリスト
   const keywords = [
-    { id: 'engine', label: 'エンジン', color: 'bg-blue-100 text-blue-800 hover:bg-blue-200' },
-    { id: 'torque', label: 'トルコン', color: 'bg-green-100 text-green-800 hover:bg-green-200' },
-    { id: 'brake', label: 'ブレーキ', color: 'bg-red-100 text-red-800 hover:bg-red-200' },
-    { id: 'air-circuit', label: 'エアー回路', color: 'bg-purple-100 text-purple-800 hover:bg-purple-200' },
+    // Note: Previous keywords have been removed as requested
   ];
 
   return (
@@ -24,7 +21,7 @@ const KeywordSuggestions: React.FC<KeywordSuggestionsProps> = ({ onKeywordClick 
       <CardHeader className="pb-2">
         <CardTitle className="text-md flex items-center">
           <Search className="h-4 w-4 mr-2 text-gray-500" />
-          <span>代表的な検索キーワード</span>
+          <span>検索</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
