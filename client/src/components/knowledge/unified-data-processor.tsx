@@ -37,12 +37,12 @@ const UnifiedDataProcessor: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // 処理オプション（すべてデフォルト無効に変更）
+  // 処理オプション（自動化するため、すべてデフォルトで有効に設定）
   const [options, setOptions] = useState<ProcessingOptions>({
-    keepOriginalFile: false,
-    extractKnowledgeBase: false,
-    extractImageSearch: false,
-    createQA: false
+    keepOriginalFile: true, // 元ファイルを保存するオプションのみユーザーが選択可能
+    extractKnowledgeBase: true,
+    extractImageSearch: true,
+    createQA: true
   });
 
   // コンポーネントがマウントされたときに文書リストを読み込む
@@ -123,15 +123,7 @@ const UnifiedDataProcessor: React.FC = () => {
       return;
     }
     
-    // 少なくとも1つの処理オプションが選択されているか確認
-    if (!(options.extractKnowledgeBase || options.extractImageSearch || options.createQA)) {
-      toast({
-        title: "処理オプションが選択されていません",
-        description: "処理に必要な項目をチェックしてください！",
-        variant: "destructive",
-      });
-      return;
-    }
+    // 処理オプションは自動的に有効化されているので確認不要
 
     setIsUploading(true);
 
@@ -286,51 +278,16 @@ const UnifiedDataProcessor: React.FC = () => {
           </div>
         </div>
 
-        {/* 処理オプション */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="keepOriginalFile" 
-              checked={options.keepOriginalFile}
-              onCheckedChange={() => handleOptionChange('keepOriginalFile')}
-            />
-            <Label htmlFor="keepOriginalFile" className="cursor-pointer">
-              元ファイルを保存する
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="extractKnowledgeBase" 
-              checked={options.extractKnowledgeBase}
-              onCheckedChange={() => handleOptionChange('extractKnowledgeBase')}
-            />
-            <Label htmlFor="extractKnowledgeBase" className="cursor-pointer">
-              ナレッジベース用に処理
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="extractImageSearch" 
-              checked={options.extractImageSearch}
-              onCheckedChange={() => handleOptionChange('extractImageSearch')}
-            />
-            <Label htmlFor="extractImageSearch" className="cursor-pointer">
-              画像検索用に処理
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="createQA" 
-              checked={options.createQA}
-              onCheckedChange={() => handleOptionChange('createQA')}
-            />
-            <Label htmlFor="createQA" className="cursor-pointer">
-              Q&A用に処理
-            </Label>
-          </div>
+        {/* 処理オプション（元ファイル保存のみ表示） */}
+        <div className="flex items-center space-x-2 mb-4">
+          <Checkbox 
+            id="keepOriginalFile" 
+            checked={options.keepOriginalFile}
+            onCheckedChange={() => handleOptionChange('keepOriginalFile')}
+          />
+          <Label htmlFor="keepOriginalFile" className="cursor-pointer">
+            元ファイルを保存する
+          </Label>
         </div>
 
         {/* 処理ボタン */}
