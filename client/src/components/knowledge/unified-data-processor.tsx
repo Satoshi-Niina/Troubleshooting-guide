@@ -39,7 +39,7 @@ const UnifiedDataProcessor: React.FC = () => {
   
   // 処理オプション（自動化するため、すべてデフォルトで有効に設定）
   const [options, setOptions] = useState<ProcessingOptions>({
-    keepOriginalFile: true, // 元ファイルを保存するオプションのみユーザーが選択可能
+    keepOriginalFile: false, // 元ファイルを保存するオプションのみユーザーが選択可能（デフォルトでは無効）
     extractKnowledgeBase: true,
     extractImageSearch: true,
     createQA: true
