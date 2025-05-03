@@ -39,17 +39,17 @@ function cleanupTempDirectory(dirPath: string): void {
 const router = Router();
 
 // ディレクトリ構造の設定
-const knowledgeBaseDir = path.resolve('./knowledge-base');
-const pptDir = path.join(knowledgeBaseDir, 'ppt');
-const jsonDir = path.join(knowledgeBaseDir, 'json');
-const imageDir = path.join(knowledgeBaseDir, 'images');
-const tempDir = path.join(knowledgeBaseDir, 'temp');
+const baseDir = path.join(process.cwd(), 'knowledge-base', 'processed');
+const jsonDir = path.join(baseDir, 'emergency-guides');
+const pptDir = path.join(baseDir, 'ppt');
+const imageDir = path.join(baseDir, 'images');
+const tempDir = path.join(baseDir, 'temp');
 
 // knowledge-baseに完全に一元化されたため、uploadsディレクトリの参照は不要
 // データの参照はすべてknowledge-baseディレクトリから行う
 
 // ディレクトリの存在確認と作成（主にknowledge-base）
-[knowledgeBaseDir, pptDir, jsonDir, imageDir, tempDir].forEach(dir => {
+[baseDir, pptDir, jsonDir, imageDir, tempDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

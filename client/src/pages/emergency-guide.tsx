@@ -6,8 +6,22 @@ import EmergencyFlowCreator from "@/components/emergency-guide/emergency-flow-cr
 import KeywordSuggestions from "@/components/emergency-guide/keyword-suggestions";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import EmergencyFlowEditor from "@/components/emergency-guide/emergency-flow-editor";
+import { useToast } from "@/hooks/use-toast";
+
+interface GeneratedOption {
+  id: string;
+  summary: string;
+  content: string;
+  images?: { url: string; description?: string }[];
+  type?: '応急処置' | 'トラブルシューティング' | '予防保全' | 'その他';
+  category?: string;
+}
 
 const EmergencyGuidePage: React.FC = () => {
+  const { toast } = useToast();
+  
   // URLからクエリパラメータを取得
   const getQueryParam = (name: string): string | null => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -15,17 +29,38 @@ const EmergencyGuidePage: React.FC = () => {
   };
 
   // 初期タブをURLから設定
-  const initialTab = getQueryParam('tab') || "edit";
+  const initialTab = getQueryParam('tab') || "basic";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [targetGuideId, setTargetGuideId] = useState<string | null>(
     getQueryParam('guideId')
   );
-  const [lastUploadedGuideId, setLastUploadedGuideId] = useState<string | null>(
-    null,
-  );
+  const [lastUploadedGuideId, setLastUploadedGuideId] = useState<string | null>(null);
   
+  // フローデータの状態
+  const [flowData, setFlowData] = useState<any>({
+    title: '',
+    description: '',
+    nodes: [],
+    edges: []
+  });
+
   // 検索機能の状態
   const [searchQuery, setSearchQuery] = useState<string>("");
+  
+  // GPT生成結果の選択肢を管理
+  const [generatedOptions, setGeneratedOptions] = useState<GeneratedOption[]>([]);
+  
+  // 生成中の状態を管理
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // 詳細表示の状態を管理
+  const [expandedOptions, setExpandedOptions] = useState<string[]>([]);
+
+  // 選択されたファイルのIDを管理
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+
+  // ファイルの種類によるフィルタリング状態
+  const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
 
   // タブ切り替えイベントのリスナー
   useEffect(() => {
@@ -33,7 +68,7 @@ const EmergencyGuidePage: React.FC = () => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail && customEvent.detail.guideId) {
         setTargetGuideId(customEvent.detail.guideId);
-        setActiveTab("flow");
+        setActiveTab("character");
       }
     };
 
@@ -46,33 +81,158 @@ const EmergencyGuidePage: React.FC = () => {
   // アップロード成功時のハンドラー
   const handleUploadSuccess = (guideId: string) => {
     setLastUploadedGuideId(guideId);
-    // アップロード成功後に編集タブに切り替え
     setActiveTab("edit");
   };
   
   // 検索キーワードがクリックされたときのハンドラー
   const handleKeywordClick = (keyword: string) => {
     setSearchQuery(keyword);
-    // ここで実際に検索を実行する処理を呼び出す
-    console.log(`検索キーワード「${keyword}」がクリックされました`);
-    
-    // 検索を実行
     executeSearch(keyword);
   };
   
-  // 検索を実行する関数
-  const executeSearch = (keyword: string) => {
-    if (!keyword.trim()) return;
+  // GPTによるフロー生成と選択肢の設定
+  const executeSearch = async (query: string) => {
+    if (!query.trim()) return;
     
-    console.log(`検索実行: 「${keyword}」`);
-    
-    // 編集タブに切り替え（検索結果表示のため）
+    try {
+      setIsGenerating(true);
+      // ここでGPT APIを呼び出してフローを生成
+      const response = await fetch('/api/generate-flow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        throw new Error('フロー生成に失敗しました');
+      }
+
+      const data = await response.json();
+      setGeneratedOptions(data.options);
+      
+      toast({
+        title: "フロー生成完了",
+        description: "生成された選択肢から最適なフローを選択してください。",
+      });
+    } catch (error) {
+      console.error('フロー生成エラー:', error);
+      toast({
+        title: "エラー",
+        description: "フローの生成に失敗しました。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // 選択肢が選ばれた時の処理
+  const handleOptionSelect = (option: GeneratedOption) => {
+    // 選択されたフローをデータとして設定
+    setFlowData({
+      ...flowData,
+      title: `応急処理フロー: ${searchQuery}`,
+      description: option.summary,
+      content: option.content,
+    });
+
+    // テキスト編集タブに移動
     setActiveTab("edit");
     
-    // キーワードをカスタムイベントで通知
-    window.dispatchEvent(new CustomEvent('search-emergency-guide', { 
-      detail: { keyword }
-    }));
+    toast({
+      title: "フロー選択完了",
+      description: "テキスト編集タブでフローを編集できます。",
+    });
+  };
+
+  const handleSaveFlow = (flowData: any) => {
+    console.log('Saving flow data:', flowData);
+    // 保存処理の実装
+    toast({
+      title: "保存完了",
+      description: "フローが正常に保存されました。",
+    });
+  };
+
+  const handleCancelFlow = () => {
+    console.log('Canceling flow edit');
+    setActiveTab("basic");
+    toast({
+      title: "編集キャンセル",
+      description: "フローの編集をキャンセルしました。",
+    });
+  };
+
+  // 詳細表示の切り替え
+  const toggleOptionDetails = (optionId: string) => {
+    setExpandedOptions(prev => 
+      prev.includes(optionId)
+        ? prev.filter(id => id !== optionId)
+        : [...prev, optionId]
+    );
+  };
+
+  // プレビューの最初の3行を取得
+  const getPreviewContent = (content: string) => {
+    return content.split('\n').slice(0, 3).join('\n');
+  };
+
+  // ファイルの選択を切り替え
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFileIds(prev => 
+      prev.includes(fileId)
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    );
+  };
+
+  // 選択したファイルを保存
+  const handleSaveSelectedFiles = async () => {
+    if (selectedFileIds.length === 0) {
+      toast({
+        title: "選択エラー",
+        description: "保存するファイルを選択してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/save-selected-flows', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fileIds: selectedFileIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('保存に失敗しました');
+      }
+
+      toast({
+        title: "保存完了",
+        description: `${selectedFileIds.length}件のファイルを保存しました。`,
+      });
+      
+      // 選択をクリア
+      setSelectedFileIds([]);
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "ファイルの保存に失敗しました。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ファイルの種類に基づくフィルタリング
+  const getFilteredOptions = (options: GeneratedOption[]) => {
+    if (fileTypeFilter === 'all') return options;
+    return options.filter(option => option.type === fileTypeFilter);
   };
 
   return (
@@ -88,34 +248,290 @@ const EmergencyGuidePage: React.FC = () => {
         <p className="text-gray-600">
           PowerPoint、Excel、PDF、JSONファイルをアップロードして応急処置フローを生成・編集できます。
         </p>
-        
-        {/* キーワード検索のみ表示 */}
-        <div className="mt-4 space-y-2">
-          <KeywordSuggestions onKeywordClick={handleKeywordClick} />
-        </div>
       </div>
 
       <Tabs
         defaultValue={activeTab}
         onValueChange={setActiveTab}
-        className="w-full h-[calc(100vh-120px)]"
+        className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="upload">新規作成（アップロード）</TabsTrigger>
+          <TabsTrigger value="basic">応急処理基本フロー作成</TabsTrigger>
           <TabsTrigger value="edit">テキスト編集</TabsTrigger>
-          <TabsTrigger value="flow">キャラクター編集</TabsTrigger>
+          <TabsTrigger value="character">キャラクター編集</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upload" className="space-y-4 h-full overflow-auto">
-          <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
-        </TabsContent>
-        
-        <TabsContent value="edit" className="space-y-4 h-full overflow-auto">
-          <EmergencyGuideEdit />
+        {/* 応急処理基本フロー作成タブ */}
+        <TabsContent value="basic" className="space-y-4">
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4">発生事象キーワード</h2>
+            <div className="space-y-4">
+              <div>
+                <textarea
+                  className="w-full h-24 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="具体的な事象や状況、機器名などを入力してください！自動的に判断します。"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  maxLength={100}
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  {searchQuery.length}/100文字
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    // GPTを使用してフロー生成
+                    executeSearch(searchQuery);
+                    toast({
+                      title: "フロー生成中",
+                      description: "GPTを使用して応急処理フローを生成しています...",
+                    });
+                  }}
+                  disabled={!searchQuery.trim()}
+                >
+                  GPTでフロー生成
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSearchQuery('');
+                    toast({
+                      title: "キャンセル",
+                      description: "入力をクリアしました",
+                    });
+                  }}
+                >
+                  キャンセル
+                </Button>
+              </div>
+              <div className="mt-4 text-sm text-gray-600">
+                <p>※ GPTを活用して入力された事象から自動的に応急処理フローを生成します。</p>
+                <p className="mt-2">【生成から編集までの流れ】</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>1. キーワードを入力してGPTでフロー生成</li>
+                  <li>2. 生成された選択肢から最適なフローを選択</li>
+                  <li>3. 選択したフローを以下の方法で編集可能：</li>
+                </ul>
+                <ul className="list-disc pl-10 space-y-1 mt-1">
+                  <li>「テキスト編集」タブ：フローの内容をテキストベースで編集</li>
+                  <li>「キャラクター編集」タブ：フローチャートとして視覚的に編集</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+
+          {/* GPT生成結果の選択UI */}
+          {generatedOptions && generatedOptions.length > 0 && (
+            <Card className="p-6 mt-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">
+                  <span>生成された選択肢</span>
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    ※ プレビューを確認して保存するフローを選択してください
+                  </span>
+                </h2>
+                <div className="flex gap-4">
+                  <select
+                    className="border rounded-md px-3 py-1"
+                    value={fileTypeFilter}
+                    onChange={(e) => setFileTypeFilter(e.target.value)}
+                  >
+                    <option value="all">全てのタイプ</option>
+                    <option value="応急処置">応急処置</option>
+                    <option value="トラブルシューティング">トラブルシューティング</option>
+                    <option value="予防保全">予防保全</option>
+                    <option value="その他">その他</option>
+                  </select>
+                  <Button
+                    onClick={handleSaveSelectedFiles}
+                    disabled={selectedFileIds.length === 0}
+                  >
+                    選択したファイルを保存 ({selectedFileIds.length}件)
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {getFilteredOptions(generatedOptions).map((option, index) => (
+                  <div 
+                    key={option.id} 
+                    className={`border rounded-lg p-4 ${
+                      selectedFileIds.includes(option.id) ? 'border-blue-500 bg-blue-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start gap-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedFileIds.includes(option.id)}
+                          onChange={() => toggleFileSelection(option.id)}
+                          className="mt-1.5"
+                        />
+                        <div>
+                          <h3 className="font-medium text-lg">
+                            選択肢 {index + 1}
+                            {option.type && (
+                              <span className="ml-2 text-sm px-2 py-1 bg-gray-100 rounded-full">
+                                {option.type}
+                              </span>
+                            )}
+                          </h3>
+                          <p className="text-gray-600 mt-1">{option.summary}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => toggleOptionDetails(option.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          {expandedOptions.includes(option.id) ? '詳細を隠す' : '詳細を表示'}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* フロープレビュー */}
+                    <div className="mt-4 bg-gray-50 rounded-md p-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">フロープレビュー</h4>
+                      <div className="space-y-3">
+                        {(expandedOptions.includes(option.id) 
+                          ? option.content.split('\n')
+                          : option.content.split('\n').slice(0, 3)
+                        ).map((line, lineIndex) => (
+                          line.trim() && (
+                            <div 
+                              key={lineIndex} 
+                              className="flex items-start"
+                            >
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-sm mr-3">
+                                {lineIndex + 1}
+                              </div>
+                              <p className="text-gray-700">{line}</p>
+                            </div>
+                          )
+                        ))}
+                        {!expandedOptions.includes(option.id) && option.content.split('\n').length > 3 && (
+                          <div className="text-center pt-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleOptionDetails(option.id)}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              続きを表示 ({option.content.split('\n').length - 3} ステップ)
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 関連画像があれば表示 */}
+                    {expandedOptions.includes(option.id) && option.images && option.images.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">関連画像</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          {option.images.map((image, imgIndex) => (
+                            <div key={imgIndex} className="relative aspect-video">
+                              <img
+                                src={image.url}
+                                alt={image.description || `関連画像 ${imgIndex + 1}`}
+                                className="rounded-md object-cover w-full h-full"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* 生成中の表示 */}
+          {isGenerating && (
+            <Card className="p-6 mt-4">
+              <div className="flex items-center justify-center space-x-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
+                <p className="text-gray-600">フローを生成中です...</p>
+              </div>
+            </Card>
+          )}
         </TabsContent>
 
-        <TabsContent value="flow" className="space-y-4 h-full overflow-auto">
-          <EmergencyFlowCreator />
+        {/* テキスト編集タブ */}
+        <TabsContent value="edit" className="space-y-4 h-[calc(100vh-300px)] overflow-auto">
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">テキスト編集</h2>
+              <select
+                className="border rounded-md px-3 py-1"
+                value={fileTypeFilter}
+                onChange={(e) => setFileTypeFilter(e.target.value)}
+              >
+                <option value="all">全て表示</option>
+                <option value="応急処置">応急処置フロー</option>
+                <option value="トラブルシューティング">トラブルシューティング</option>
+                <option value="予防保全">予防保全手順</option>
+                <option value="その他">その他のフロー</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <p className="text-gray-600">
+                保存されたフローの内容をテキストベースで編集できます。
+              </p>
+            </div>
+            <EmergencyGuideEdit />
+          </Card>
+        </TabsContent>
+
+        {/* キャラクター編集タブ */}
+        <TabsContent value="character" className="space-y-4 h-[calc(100vh-300px)] overflow-auto">
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">フローチャート編集</h2>
+              <select
+                className="border rounded-md px-3 py-1"
+                value={fileTypeFilter}
+                onChange={(e) => setFileTypeFilter(e.target.value)}
+              >
+                <option value="all">全て表示</option>
+                <option value="応急処置">応急処置フローチャート</option>
+                <option value="トラブルシューティング">診断フローチャート</option>
+                <option value="予防保全">点検フローチャート</option>
+                <option value="その他">その他のチャート</option>
+              </select>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                フローチャートを視覚的に編集できます。既存のファイルからフローを生成することも可能です。
+              </p>
+              <EmergencyFlowCreator />
+            </div>
+          </Card>
+
+          <div className="relative py-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-4 text-sm text-gray-500">または</span>
+            </div>
+          </div>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4">既存ファイルからの生成</h2>
+            <div className="mb-2">
+              <p className="text-gray-600">
+                PowerPoint、Excel、PDF、JSONファイルをアップロードしてフローチャートを生成・編集できます。
+              </p>
+            </div>
+            <EmergencyGuideUploader onUploadSuccess={handleUploadSuccess} />
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -21,6 +21,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import EmergencyFlowEditor from './emergency-flow-editor';
 
+interface EmergencyFlow {
+  title: string;
+  steps: {
+    description: string;
+    imageUrl?: string;
+  }[];
+}
+
 const EmergencyFlowCreator: React.FC = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);

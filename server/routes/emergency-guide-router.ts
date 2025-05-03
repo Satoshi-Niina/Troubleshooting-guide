@@ -41,14 +41,14 @@ interface GuideData {
 const router = Router();
 
 // 知識ベースディレクトリの設定 - uploadsフォルダの使用を廃止
-const knowledgeBaseDir = path.resolve('./knowledge-base');
-const kbPptDir = path.join(knowledgeBaseDir, 'ppt');
-const kbJsonDir = path.join(knowledgeBaseDir, 'json');
-const kbImageDir = path.join(knowledgeBaseDir, 'images');
-const kbTempDir = path.join(knowledgeBaseDir, 'temp');
+const kbBaseDir = path.join(process.cwd(), 'knowledge-base', 'processed');
+const kbPptDir = path.join(kbBaseDir, 'ppt');
+const kbJsonDir = path.join(kbBaseDir, 'emergency-guides');
+const kbImageDir = path.join(kbBaseDir, 'images');
+const kbTempDir = path.join(kbBaseDir, 'temp');
 
 // ディレクトリの存在確認と作成
-[knowledgeBaseDir, kbPptDir, kbJsonDir, kbImageDir, kbTempDir].forEach(dir => {
+[kbBaseDir, kbPptDir, kbJsonDir, kbImageDir, kbTempDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
