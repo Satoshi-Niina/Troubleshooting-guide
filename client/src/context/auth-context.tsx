@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch("/api/user", {
           credentials: "include",
         });
         
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("POST", "/api/auth/login", { username, password });
+      const response = await apiRequest("POST", "/api/login", { username, password });
       const userData = await response.json();
       setUser(userData);
       toast({
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
-      await apiRequest("POST", "/api/auth/logout");
+      await apiRequest("POST", "/api/logout");
       setUser(null);
       toast({
         title: "ログアウト成功",

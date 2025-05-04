@@ -26,8 +26,21 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  publicDir: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    },
+    fs: {
+      allow: ['..']  // 親ディレクトリへのアクセスを許可
+    }
+  }
 });

@@ -24,6 +24,7 @@ import emergencyGuideRouter from './routes/emergency-guide';
 import { emergencyFlowRouter } from './routes/emergency-flow-router';
 import { registerSyncRoutes } from './routes/sync-routes';
 import { flowGeneratorRouter } from './routes/flow-generator';
+import { registerKnowledgeBaseRoutes } from './routes/knowledge-base';
 
 // Extend the express-session types
 declare module 'express-session' {
@@ -36,6 +37,9 @@ declare module 'express-session' {
 // Session will now use Postgres via storage.sessionStore
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register knowledge base routes
+  registerKnowledgeBaseRoutes(app);
+  
   // Register tech support router
   app.use('/api/tech-support', techSupportRouter);
   
@@ -143,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Auth routes
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/login", async (req, res) => {
     try {
       const credentials = loginSchema.parse(req.body);
       const user = await storage.getUserByUsername(credentials.username);
@@ -169,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/logout", (req, res) => {
+  app.post("/api/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ message: "Failed to logout" });
@@ -179,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/auth/me", async (req, res) => {
+  app.get("/api/user", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }

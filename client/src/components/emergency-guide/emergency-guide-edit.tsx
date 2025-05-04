@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Card,
@@ -119,6 +119,24 @@ const EmergencyGuideEdit: React.FC = () => {
     label: '',
     value: ''
   });
+  
+  // フローデータの状態
+  const [flowData, setFlowData] = useState({
+    title: '',
+    description: '',
+    fileName: '',
+    nodes: [{
+      id: 'start',
+      type: 'start',
+      position: { x: 250, y: 50 },
+      data: { label: '開始' }
+    }],
+    edges: []
+  });
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [characterDesignTab, setCharacterDesignTab] = useState('file');
+  const [flowList, setFlowList] = useState([]);
+  const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
   
   // ガイドファイル一覧を取得
   const fetchGuideFiles = async () => {
@@ -662,6 +680,101 @@ const EmergencyGuideEdit: React.FC = () => {
     }
   };
   
+  // メモ化されたフローデータの処理
+  const processFlowData = useCallback((jsonData: any) => {
+    if (!jsonData) {
+      return {
+        title: '無効なデータ',
+        description: 'データが正しく読み込めませんでした',
+        nodes: [{
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }],
+        edges: []
+      };
+    }
+
+    // ... existing processFlowData code ...
+  }, []);
+
+  // メモ化されたフロー保存ハンドラー
+  const handleSaveFlow = useCallback(async (data: any) => {
+    try {
+      console.log("保存するフローデータ:", data);
+      const response = await fetch('/api/emergency-guide/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('フローの保存に失敗しました');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "保存成功",
+          description: "応急処置ガイドが保存されました",
+        });
+        
+        fetchFlowList();
+        
+        setFlowData({
+          title: '',
+          description: '',
+          fileName: '',
+          nodes: [
+            {
+              id: 'start',
+              type: 'start',
+              position: { x: 250, y: 50 },
+              data: { label: '開始' }
+            }
+          ],
+          edges: []
+        });
+        setUploadedFileName('');
+        setCharacterDesignTab('file');
+      } else {
+        throw new Error(result.error || 'フローの保存に失敗しました');
+      }
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "フローの保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchFlowList]);
+
+  // メモ化されたフローリストの表示
+  const renderFlowList = useMemo(() => {
+    if (isLoadingFlowList) {
+      return <div className="py-4 text-center text-gray-500">読込中...</div>;
+    }
+    
+    if (flowList.length === 0) {
+      return <div className="py-4 text-center text-gray-500">保存済みのデータはありません</div>;
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {flowList.map(flow => (
+          <Card key={flow.id} className="overflow-hidden">
+            {/* ... existing card content ... */}
+          </Card>
+        ))}
+      </div>
+    );
+  }, [flowList, isLoadingFlowList]);
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col gap-6">
@@ -1220,4 +1333,4 @@ const EmergencyGuideEdit: React.FC = () => {
   );
 };
 
-export default EmergencyGuideEdit;
+export default React.memo(EmergencyGuideEdit);

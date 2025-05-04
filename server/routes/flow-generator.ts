@@ -334,4 +334,120 @@ ${relatedKnowledgeText}
   }
 });
 
+// キーワードからフローを直接生成するエンドポイント
+router.post('/generate-flow', async (req, res) => {
+  try {
+    const { query, options } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        error: 'クエリが必要です'
+      });
+    }
+
+    // ナレッジベースから関連情報を検索
+    console.log('ナレッジベースから関連情報を検索中...');
+    const searchQuery = query.split(' ').slice(0, 10).join(' ');
+    console.log(`検索クエリ: "${searchQuery}"`);
+    
+    let relevantChunks = [];
+    try {
+      relevantChunks = await searchKnowledgeBase(searchQuery);
+      console.log(`関連チャンク数: ${relevantChunks.length}`);
+    } catch (searchError) {
+      console.error('ナレッジベース検索エラー:', searchError);
+      // 検索エラーが発生しても処理は続行
+    }
+    
+    // 関連情報をプロンプトに追加するための文字列を構築
+    let relatedKnowledgeText = '';
+    if (relevantChunks.length > 0) {
+      relatedKnowledgeText = '\n\n【関連する知識ベース情報】:\n';
+      const chunksToInclude = relevantChunks.slice(0, 5);
+      
+      for (const chunk of chunksToInclude) {
+        relatedKnowledgeText += `---\n出典: ${chunk.metadata?.source || '不明'}\n\n${chunk.text}\n---\n\n`;
+      }
+    }
+    
+    // GPTに渡すプロンプト
+    const prompt = `以下のキーワードに基づいて、複数の応急処置フローの選択肢を生成してください。
+応答は必ず以下の形式の有効なJSONで返してください：
+
+{
+  "options": [
+    {
+      "id": "一意のID",
+      "summary": "フローの概要",
+      "content": "詳細な手順（ステップごとに改行）",
+      "type": "応急処置",
+      "category": "カテゴリ名"
+    }
+  ]
+}
+
+キーワード: ${query}
+
+${relatedKnowledgeText}
+
+生成時の注意点：
+1. 少なくとも3つの異なるアプローチの選択肢を提供してください
+2. 各選択肢は異なる状況や原因を想定したものにしてください
+3. 安全性を最優先し、危険な手順には適切な警告を含めてください
+4. 専門的な知識を活用しつつ、明確で実行可能な手順を提供してください
+5. 各ステップは具体的で、技術者でなくても理解できる説明を心がけてください
+
+重要: 応答は必ず有効なJSONフォーマットにしてください。HTMLやその他のフォーマットは使用しないでください。`;
+
+    // OpenAIでフローを生成
+    console.log('OpenAIにフロー生成をリクエスト中...');
+    const generatedFlow = await processOpenAIRequest(prompt);
+    
+    try {
+      // 生成されたテキストからJSONの部分のみを抽出
+      const jsonMatch = generatedFlow.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('JSONデータが見つかりません');
+      }
+      
+      // JSONとして解析
+      const flowData = JSON.parse(jsonMatch[0]);
+      
+      // 必要なフィールドの存在を確認
+      if (!flowData.options || !Array.isArray(flowData.options)) {
+        throw new Error('生成されたデータの形式が不正です');
+      }
+      
+      // 各オプションにIDを付与（存在しない場合）
+      flowData.options = flowData.options.map((option: any, index: number) => ({
+        ...option,
+        id: option.id || `flow_${Date.now()}_${index}`
+      }));
+      
+      // 成功レスポンス
+      res.json({
+        success: true,
+        options: flowData.options
+      });
+      
+    } catch (parseError) {
+      console.error('生成されたフローの解析エラー:', parseError);
+      console.error('生成されたテキスト:', generatedFlow);
+      
+      res.status(500).json({
+        success: false,
+        error: 'フローデータの解析に失敗しました',
+        details: parseError instanceof Error ? parseError.message : '不明なエラー'
+      });
+    }
+  } catch (error) {
+    console.error('フロー生成エラー:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : '不明なエラーが発生しました'
+    });
+  }
+});
+
 export const flowGeneratorRouter = router;

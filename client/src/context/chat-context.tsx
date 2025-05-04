@@ -199,7 +199,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await apiRequest('POST', `/api/chats/${currentChatId}/messages`, { 
         content,
         useOnlyKnowledgeBase,
-        usePerplexity: false // Perplexity APIを一時的に無効化
+        usePerplexity: false
       });
       if (!response.ok) {
         throw new Error('メッセージの送信に失敗しました');
@@ -537,6 +537,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await apiRequest(
         'POST', 
         `/api/chats/${chatId}/export`, 
+        `/api/tech-support/chats/${chatId}/export`, 
         { lastExportTimestamp: lastExportTimestamp ? lastExportTimestamp.toISOString() : null }
       );
       
@@ -623,7 +624,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!chatId) return;
     
     try {
-      const response = await apiRequest('GET', `/api/chats/${chatId}/last-export`);
+      const response = await apiRequest('GET', `/api/tech-support/chats/${chatId}/last-export`);
       const data = await response.json();
       
       if (data.timestamp) {
@@ -896,11 +897,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setDraftMessage(null);
       
       // クエリキャッシュのキーを定義
-      const chatKey = chatId ? `/api/chats/${chatId}/messages` : '/api/chats/1/messages';
+      const chatKey = chatId ? `/api/tech-support/chats/${chatId}/messages` : '/api/tech-support/chats/1/messages';
       
       // サーバーにクリア要求を送信
       try {
-        await apiRequest('POST', `/api/chats/${chatId || 1}/clear`);
+        await apiRequest('POST', `/api/tech-support/chats/${chatId || 1}/clear`);
         console.log('サーバーサイドキャッシュクリア要求が成功しました');
         // サーバーからクリア指示を受信したのでローカルも完全にクリア
         console.log('サーバーからキャッシュクリア指示を受信');
@@ -910,15 +911,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // React Queryのキャッシュを強制的に無効化する
       queryClient.invalidateQueries({ queryKey: [chatKey] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chats/1/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tech-support/chats/1/messages'] });
       
       // リアクトクエリのキャッシュを完全にリセット
       queryClient.removeQueries({ queryKey: [chatKey] });
-      queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
+      queryClient.removeQueries({ queryKey: ['/api/tech-support/chats/1/messages'] });
       
       // 新しい空の配列をキャッシュに明示的に設定
       queryClient.setQueryData([chatKey], []);
-      queryClient.setQueryData(['/api/chats/1/messages'], []);
+      queryClient.setQueryData(['/api/tech-support/chats/1/messages'], []);
       
       // LocalStorageのリアクトクエリキャッシュをクリア
       for (const key of Object.keys(localStorage)) {
@@ -954,7 +955,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (now - clearTime < 15000) {
             console.log('クエリキャッシュクリア直後のためメッセージを空にします');
             queryClient.setQueryData([chatKey], []);
-            queryClient.setQueryData(['/api/chats/1/messages'], []);
+            queryClient.setQueryData(['/api/tech-support/chats/1/messages'], []);
             return true;
           } else {
             localStorage.removeItem('chat_cleared_timestamp');

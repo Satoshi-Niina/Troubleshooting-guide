@@ -100,7 +100,8 @@ app.use((req, res, next) => {
       // APIが起動した後に実行するために少し待機
       setTimeout(async () => {
         try {
-          const syncResult = await axios.post('http://localhost:5001/api/tech-support/sync-knowledge-base?direction=uploads-to-kb');
+          const port = process.env.PORT || 5000;
+          const syncResult = await axios.post(`http://localhost:${port}/api/tech-support/sync-knowledge-base?direction=uploads-to-kb`);
           console.log('アップロードデータの同期結果:', syncResult.data);
         } catch (syncErr: any) {
           console.error('同期API呼び出しエラー:', syncErr?.message || '不明なエラー');
@@ -135,7 +136,7 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5001;
+  const port = process.env.PORT || 5000;
   server.listen(port, () => {
     log(`serving on port ${port}`);
   });

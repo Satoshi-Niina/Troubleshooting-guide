@@ -96,20 +96,33 @@ const EmergencyGuidePage: React.FC = () => {
     
     try {
       setIsGenerating(true);
-      // ここでGPT APIを呼び出してフローを生成
-      const response = await fetch('/api/generate-flow', {
+      // GPT APIを呼び出してフローを生成
+      const response = await fetch('/api/flow-generator/generate-flow', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ 
+          query,
+          options: {
+            maxSteps: 5,
+            includeImages: true,
+            language: 'ja'
+          }
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('フロー生成に失敗しました');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'フロー生成に失敗しました');
       }
 
       const data = await response.json();
+      
+      if (!data.success || !data.options || !Array.isArray(data.options)) {
+        throw new Error('生成されたデータの形式が不正です');
+      }
+      
       setGeneratedOptions(data.options);
       
       toast({
@@ -120,7 +133,7 @@ const EmergencyGuidePage: React.FC = () => {
       console.error('フロー生成エラー:', error);
       toast({
         title: "エラー",
-        description: "フローの生成に失敗しました。",
+        description: error instanceof Error ? error.message : "フローの生成に失敗しました。",
         variant: "destructive",
       });
     } finally {

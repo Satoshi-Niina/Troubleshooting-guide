@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,6 +8,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { useChat } from '@/context/chat-context';
 import { useAuth } from '@/context/auth-context';
 import { searchByText } from '@/lib/image-search';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { RefreshCw, Plus } from 'lucide-react';
 
 // 画像パスを修正するヘルパー関数
 function handleImagePath(imagePath: string): string {
@@ -54,26 +56,68 @@ interface TroubleshootingFlowProps {
   onExit?: () => void;
 }
 
-export default function TroubleshootingFlow({ id, onComplete, onExit }: TroubleshootingFlowProps) {
+interface FlowData {
+  id?: string;
+  title: string;
+  description?: string;
+  fileName?: string;
+  nodes?: any[];
+  edges?: any[];
+  steps?: TroubleshootingStep[];
+}
+
+function TroubleshootingFlow({ id, onComplete, onExit }: TroubleshootingFlowProps) {
   const { toast } = useToast();
   const { sendEmergencyGuide } = useChat(); // ChatContextからsendEmergencyGuideを取得
   const { user } = useAuth(); // 認証状態を取得
   const [loading, setLoading] = useState(true);
-  const [flowData, setFlowData] = useState<{
-    id: string;
-    steps: TroubleshootingStep[];
-  } | null>(null);
+  const [flowData, setFlowData] = useState<FlowData | null>(null);
   const [currentStep, setCurrentStep] = useState<TroubleshootingStep | null>(null);
   const [stepHistory, setStepHistory] = useState<string[]>([]);
   const [checklistItems, setChecklistItems] = useState<Record<string, boolean>>({});
   const [imageLoading, setImageLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [characterDesignTab, setCharacterDesignTab] = useState('new');
+  const [flowList, setFlowList] = useState<any[]>([]);
+  const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
+
+  // フローリストを取得
+  const fetchFlowList = useCallback(async () => {
+    setIsLoadingFlowList(true);
+    try {
+      const response = await fetch('/api/troubleshooting/list', {
+        credentials: 'include',
+        cache: 'no-cache'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setFlowList(data);
+    } catch (error) {
+      console.error('フローリストの取得に失敗しました:', error);
+      toast({
+        title: 'エラー',
+        description: 'フローリストの取得に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingFlowList(false);
+    }
+  }, [toast]);
+
+  // 新規フロー作成
+  const handleCreateNewFlow = useCallback(() => {
+    window.location.href = '/troubleshooting/editor';
+  }, []);
 
   // フローデータを取得
   const fetchFlowData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/troubleshooting/${id}`, {
+      const response = await fetch(`/api/tech-support/metadata/flows/${id}`, {
         credentials: 'include',
         cache: 'no-cache'
       });
@@ -87,7 +131,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       
       // 最初のステップを設定
       if (data && data.steps && data.steps.length > 0) {
-        setCurrentStep(data.steps[0]);
+        setCurrentStep(data.steps[0] || null);
       }
     } catch (error) {
       console.error('トラブルシューティングデータの取得に失敗しました:', error);
@@ -134,7 +178,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
         }
         
         // 自動表示フラグがある場合、または検索結果が1つだけの場合は直接リダイレクト
-        window.location.href = `/emergency-guide/${event.detail.flowId}`;
+        window.location.href = `/knowledge-base/data/metadata/flows/${event.detail.flowId}`;
       }
     };
     
@@ -242,7 +286,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     }
 
     // 次のステップを探す
-    const nextStep = flowData.steps.find(step => step.id === nextStepId);
+    const nextStep = flowData.steps?.find(step => step.id === nextStepId);
     if (nextStep) {
       setCurrentStep(nextStep);
       // チェックリストをリセット
@@ -267,14 +311,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     
     // 前のステップを設定
     if (prevStepId) {
-      const prevStep = flowData.steps.find(step => step.id === prevStepId);
+      const prevStep = flowData.steps?.find(step => step.id === prevStepId);
       if (prevStep) {
         setCurrentStep(prevStep);
         setChecklistItems({});
       }
     } else {
       // 履歴にない場合は最初のステップに戻る
-      setCurrentStep(flowData.steps[0]);
+      setCurrentStep(flowData.steps?.[0]);
       setChecklistItems({});
     }
   }, [stepHistory, flowData]);
@@ -351,7 +395,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     }
     
     // ガイドタイトルを設定
-    const guideTitle = flowData.id.replace(/_/g, ' ');
+    const guideTitle = flowData.id?.replace(/_/g, ' ') || '';
     
     // 現在表示中の手順のみを送信するようにコンテンツを作成
     let guideContent = `**${guideTitle} - 現在の手順**\n\n`;
@@ -374,11 +418,11 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     // 画像情報の追加
     if (currentStep.image || currentStep.imageUrl) {
       // 直接指定された画像がある場合
-      guideContent += `\n**関連画像**: ${currentStep.image || currentStep.imageUrl}\n`;
+      guideContent += `\n**関連画像**: /knowledge-base/media/images/${currentStep.image || currentStep.imageUrl}\n`;
     } else if (searchResults && searchResults.length > 0) {
       // 検索結果から画像情報を追加
       const firstResult = searchResults[0];
-      guideContent += `\n**関連画像**: ${firstResult.file || firstResult.url}\n`;
+      guideContent += `\n**関連画像**: /knowledge-base/media/images/${firstResult.file || firstResult.url}\n`;
       guideContent += `\n**画像説明**: ${firstResult.title || '関連画像'}\n`;
       
       // 他の検索結果があれば、追加情報として表示
@@ -423,6 +467,100 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     onExit?.();
   }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast, searchResults]);
 
+  // メモ化されたフローデータの処理
+  const processFlowData = useCallback((jsonData: any) => {
+    if (!jsonData) {
+      return {
+        title: '無効なデータ',
+        description: 'データが正しく読み込めませんでした',
+        nodes: [{
+          id: 'start',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: '開始' }
+        }],
+        edges: []
+      };
+    }
+
+    // ... existing processFlowData code ...
+  }, []);
+
+  // メモ化されたフロー保存ハンドラー
+  const handleSaveFlow = useCallback(async (data: any) => {
+    try {
+      console.log("保存するフローデータ:", data);
+      const response = await fetch('/api/tech-support/metadata/flows/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('フローの保存に失敗しました');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "保存成功",
+          description: "トラブルシューティングフローが保存されました",
+        });
+        
+        fetchFlowList();
+        
+        setFlowData({
+          title: '',
+          description: '',
+          fileName: '',
+          nodes: [
+            {
+              id: 'start',
+              type: 'start',
+              position: { x: 250, y: 50 },
+              data: { label: '開始' }
+            }
+          ],
+          edges: []
+        });
+        setCharacterDesignTab('file');
+      } else {
+        throw new Error(result.error || 'フローの保存に失敗しました');
+      }
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "フローの保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchFlowList]);
+
+  // メモ化されたフローリストの表示
+  const renderFlowList = useMemo(() => {
+    if (isLoadingFlowList) {
+      return <div className="py-4 text-center text-gray-500">読込中...</div>;
+    }
+    
+    if (flowList.length === 0) {
+      return <div className="py-4 text-center text-gray-500">保存済みのデータはありません</div>;
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {flowList.map(flow => (
+          <Card key={flow.id} className="overflow-hidden">
+            {/* ... existing card content ... */}
+          </Card>
+        ))}
+      </div>
+    );
+  }, [flowList, isLoadingFlowList]);
+
   // ローディング中の表示
   if (loading) {
     return (
@@ -454,226 +592,48 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">応急処置ガイド</CardTitle>
-          <Badge variant="outline">{flowData.id}</Badge>
-        </div>
-      </CardHeader>
+    <>
+      <Card className="w-full h-screen max-h-[calc(100vh-120px)] overflow-auto">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl">応急処置ガイド</CardTitle>
+            <Badge variant="outline">{flowData.id}</Badge>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="overflow-y-auto pb-24">
+          <Tabs defaultValue="new" value={characterDesignTab} onValueChange={setCharacterDesignTab}>
+            <TabsContent value="new" className="h-full">
+              {/* ... existing content ... */}
+            </TabsContent>
+            <TabsContent value="file" className="h-full">
+              <div className="space-y-4">
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium">保存データ一覧</h3>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        更新
+                      </Button>
+                      <Button variant="default" size="sm" onClick={handleCreateNewFlow}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        新規作成
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {renderFlowList}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
       
-      <CardContent>
-        {/* メッセージ */}
-        <div className="mb-4">
-          <p className="whitespace-pre-line">{currentStep.message}</p>
-        </div>
-        
-        {/* 画像（直接指定された場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
-        {(currentStep.image || currentStep.imageUrl) && (
-          <div className="mb-4 flex justify-center">
-            {/* 画像読み込み中プレースホルダー - 常に表示して読み込み完了時に非表示化 */}
-            <div className="relative flex justify-center items-center min-h-[200px] min-w-[200px] w-full max-w-md">
-              <div className="loading-placeholder absolute inset-0 flex items-center justify-center z-0 bg-gray-100 rounded-md">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
-              </div>
-              
-              <img
-                src={handleImagePath(currentStep.image || currentStep.imageUrl || '')}
-                alt="応急処置ガイド図"
-                className="max-h-80 object-contain rounded-md cursor-pointer z-10 relative"
-                onLoad={(e) => {
-                  setImageLoading(false);
-                  
-                  // 画像読み込みが完了したらプレースホルダーを非表示にする
-                  const imgElement = e.currentTarget;
-                  const parent = imgElement.parentElement;
-                  if (parent) {
-                    const placeholders = parent.querySelectorAll('.loading-placeholder');
-                    placeholders.forEach(placeholder => {
-                      placeholder.classList.add('hidden');
-                    });
-                  }
-                  
-                  // 関係画像エリアにこの画像を表示するためのイベントを発火
-                  const imageTitle = flowData?.id || "応急処置ガイド";
-                  window.dispatchEvent(new CustomEvent('preview-image', { 
-                    detail: { 
-                      url: currentStep.image || currentStep.imageUrl,
-                      title: imageTitle,
-                      content: currentStep.message || "トラブルシューティング画像"
-                    } 
-                  }));
-                }}
-                onError={(e) => {
-                  setImageLoading(false);
-                  
-                  const imgElement = e.currentTarget;
-                  const parent = imgElement.parentElement;
-                  
-                  // エラー時の表示
-                  if (parent) {
-                    // プレースホルダーを非表示
-                    const placeholders = parent.querySelectorAll('.loading-placeholder');
-                    placeholders.forEach(placeholder => {
-                      placeholder.classList.add('hidden');
-                    });
-                    
-                    // エラーメッセージを表示
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-red-50 text-red-600 rounded-md border border-red-200 z-20';
-                    errorDiv.innerHTML = `
-                      <div class="text-center p-4">
-                        <p class="font-medium">画像を読み込めませんでした</p>
-                        <p class="text-sm mt-2">別の方法でご確認ください</p>
-                      </div>
-                    `;
-                    parent.appendChild(errorDiv);
-                  }
-                }}
-                // クリックでもプレビューを表示
-                onClick={() => {
-                  const imageTitle = flowData?.id || "応急処置ガイド";
-                  window.dispatchEvent(new CustomEvent('preview-image', { 
-                    detail: { 
-                      url: currentStep.image || currentStep.imageUrl,
-                      title: imageTitle,
-                      content: currentStep.message || "トラブルシューティング画像"
-                    } 
-                  }));
-                }}
-              />
-            </div>
-          </div>
-        )}
-        
-        {/* 検索結果から表示される画像（直接指定がない場合のみ） */}
-        {!currentStep.image && !currentStep.imageUrl && searchResults && searchResults.length > 0 && (
-          <div className="mb-4">
-            {/* 検索結果ヘッダー */}
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-sm font-medium text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image inline-block mr-1"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                キーワードに基づく関連画像
-              </p>
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                {searchResults.length}件の画像
-              </span>
-            </div>
-            
-            {/* 最初の検索結果を表示 */}
-            <div className="flex justify-center">
-              <div className="relative flex justify-center items-center min-h-[200px] min-w-[200px] w-full max-w-md">
-                <img
-                  src={handleImagePath(searchResults[0].file || searchResults[0].url)}
-                  alt={searchResults[0].title || "関連画像"}
-                  className="max-h-80 object-contain rounded-md cursor-pointer border border-blue-100 shadow-sm"
-                  onClick={() => {
-                    // Chat UIに通知
-                    window.dispatchEvent(new CustomEvent('preview-image', { 
-                      detail: { 
-                        url: handleImagePath(searchResults[0].file || searchResults[0].url),
-                        title: searchResults[0].title || '関連画像',
-                        content: searchResults[0].description || currentStep.message
-                      } 
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-            
-            {/* キーワード表示 */}
-            {currentStep.imageKeywords && currentStep.imageKeywords.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {currentStep.imageKeywords.map((keyword, idx) => (
-                  <span key={idx} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* 選択肢（ある場合） */}
-        {currentStep.options && currentStep.options.length > 0 && (
-          <div className="mb-4 space-y-2">
-            <p className="font-medium mb-2">状態を選択してください：</p>
-            {currentStep.options.map((option, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="w-full text-left justify-start h-auto py-2 mb-2"
-                onClick={() => handleOptionSelect(option)}
-              >
-                {option.label || option.text}
-              </Button>
-            ))}
-          </div>
-        )}
-        
-        {/* チェックリスト（ある場合） */}
-        {currentStep.checklist && currentStep.checklist.length > 0 && (
-          <div className="mb-4 space-y-3">
-            <p className="font-medium mb-2">確認項目：</p>
-            {currentStep.checklist.map((item, index) => (
-              <div key={index} className="flex items-start space-x-2">
-                <Checkbox
-                  id={`checklist-${index}`}
-                  checked={checklistItems[`${index}`] || false}
-                  onCheckedChange={() => toggleChecklistItem(`${index}`)}
-                />
-                <label
-                  htmlFor={`checklist-${index}`}
-                  className="text-sm cursor-pointer"
-                >
-                  {item}
-                </label>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-      
-      <CardFooter className="flex flex-col gap-3">
-        <div className="flex justify-between w-full">
-          <Button
-            variant="ghost"
-            onClick={handleExit}
-          >
-            閉じる
-          </Button>
-          
-          <div className="flex space-x-2">
-            {stepHistory.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={goToPreviousStep}
-              >
-                戻る
-              </Button>
-            )}
-            
-            {(currentStep.next || currentStep.nextStep || currentStep.end) && (
-              <Button
-                onClick={handleNextStep}
-                disabled={currentStep.checklist && !isChecklistComplete()}
-              >
-                {currentStep.end ? '完了' : '次へ'}
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        {/* チャットに送信ボタン */}
-        <Button 
-          variant="secondary" 
-          className="w-full" 
-          onClick={sendTroubleshootingToChat}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          チャットに送信
-        </Button>
-      </CardFooter>
-    </Card>
+      {/* ... existing alert dialog ... */}
+    </>
   );
 }
+
+export default React.memo(TroubleshootingFlow);

@@ -40,14 +40,15 @@ async function loadImageSearchData() {
     // knowledge-baseからJSONファイルを読み込む
     let metadata;
     try {
-      const response = await fetch(`/knowledge-base/json/${metadataFile}?t=${timestamp}`);
-      if (!response.ok) {
-        throw new Error(`knowledge-baseからのメタデータJSONの読み込みに失敗: ${metadataFile}`);
+      const metadataResponse = await fetch(`/knowledge-base/data/metadata/images/${metadataFile}?t=${timestamp}`);
+      if (!metadataResponse.ok) {
+        console.error(`メタデータの読み込みに失敗: ${metadataResponse.status} ${metadataResponse.statusText}`);
+        throw new Error('メタデータの読み込みに失敗しました');
       }
-      metadata = await response.json();
+      metadata = await metadataResponse.json();
     } catch (error) {
       console.error("メタデータJSONの読み込みに失敗しました:", error);
-      throw error; // 上位のcatchで処理するためにエラーを再スロー
+      throw error;
     }
     
     // 既存データをクリア
@@ -85,13 +86,13 @@ async function loadImageSearchData() {
           console.warn(`スライド ${slide['スライド番号']} に有効な画像パスがありません`);
         }
         
-        // 画像パスの参照を knowledge-base/images に統一
+        // 画像パスの参照を knowledge-base/media/images に統一
         if (imagePath) {
           // ファイル名だけを抽出
           const fileName = imagePath.split('/').pop();
           if (fileName) {
-            // 知識ベースの画像ディレクトリに統一
-            imagePath = `/knowledge-base/images/${fileName}`;
+            // 画像パスを修正
+            imagePath = `/knowledge-base/media/images/${fileName}`;
           }
         }
         
@@ -192,7 +193,7 @@ async function loadImageSearchData() {
               // ファイル名だけを抽出
               const fileName = imagePath.split('/').pop();
               if (fileName) {
-                imagePath = `/knowledge-base/images/${fileName}`;
+                imagePath = `/knowledge-base/media/images/${fileName}`;
               }
             }
             
