@@ -138,6 +138,35 @@ const EmergencyGuideEdit: React.FC = () => {
   const [flowList, setFlowList] = useState([]);
   const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
   
+  // フローリストを取得する関数
+  const fetchFlowList = useCallback(async () => {
+    try {
+      setIsLoadingFlowList(true);
+      const response = await fetch('/api/emergency-flow/list');
+      
+      if (!response.ok) {
+        throw new Error('フローリストの取得に失敗しました');
+      }
+      
+      const data = await response.json();
+      setFlowList(data);
+    } catch (error) {
+      console.error('フローリスト取得エラー:', error);
+      toast({
+        title: 'エラー',
+        description: 'フローリストの取得に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingFlowList(false);
+    }
+  }, [toast]);
+
+  // コンポーネントマウント時にフローリストを取得
+  useEffect(() => {
+    fetchFlowList();
+  }, [fetchFlowList]);
+  
   // ガイドファイル一覧を取得
   const fetchGuideFiles = async () => {
     try {

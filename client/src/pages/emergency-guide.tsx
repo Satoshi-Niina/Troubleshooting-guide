@@ -60,7 +60,7 @@ const EmergencyGuidePage: React.FC = () => {
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
 
   // ファイルの種類によるフィルタリング状態
-  const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
+  const [fileTypeFilter, setFileTypeFilter] = useState<string>('応急処置');
 
   // タブ切り替えイベントのリスナー
   useEffect(() => {
@@ -213,30 +213,57 @@ const EmergencyGuidePage: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/save-selected-flows', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileIds: selectedFileIds }),
-      });
+      // 選択されたフローデータを取得
+      const selectedFlows = generatedOptions.filter(option => selectedFileIds.includes(option.id));
+      console.log('選択されたフロー:', selectedFlows);
+      
+      // 各フローを保存
+      for (const flow of selectedFlows) {
+        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const flowData = {
+          id: flowId,
+          title: `応急処理フロー: ${searchQuery}`,
+          description: flow.summary,
+          content: flow.content,
+          type: flow.type || '応急処置',
+          images: flow.images || [],
+          savePath: 'C:/Users/Satoshi Niina/OneDrive/Desktop/Troubleshooting-guide/knowledge-base/troubleshooting',
+          nodes: [],
+          edges: []
+        };
 
-      if (!response.ok) {
-        throw new Error('保存に失敗しました');
+        console.log('保存するフローデータ:', flowData);
+
+        const response = await fetch('/api/emergency-flow/save-flow', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(flowData),
+        });
+
+        const responseData = await response.json();
+        console.log('サーバーからの応答:', responseData);
+
+        if (!response.ok) {
+          throw new Error(responseData.error || '保存に失敗しました');
+        }
       }
 
       toast({
         title: "保存完了",
-        description: `${selectedFileIds.length}件のファイルを保存しました。`,
+        description: `${selectedFileIds.length}件のフローを保存しました。`,
       });
       
       // 選択をクリア
       setSelectedFileIds([]);
+      // 生成された選択肢をクリア
+      setGeneratedOptions([]);
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
         title: "エラー",
-        description: "ファイルの保存に失敗しました。",
+        description: error instanceof Error ? error.message : "フローの保存に失敗しました。",
         variant: "destructive",
       });
     }
@@ -275,7 +302,7 @@ const EmergencyGuidePage: React.FC = () => {
         </TabsList>
 
         {/* 応急処理基本フロー作成タブ */}
-        <TabsContent value="basic" className="space-y-4">
+        <TabsContent value="basic" className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
           <Card className="p-6">
             <h2 className="text-xl font-bold mb-4">発生事象キーワード</h2>
             <div className="space-y-4">
@@ -381,7 +408,12 @@ const EmergencyGuidePage: React.FC = () => {
                           type="checkbox"
                           checked={selectedFileIds.includes(option.id)}
                           onChange={() => toggleFileSelection(option.id)}
-                          className="mt-1.5"
+                          className="mt-1.5 w-6 h-6 cursor-pointer"
+                          style={{
+                            transform: 'scale(1.2)',
+                            transformOrigin: 'left center',
+                            border: '2px solid #666'
+                          }}
                         />
                         <div>
                           <h3 className="font-medium text-lg">

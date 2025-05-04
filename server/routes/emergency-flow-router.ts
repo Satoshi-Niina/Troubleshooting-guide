@@ -9,58 +9,92 @@ const router = express.Router();
 router.post('/save-flow', async (req: Request, res: Response) => {
   try {
     const flowData = req.body;
+    console.log('受信したフローデータ:', flowData);
     
-    if (!flowData || !flowData.id || !flowData.title) {
+    if (!flowData || !flowData.title) {
+      console.error('無効なフローデータ:', flowData);
       return res.status(400).json({
         success: false,
         error: '無効なフローデータです'
       });
     }
+
+    if (!flowData.id) {
+      console.error('フローIDが未指定:', flowData);
+      return res.status(400).json({
+        success: false,
+        error: 'フローIDが指定されていません'
+      });
+    }
+    
+    // 保存先のパスを取得（クライアントから指定されたパスを使用）
+    const savePath = flowData.savePath || path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting');
+    console.log('保存先パス:', savePath);
     
     // ディレクトリ存在確認
-    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-    if (!fs.existsSync(jsonDir)) {
-      fs.mkdirSync(jsonDir, { recursive: true });
+    if (!fs.existsSync(savePath)) {
+      try {
+        console.log('ディレクトリを作成します:', savePath);
+        fs.mkdirSync(savePath, { recursive: true });
+      } catch (error) {
+        console.error('ディレクトリ作成エラー:', error);
+        return res.status(500).json({
+          success: false,
+          error: '保存先ディレクトリの作成に失敗しました'
+        });
+      }
     }
     
     // フローIDとタイムスタンプでファイル名を生成
-    const timestamp = Date.now();
-    const fileName = `flow_${timestamp}.json`;
-    const filePath = path.join(jsonDir, fileName);
+    const fileName = `${flowData.id}.json`;
+    const filePath = path.join(savePath, fileName);
+    console.log('フローファイルパス:', filePath);
     
     // メタデータファイル名
-    const metadataFileName = `flow_${timestamp}_metadata.json`;
-    const metadataFilePath = path.join(jsonDir, metadataFileName);
+    const metadataFileName = `${flowData.id}_metadata.json`;
+    const metadataFilePath = path.join(savePath, metadataFileName);
+    console.log('メタデータファイルパス:', metadataFilePath);
     
-    // フローデータをJSON形式で保存
-    fs.writeFileSync(filePath, JSON.stringify(flowData, null, 2));
-    
-    // メタデータを作成
-    const metadata = {
-      id: `flow_${timestamp}`,
-      filePath: filePath,
-      fileName: fileName,
-      title: flowData.title,
-      description: flowData.description || '',
-      createdAt: new Date().toISOString(),
-      type: 'flow',
-      nodeCount: flowData.nodes ? flowData.nodes.length : 0,
-      edgeCount: flowData.edges ? flowData.edges.length : 0
-    };
-    
-    // メタデータをJSON形式で保存
-    fs.writeFileSync(metadataFilePath, JSON.stringify(metadata, null, 2));
-    
-    // インデックスファイルを更新
-    updateIndexFile(metadata);
-    
-    log(`フローデータを保存しました: ${fileName}`);
-    
-    return res.status(200).json({
-      success: true,
-      id: metadata.id,
-      message: 'フローデータが保存されました'
-    });
+    try {
+      // フローデータをJSON形式で保存
+      console.log('フローデータを保存します:', filePath);
+      fs.writeFileSync(filePath, JSON.stringify(flowData, null, 2));
+      
+      // メタデータを作成
+      const metadata = {
+        id: flowData.id,
+        filePath: filePath,
+        fileName: fileName,
+        title: flowData.title,
+        description: flowData.description || '',
+        createdAt: new Date().toISOString(),
+        type: flowData.type || 'flow',
+        nodeCount: flowData.nodes ? flowData.nodes.length : 0,
+        edgeCount: flowData.edges ? flowData.edges.length : 0
+      };
+      
+      // メタデータをJSON形式で保存
+      console.log('メタデータを保存します:', metadataFilePath);
+      fs.writeFileSync(metadataFilePath, JSON.stringify(metadata, null, 2));
+      
+      // インデックスファイルを更新
+      console.log('インデックスファイルを更新します');
+      updateIndexFile(metadata);
+      
+      log(`フローデータを保存しました: ${fileName}`);
+      
+      return res.status(200).json({
+        success: true,
+        id: metadata.id,
+        message: 'フローデータが保存されました'
+      });
+    } catch (error) {
+      console.error('ファイル保存エラー:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'ファイルの保存中にエラーが発生しました'
+      });
+    }
   } catch (error) {
     console.error('フロー保存エラー:', error);
     return res.status(500).json({
@@ -73,7 +107,7 @@ router.post('/save-flow', async (req: Request, res: Response) => {
 // インデックスファイルを更新
 function updateIndexFile(metadata: any) {
   try {
-    const indexPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+    const indexPath = path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting', 'index.json');
     let indexData: any = { lastUpdated: new Date().toISOString(), guides: [], fileCount: 0 };
     
     if (fs.existsSync(indexPath)) {
@@ -104,7 +138,7 @@ function updateIndexFile(metadata: any) {
 // フロー一覧の取得
 router.get('/list', async (req: Request, res: Response) => {
   try {
-    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+    const jsonDir = path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting');
     const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
     
     if (!fs.existsSync(jsonDir)) {
@@ -330,7 +364,7 @@ router.delete('/delete/:id', async (req: Request, res: Response) => {
 // 削除後にインデックスファイルを更新
 function updateIndexFileAfterDelete(id: string) {
   try {
-    const indexPath = path.join(process.cwd(), 'knowledge-base', 'index.json');
+    const indexPath = path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting', 'index.json');
     
     if (!fs.existsSync(indexPath)) {
       return;
