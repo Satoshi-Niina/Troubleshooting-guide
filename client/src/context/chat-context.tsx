@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { 
@@ -98,6 +98,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     media?: { type: string, url: string, thumbnail?: string }[]
   } | null>(null);
   const { toast } = useToast();
+  const lastSentTextsRef = useRef<string[]>([]); // 直近の送信内容を記録
   
   // チャットの初期化
   const initializeChat = useCallback(async () => {
@@ -252,39 +253,28 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordedText(''); // 録音開始時にテキストをクリア
-    
     try {
-      // 現在のメディア状態を保持
       const currentMedia = draftMessage?.media || [];
-      
-      // iOS Safariの判定
       const isIOSDevice = () => {
         return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       };
-      
-      // iOS Safariの場合は直接Azure Speech APIを使用
+      // 音声認識結果をリアルタイム送信するコールバック
+      const handleRealtimeSend = (text: string) => {
+        const trimmed = text.trim();
+        // 2文字以下は送信しない
+        if (trimmed.length <= 2) return;
+        // 直近5件に同じ内容があれば送信しない
+        if (lastSentTextsRef.current.includes(trimmed)) return;
+        // 送信
+        sendMessage(trimmed, currentMedia);
+        // 直近5件に追加（最大5件まで）
+        lastSentTextsRef.current = [trimmed, ...lastSentTextsRef.current].slice(0, 5);
+      };
       if (isIOSDevice()) {
-        console.log('iOSデバイスを検出: Azure Speech APIを使用します');
         startSpeechRecognition(
           (text: string) => {
-            console.log('Azure音声認識結果:', text);
-            setRecordedText(text);
-            
-            if (text.trim()) {
-              // HTMLエスケープ処理を追加
-              const escapedText = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-              
-              setDraftMessage({
-                content: escapedText,
-                media: currentMedia
-              });
-            }
+            handleRealtimeSend(text);
           },
           (error: string) => {
             console.error('Azure音声認識エラー:', error);
@@ -298,56 +288,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         );
         return;
       }
-      
-      // 通常のブラウザでは標準音声認識を試す
       startBrowserSpeechRecognition(
         (text: string) => {
-          console.log('ブラウザ音声認識結果:', text);
-          setRecordedText(text);
-          
-          if (text.trim()) {
-            // HTMLエスケープ処理を追加
-            const escapedText = text
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#039;');
-            
-            setDraftMessage({
-              content: escapedText,
-              media: currentMedia
-            });
-          }
+          handleRealtimeSend(text);
         },
         (error: string) => {
-          console.log('ブラウザ音声認識エラー:', error);
-          
           toast({
             title: 'ブラウザ音声認識が使用できません',
             description: 'Azure音声認識を使用します',
             duration: 2000,
           });
-          
           startSpeechRecognition(
             (text: string) => {
-              console.log('Azure音声認識結果:', text);
-              setRecordedText(text);
-              
-              if (text.trim()) {
-                // HTMLエスケープ処理を追加
-                const escapedText = text
-                  .replace(/&/g, '&amp;')
-                  .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;')
-                  .replace(/"/g, '&quot;')
-                  .replace(/'/g, '&#039;');
-                
-                setDraftMessage({
-                  content: escapedText,
-                  media: currentMedia
-                });
-              }
+              handleRealtimeSend(text);
             },
             (error: string) => {
               console.error('Azure音声認識エラー:', error);
@@ -370,23 +323,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       setIsRecording(false);
     }
-  }, [toast, draftMessage]);
+  }, [toast, draftMessage, sendMessage]);
 
   const stopRecording = useCallback(() => {
-    console.log('録音停止時のテキスト:', recordedText); // デバッグログを追加
     setIsRecording(false);
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
-    
-    // 録音テキストがある場合は、自動的にメッセージを送信
-    if (recordedText.trim()) {
-      sendMessage(recordedText.trim());
-      setDraftMessage(null);
-    } else {
-      // 録音テキストがない場合は、ドラフトメッセージをクリア
-      setDraftMessage(null);
-    }
-  }, [recordedText, sendMessage]);
+    setDraftMessage(null); // draftMessageのみクリア
+    // recordedTextやsendMessageは呼ばない
+  }, [setDraftMessage]);
 
   const searchBySelectedText = async (text: string) => {
     // すでに検索中の場合は処理をスキップ

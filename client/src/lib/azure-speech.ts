@@ -208,15 +208,15 @@ export const startBrowserSpeechRecognition = (
   let lastTranscript = '';
   
   browserRecognition.onresult = (event: any) => {
-    const transcript = Array.from(event.results)
-      .map((result: any) => result[0])
-      .map((result) => result.transcript)
-      .join('');
-    
-    // 重複を防ぐために前回と同じ結果でない場合のみ通知
-    if (transcript !== lastTranscript) {
-      onResult(transcript);
-      lastTranscript = transcript;
+    // isFinal=trueのときだけ送信
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const result = event.results[i];
+      if (result.isFinal) {
+        const transcript = result[0].transcript.trim();
+        if (transcript) {
+          onResult(transcript);
+        }
+      }
     }
   };
 
