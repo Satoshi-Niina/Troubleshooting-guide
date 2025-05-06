@@ -102,6 +102,12 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
     }
   };
 
+  // HTMLコンテンツを安全に表示する関数
+  const renderContent = (content: string) => {
+    // HTMLエスケープされたコンテンツを安全に表示
+    return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  };
+
   return (
     <div 
       className={`flex items-end mb-4 ${isUserMessage ? "" : "flex-row-reverse"} min-w-[250px]`}
@@ -123,108 +129,43 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
             </button>
           )}
         </div>
-        <div 
-          className={`px-4 py-3 mb-1 shadow-sm w-full ${
-            isUserMessage 
-              ? `chat-bubble-user bg-blue-50 rounded-[18px_18px_4px_18px] border ${isDraft ? "border-blue-400 border-dashed" : "border-blue-200"}` 
-              : "chat-bubble-ai bg-white rounded-[18px_18px_18px_4px] border border-blue-200"
-          } ${isDraft ? "cursor-pointer hover:bg-blue-100 transition-colors" : ""}`}
-          onClick={() => {
-            // ドラフトメッセージの場合、クリックで入力欄にテキストをコピーする
-            if (isDraft && message.content) {
-              setSelectedText(message.content);
-              toast({
-                title: "テキストをコピーしました",
-                description: "音声認識テキストが入力欄にコピーされました",
-                duration: 2000,
-              });
-            }
-          }}
-        >
-          <div className="relative">
-            <p className={`${!isUserMessage ? "text-blue-600" : "text-black"}`}>{message.content}</p>
-            
-            {/* テキスト選択時のコピーボタン */}
-            {showCopyButton && (
-              <button
-                onClick={copyToInput}
-                className="absolute -top-2 -right-2 bg-blue-600 text-white p-1.5 rounded-full shadow-md hover:bg-blue-700 transition-colors"
-                title="入力欄にコピー"
-              >
-                <Copy size={14} />
-              </button>
-            )}
-            
-            {/* ドラフトメッセージの場合、テキストをタップして入力欄にコピーできることを示すヒント */}
-            {isDraft && message.content && (
-              <div className="mt-2 text-xs text-blue-500 italic">
-                ↑ タップしてテキストを入力欄にコピー
-              </div>
-            )}
-          </div>
-          
-          {/* Display media attachments if any */}
-          {message.media && message.media.length > 0 && (
-            <div className="mt-3">
-              {message.media.map((media, index) => (
-                <div key={index} className="mt-2">
-                  {media.type === 'image' && (
-                    <div className="relative">
-                      <img 
-                        src={media.url} 
-                        alt="添付画像" 
-                        className="rounded-lg w-full max-w-xs cursor-pointer border border-blue-200 shadow-md" 
-                        onClick={() => {
-                          // Open image preview modal
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
-                      />
-                      <div 
-                        className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
-                      >
-                        <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {media.type === 'video' && (
-                    <div className="relative">
-                      <video 
-                        src={media.url} 
-                        controls 
-                        className="rounded-lg w-full max-w-xs border border-blue-200 shadow-md"
-                        onClick={(e) => {
-                          // Stop propagation to prevent both video control and preview
-                          e.stopPropagation();
-                        }}
-                      />
-                      <div 
-                        className="absolute top-2 right-2 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
-                      >
-                        <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+        
+        <div className={`rounded-lg p-3 ${
+          isUserMessage 
+            ? "bg-blue-100 text-gray-800" 
+            : "bg-indigo-100 text-gray-800"
+        }`}>
+          {renderContent(message.content)}
         </div>
-        <span className="text-xs text-blue-400">{formattedTime}</span>
+        
+        {/* メディアの表示 */}
+        {message.media && message.media.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {message.media.map((media) => (
+              <div key={media.id} className="relative">
+                {media.type === 'image' && (
+                  <img
+                    src={media.url}
+                    alt="添付画像"
+                    className="max-w-full rounded-lg"
+                  />
+                )}
+                {media.type === 'video' && (
+                  <video
+                    src={media.url}
+                    controls
+                    className="max-w-full rounded-lg"
+                    poster={media.thumbnail}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="text-xs text-gray-500 mt-1">
+          {formattedTime}
+        </div>
       </div>
       <div>
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${

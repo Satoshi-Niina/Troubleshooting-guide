@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, memo, useEffect } from 'react';
+import React, { useState, useCallback, useRef, memo, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -223,13 +223,21 @@ const initialNodes: Node[] = [
 // 初期エッジ（なし）
 const initialEdges: Edge[] = [];
 
-interface EmergencyFlowEditorProps {
-  onSave: (data: any) => void;
+export interface EmergencyFlowEditorProps {
+  onSave: (data: any) => Promise<void>;
   onCancel: () => void;
+  showSlideAddButtons?: boolean;
+  onAddSlide?: (parentNodeId?: string) => void;
   initialData?: any;
 }
 
-const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCancel, initialData }) => {
+export const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({
+  onSave,
+  onCancel,
+  showSlideAddButtons = false,
+  onAddSlide,
+  initialData
+}) => {
   const { toast } = useToast();
   
   // デバッグ: 初期データをコンソールに表示
@@ -464,6 +472,38 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
     });
   }, [flowTitle, flowDescription, nodes, edges, flowId, onSave, toast]);
   
+  // カスタムノードのレンダリング
+  const customNodeTypes = useMemo(() => ({
+    start: StartNode,
+    step: StepNode,
+    decision: DecisionNode,
+    end: EndNode,
+    custom: ({ data, id }: any) => (
+      <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400">
+        <div className="flex items-center">
+          <div className="ml-2">
+            <div className="text-lg font-bold">{data.label}</div>
+            {data.message && (
+              <div className="text-sm text-gray-500">{data.message}</div>
+            )}
+          </div>
+        </div>
+        {showSlideAddButtons && onAddSlide && (
+          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => onAddSlide(id)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+    )
+  }), [showSlideAddButtons, onAddSlide]);
+
   return (
     <div className="flex flex-col h-full">
       <Card className="flex-1">
@@ -530,7 +570,7 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
                   onNodeClick={onNodeClick}
                   onPaneClick={onPaneClick}
                   connectionMode={ConnectionMode.Loose}
-                  nodeTypes={nodeTypes}
+                  nodeTypes={customNodeTypes}
                   fitView
                   onInit={setReactFlowInstance}
                 >

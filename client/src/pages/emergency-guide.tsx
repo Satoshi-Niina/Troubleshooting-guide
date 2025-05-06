@@ -217,9 +217,22 @@ const EmergencyGuidePage: React.FC = () => {
       const selectedFlows = generatedOptions.filter(option => selectedFileIds.includes(option.id));
       console.log('選択されたフロー:', selectedFlows);
       
-      // 各フローを保存
-      for (const flow of selectedFlows) {
+      // 選択肢は1つだけ選べる前提で、1ファイルだけ保存
+      if (selectedFlows.length > 0) {
+        const flow = selectedFlows[0];
         const flowId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // contentからsteps配列を生成
+        const steps = flow.content
+          ? flow.content
+              .split(/\n+/)
+              .filter(line => line.match(/^\d+\./))
+              .map((line, idx) => ({
+                id: `step${idx + 1}`,
+                title: line.replace(/^\d+\.\s*/, ''),
+                order: idx + 1
+              }))
+          : [];
+
         const flowData = {
           id: flowId,
           title: `応急処理フロー: ${searchQuery}`,
@@ -229,41 +242,63 @@ const EmergencyGuidePage: React.FC = () => {
           images: flow.images || [],
           savePath: 'C:/Users/Satoshi Niina/OneDrive/Desktop/Troubleshooting-guide/knowledge-base/troubleshooting',
           nodes: [],
-          edges: []
+          edges: [],
+          steps,
+          metadata: {
+            createdAt: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+            filePath: `flow_${flowId}.json`,
+            fileName: `flow_${flowId}.json`,
+            nodeCount: 0,
+            edgeCount: 0,
+            stepCount: steps.length,
+            steps: steps.map(step => ({
+              id: step.id,
+              title: step.title,
+              order: step.order
+            }))
+          }
         };
 
         console.log('保存するフローデータ:', flowData);
 
-        const response = await fetch('/api/emergency-flow/save-flow', {
+        // フローデータを保存
+        const response = await fetch('/api/tech-support/flows/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(flowData),
+          body: JSON.stringify({
+            ...flowData,
+            saveAsSingleFile: true // 単一ファイルとして保存することを指示
+          }),
         });
 
-        const responseData = await response.json();
-        console.log('サーバーからの応答:', responseData);
-
         if (!response.ok) {
-          throw new Error(responseData.error || '保存に失敗しました');
+          throw new Error('フローの保存に失敗しました');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          toast({
+            title: "保存成功",
+            description: "フローが保存されました",
+          });
+          
+          // 選択状態をリセット
+          setSelectedFileIds([]);
+          setGeneratedOptions([]);
+          setSearchQuery('');
+        } else {
+          throw new Error(result.error || 'フローの保存に失敗しました');
         }
       }
-
-      toast({
-        title: "保存完了",
-        description: `${selectedFileIds.length}件のフローを保存しました。`,
-      });
-      
-      // 選択をクリア
-      setSelectedFileIds([]);
-      // 生成された選択肢をクリア
-      setGeneratedOptions([]);
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
         title: "エラー",
-        description: error instanceof Error ? error.message : "フローの保存に失敗しました。",
+        description: error instanceof Error ? error.message : "フローの保存に失敗しました",
         variant: "destructive",
       });
     }

@@ -6,6 +6,7 @@ import path from "path";
 import { initializeKnowledgeBase } from "./lib/knowledge-base";
 import fs from "fs";
 import axios from "axios";
+import emergencyFlowRouter from './routes/emergency-flow-router';
 
 const app = express();
 app.use(express.json());
@@ -69,6 +70,9 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Mount emergency flow router
+app.use('/api/tech-support/flows', emergencyFlowRouter);
 
 (async () => {
   try {

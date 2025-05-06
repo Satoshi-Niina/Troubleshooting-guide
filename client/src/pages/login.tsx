@@ -25,8 +25,10 @@ export default function Login() {
   const onSubmit = async (values: { username: string; password: string }) => {
     try {
       setIsLoading(true);
-      await login(values.username, values.password);
-      setLocation("/chat");
+      const response = await login(values.username, values.password);
+      if (response.success) {
+        setLocation("/chat");
+      }
     } catch (error) {
       console.error("Login error:", error);
     } finally {

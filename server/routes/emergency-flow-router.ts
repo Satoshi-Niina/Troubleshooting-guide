@@ -5,8 +5,8 @@ import { log } from '../vite';
 
 const router = express.Router();
 
-// 応急処置フローの保存
-router.post('/save-flow', async (req: Request, res: Response) => {
+// 応急処置フローの保存（クライアント側のエンドポイントに対応）
+router.post('/save', async (req: Request, res: Response) => {
   try {
     const flowData = req.body;
     console.log('受信したフローデータ:', flowData);
@@ -28,184 +28,122 @@ router.post('/save-flow', async (req: Request, res: Response) => {
     }
     
     // 保存先のパスを取得（クライアントから指定されたパスを使用）
-    const savePath = flowData.savePath || path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting');
+    const basePath = process.cwd();
+    const savePath = flowData.savePath || path.join(basePath, 'knowledge-base', 'troubleshooting');
     console.log('保存先パス:', savePath);
     
-    // ディレクトリ存在確認
-    if (!fs.existsSync(savePath)) {
+    // パスの正規化
+    const normalizedSavePath = path.normalize(savePath);
+    console.log('正規化された保存先パス:', normalizedSavePath);
+    
+    // ディレクトリ存在確認と作成
+    try {
+      if (!fs.existsSync(normalizedSavePath)) {
+        console.log('ディレクトリを作成します:', normalizedSavePath);
+        fs.mkdirSync(normalizedSavePath, { recursive: true });
+        console.log('ディレクトリ作成完了');
+      }
+      
+      // ディレクトリの書き込み権限を確認
       try {
-        console.log('ディレクトリを作成します:', savePath);
-        fs.mkdirSync(savePath, { recursive: true });
+        const testFile = path.join(normalizedSavePath, '.write-test');
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        console.log('書き込み権限確認OK');
       } catch (error) {
-        console.error('ディレクトリ作成エラー:', error);
+        console.error('書き込み権限エラー:', error);
         return res.status(500).json({
           success: false,
-          error: '保存先ディレクトリの作成に失敗しました'
+          error: '保存先ディレクトリへの書き込み権限がありません'
         });
       }
+    } catch (error) {
+      console.error('ディレクトリ操作エラー:', error);
+      return res.status(500).json({
+        success: false,
+        error: '保存先ディレクトリの操作に失敗しました'
+      });
     }
     
     // フローIDとタイムスタンプでファイル名を生成
     const fileName = `${flowData.id}.json`;
-    const filePath = path.join(savePath, fileName);
+    const filePath = path.join(normalizedSavePath, fileName);
     console.log('フローファイルパス:', filePath);
-    
-    // メタデータファイル名
-    const metadataFileName = `${flowData.id}_metadata.json`;
-    const metadataFilePath = path.join(savePath, metadataFileName);
-    console.log('メタデータファイルパス:', metadataFilePath);
     
     try {
       // フローデータをJSON形式で保存
       console.log('フローデータを保存します:', filePath);
-      fs.writeFileSync(filePath, JSON.stringify(flowData, null, 2));
+      const jsonData = JSON.stringify(flowData, null, 2);
+      fs.writeFileSync(filePath, jsonData, 'utf8');
       
-      // メタデータを作成
-      const metadata = {
-        id: flowData.id,
-        filePath: filePath,
-        fileName: fileName,
-        title: flowData.title,
-        description: flowData.description || '',
-        createdAt: new Date().toISOString(),
-        type: flowData.type || 'flow',
-        nodeCount: flowData.nodes ? flowData.nodes.length : 0,
-        edgeCount: flowData.edges ? flowData.edges.length : 0
-      };
-      
-      // メタデータをJSON形式で保存
-      console.log('メタデータを保存します:', metadataFilePath);
-      fs.writeFileSync(metadataFilePath, JSON.stringify(metadata, null, 2));
-      
-      // インデックスファイルを更新
-      console.log('インデックスファイルを更新します');
-      updateIndexFile(metadata);
+      // 保存の確認
+      if (!fs.existsSync(filePath)) {
+        throw new Error('ファイルの保存に失敗しました');
+      }
       
       log(`フローデータを保存しました: ${fileName}`);
       
       return res.status(200).json({
         success: true,
-        id: metadata.id,
-        message: 'フローデータが保存されました'
+        id: flowData.id,
+        message: 'フローデータが保存されました',
+        filePath: filePath
       });
     } catch (error) {
       console.error('ファイル保存エラー:', error);
       return res.status(500).json({
         success: false,
-        error: 'ファイルの保存中にエラーが発生しました'
+        error: 'ファイルの保存中にエラーが発生しました',
+        details: error instanceof Error ? error.message : '不明なエラー'
       });
     }
   } catch (error) {
     console.error('フロー保存エラー:', error);
     return res.status(500).json({
       success: false,
-      error: 'フローデータの保存中にエラーが発生しました'
+      error: 'フローデータの保存中にエラーが発生しました',
+      details: error instanceof Error ? error.message : '不明なエラー'
     });
   }
 });
 
-// インデックスファイルを更新
-function updateIndexFile(metadata: any) {
-  try {
-    const indexPath = path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting', 'index.json');
-    let indexData: any = { lastUpdated: new Date().toISOString(), guides: [], fileCount: 0 };
-    
-    if (fs.existsSync(indexPath)) {
-      const indexContent = fs.readFileSync(indexPath, 'utf-8');
-      indexData = JSON.parse(indexContent);
-    }
-    
-    // 既存のガイドリストを更新
-    const existingIndex = indexData.guides.findIndex((g: any) => g.id === metadata.id);
-    if (existingIndex >= 0) {
-      indexData.guides[existingIndex] = metadata;
-    } else {
-      indexData.guides.push(metadata);
-    }
-    
-    // ファイル数を更新
-    indexData.fileCount = indexData.guides.length;
-    indexData.lastUpdated = new Date().toISOString();
-    
-    // インデックスファイルを書き込み
-    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
-    log(`インデックスファイルを更新しました: ${indexData.fileCount}件のガイド`);
-  } catch (error) {
-    console.error('インデックスファイル更新エラー:', error);
-  }
-}
-
 // フロー一覧の取得
-router.get('/list', async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const jsonDir = path.join('C:', 'Users', 'Satoshi Niina', 'OneDrive', 'Desktop', 'Troubleshooting-guide', 'knowledge-base', 'troubleshooting');
     const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
     
-    if (!fs.existsSync(jsonDir)) {
-      fs.mkdirSync(jsonDir, { recursive: true });
+    if (!fs.existsSync(troubleshootingDir)) {
+      fs.mkdirSync(troubleshootingDir, { recursive: true });
+      return res.status(200).json({ flows: [] });
     }
+    
+    const files = fs.readdirSync(troubleshootingDir)
+      .filter(file => file.endsWith('.json') && !file.endsWith('_metadata.json') && file !== 'index.json');
     
     const flowList = [];
     
-    // JSONディレクトリからメタデータを読み込む
-    if (fs.existsSync(jsonDir)) {
-      const jsonFiles = fs.readdirSync(jsonDir)
-        .filter(file => (file.endsWith('_metadata.json') || file.includes('example_flow_metadata')));
-      
-      let jsonMetadataCount = 0;
-      for (const file of jsonFiles) {
-        try {
-          const filePath = path.join(jsonDir, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const metadata = JSON.parse(content);
-          flowList.push({
-            ...metadata,
-            source: 'json'
-          });
-          jsonMetadataCount++;
-        } catch (err) {
-          console.error(`メタデータ読み込みエラー (${file}):`, err);
-        }
+    for (const file of files) {
+      try {
+        const filePath = path.join(troubleshootingDir, file);
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const flowData = JSON.parse(content);
+        
+        flowList.push({
+          id: flowData.id || file.replace('.json', ''),
+          title: flowData.title || 'タイトルなし',
+          description: flowData.description || '',
+          type: flowData.type || '応急処置',
+          createdAt: flowData.metadata?.createdAt || new Date().toISOString(),
+          steps: flowData.steps || [],
+          stepCount: flowData.steps ? flowData.steps.length : 0
+        });
+      } catch (err) {
+        console.error(`フローファイル読み込みエラー (${file}):`, err);
       }
-      
-      log(`jsonDirから${jsonMetadataCount}個のメタデータファイルを取得しました`);
     }
     
-    // トラブルシューティングディレクトリからJSONを読み込む
-    if (fs.existsSync(troubleshootingDir)) {
-      const tsFiles = fs.readdirSync(troubleshootingDir)
-        .filter(file => file.endsWith('.json'));
-      
-      let tsCount = 0;
-      for (const file of tsFiles) {
-        try {
-          const filePath = path.join(troubleshootingDir, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const tsData = JSON.parse(content);
-          
-          // IDとタイトルがある場合のみ追加
-          if (tsData.id && tsData.title) {
-            flowList.push({
-              id: `ts_${file.replace('.json', '')}`,
-              filePath: filePath,
-              fileName: file,
-              title: tsData.title,
-              createdAt: new Date().toISOString(),
-              slideCount: tsData.slides ? tsData.slides.length : 0,
-              source: 'troubleshooting'
-            });
-            tsCount++;
-          }
-        } catch (err) {
-          console.error(`トラブルシューティングファイル読み込みエラー (${file}):`, err);
-        }
-      }
-      
-      log(`troubleshootingDirから${tsCount}個のJSONファイルを取得しました`);
-    }
-    
-    log(`合計${flowList.length}個のガイドを取得しました`);
-    return res.status(200).json(flowList);
+    log(`${flowList.length}個のフローを取得しました`);
+    return res.status(200).json({ flows: flowList });
   } catch (error) {
     console.error('フロー一覧取得エラー:', error);
     return res.status(500).json({
@@ -216,7 +154,7 @@ router.get('/list', async (req: Request, res: Response) => {
 });
 
 // フロー詳細の取得
-router.get('/detail/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -227,78 +165,20 @@ router.get('/detail/:id', async (req: Request, res: Response) => {
       });
     }
     
-    // トラブルシューティングのIDか通常フローのIDかを判断
-    if (id.startsWith('ts_')) {
-      // トラブルシューティングファイルの場合
-      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
-      const filename = id.replace('ts_', '') + '.json';
-      const filePath = path.join(troubleshootingDir, filename);
-      
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({
-          success: false,
-          error: '指定されたトラブルシューティングファイルが見つかりません'
-        });
-      }
-      
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const flowData = JSON.parse(content);
-      
-      return res.status(200).json({
-        id: id,
-        data: flowData
-      });
-    } else if (id === 'example_flow') {
-      // サンプルフローの場合
-      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-      const flowPath = path.join(jsonDir, 'example_flow.json');
-      
-      if (!fs.existsSync(flowPath)) {
-        return res.status(404).json({
-          success: false,
-          error: 'サンプルフローファイルが見つかりません'
-        });
-      }
-      
-      const flowContent = fs.readFileSync(flowPath, 'utf-8');
-      const flowData = JSON.parse(flowContent);
-      
-      return res.status(200).json({
-        id: 'example_flow',
-        data: flowData
-      });
-    } else {
-      // 通常のフローファイルの場合
-      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-      const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
-      
-      if (!fs.existsSync(metadataPath)) {
-        return res.status(404).json({
-          success: false,
-          error: '指定されたフローが見つかりません'
-        });
-      }
-      
-      const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-      const metadata = JSON.parse(metadataContent);
-      
-      const flowPath = path.join(jsonDir, metadata.fileName);
-      
-      if (!fs.existsSync(flowPath)) {
-        return res.status(404).json({
-          success: false,
-          error: 'フローデータファイルが見つかりません'
-        });
-      }
-      
-      const flowContent = fs.readFileSync(flowPath, 'utf-8');
-      const flowData = JSON.parse(flowContent);
-      
-      return res.status(200).json({
-        id: metadata.id,
-        data: flowData
+    const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+    const filePath = path.join(troubleshootingDir, `${id}.json`);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: '指定されたフローが見つかりません'
       });
     }
+    
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const flowData = JSON.parse(content);
+    
+    return res.status(200).json(flowData);
   } catch (error) {
     console.error('フロー詳細取得エラー:', error);
     return res.status(500).json({
@@ -309,7 +189,7 @@ router.get('/detail/:id', async (req: Request, res: Response) => {
 });
 
 // フローの削除
-router.delete('/delete/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -320,31 +200,18 @@ router.delete('/delete/:id', async (req: Request, res: Response) => {
       });
     }
     
-    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-    const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
+    const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+    const filePath = path.join(troubleshootingDir, `${id}.json`);
     
-    if (!fs.existsSync(metadataPath)) {
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
         error: '指定されたフローが見つかりません'
       });
     }
     
-    // メタデータからファイル名を取得
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    const metadata = JSON.parse(metadataContent);
-    const flowPath = path.join(jsonDir, metadata.fileName);
-    
     // ファイルの削除
-    if (fs.existsSync(flowPath)) {
-      fs.unlinkSync(flowPath);
-    }
-    
-    // メタデータファイルの削除
-    fs.unlinkSync(metadataPath);
-    
-    // インデックスファイルを更新
-    updateIndexFileAfterDelete(id);
+    fs.unlinkSync(filePath);
     
     log(`フローを削除しました: ${id}`);
     
@@ -388,4 +255,4 @@ function updateIndexFileAfterDelete(id: string) {
   }
 }
 
-export const emergencyFlowRouter = router;
+export default router;

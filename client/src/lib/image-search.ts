@@ -26,8 +26,11 @@ async function loadImageSearchData() {
     
     // 最新のmetadataJSONを探す
     const dirResponse = await fetch(`/api/tech-support/list-json-files?t=${timestamp}`);
+    if (!dirResponse.ok) {
+      const errorText = await dirResponse.text();
+      throw new Error(`list-json-files取得失敗: ${dirResponse.status} ${errorText}`);
+    }
     let metadataFile = 'mc_1744105287766_metadata.json'; // デフォルトファイル
-    
     if (dirResponse.ok) {
       const fileList = await dirResponse.json();
       if (Array.isArray(fileList) && fileList.length > 0) {
@@ -42,7 +45,8 @@ async function loadImageSearchData() {
     try {
       const metadataResponse = await fetch(`/knowledge-base/data/metadata/images/${metadataFile}?t=${timestamp}`);
       if (!metadataResponse.ok) {
-        console.error(`メタデータの読み込みに失敗: ${metadataResponse.status} ${metadataResponse.statusText}`);
+        const errorText = await metadataResponse.text();
+        console.error(`メタデータの読み込みに失敗: ${metadataResponse.status} ${errorText}`);
         throw new Error('メタデータの読み込みに失敗しました');
       }
       metadata = await metadataResponse.json();
@@ -289,29 +293,30 @@ async function loadImageSearchData() {
       const initResponse = await fetch('/api/tech-support/init-image-search-data', {
         method: 'POST'
       });
+      if (!initResponse.ok) {
+        const errorText = await initResponse.text();
+        throw new Error(`画像検索データ初期化API失敗: ${initResponse.status} ${errorText}`);
+      }
+      const initData = await initResponse.json();
+      console.log("画像検索データを初期化しました:", initData);
       
-      if (initResponse.ok) {
-        const initData = await initResponse.json();
-        console.log("画像検索データを初期化しました:", initData);
-        
-        // knowledge-baseから再度データを読み込み
-        try {
-          // knowledge-base/dataディレクトリから読み込む（一元化）
-          const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
-          if (kbReloadResponse.ok) {
-            const reloadedData = await kbReloadResponse.json();
-            if (Array.isArray(reloadedData)) {
-              console.log(`再読み込みした画像検索データ: ${reloadedData.length}件`);
-              imageSearchData = reloadedData;
-              return;
-            }
-          } else {
-            throw new Error('knowledge-baseのデータ読み込みに失敗しました');
-          }
-        } catch (error) {
-          console.warn(`knowledge-base/dataからの読み込みに失敗しました:`, error);
-          console.error(`画像検索データ読み込みに失敗しました:`, error);
+      // knowledge-baseから再度データを読み込み
+      try {
+        // knowledge-base/dataディレクトリから読み込む（一元化）
+        const kbReloadResponse = await fetch(`/knowledge-base/data/image_search_data.json?t=${Date.now()}`);
+        if (!kbReloadResponse.ok) {
+          const errorText = await kbReloadResponse.text();
+          throw new Error(`knowledge-baseのデータ読み込みに失敗: ${kbReloadResponse.status} ${errorText}`);
         }
+        const reloadedData = await kbReloadResponse.json();
+        if (Array.isArray(reloadedData)) {
+          console.log(`再読み込みした画像検索データ: ${reloadedData.length}件`);
+          imageSearchData = reloadedData;
+          return;
+        }
+      } catch (error) {
+        console.warn(`knowledge-base/dataからの読み込みに失敗しました:`, error);
+        console.error(`画像検索データ読み込みに失敗しました:`, error);
       }
     } catch (initError) {
       console.error("画像検索データの初期化に失敗:", initError);
@@ -331,12 +336,14 @@ async function loadImageSearchData() {
           headers: { 'pragma': 'no-cache', 'cache-control': 'no-cache' }
         });
         
-        if (directFetch.ok) {
-          const fetchedData = await directFetch.json();
-          if (Array.isArray(fetchedData) && fetchedData.length > 0) {
-            console.log(`知識ベースから画像検索データを読み込みました: ${fetchedData.length}件`);
-            directData = fetchedData;
-          }
+        if (!directFetch.ok) {
+          const errorText = await directFetch.text();
+          throw new Error(`知識ベースからの読み込みに失敗: ${directFetch.status} ${errorText}`);
+        }
+        const fetchedData = await directFetch.json();
+        if (Array.isArray(fetchedData) && fetchedData.length > 0) {
+          console.log(`知識ベースから画像検索データを読み込みました: ${fetchedData.length}件`);
+          directData = fetchedData;
         }
       } catch (pathError) {
         console.warn(`知識ベースからの読み込みに失敗:`, pathError);
@@ -353,58 +360,56 @@ async function loadImageSearchData() {
             method: 'POST',
             cache: 'no-store'
           });
+          if (!reinitResp.ok) {
+            const errorText = await reinitResp.text();
+            throw new Error(`画像検索データ再初期化API失敗: ${reinitResp.status} ${errorText}`);
+          }
+          const initData = await reinitResp.json();
+          console.log('画像検索データを初期化しました:', initData);
           
-          if (reinitResp.ok) {
-            const initData = await reinitResp.json();
-            console.log('画像検索データを初期化しました:', initData);
-            
-            // 少し待機して再試行
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // 初期化後は知識ベースから試行
-            const retryPaths = [
-              '/knowledge-base/data/image_search_data.json'
-            ];
-            
-            let retryData = null;
-            for (const retryPath of retryPaths) {
-              try {
-                const retryFetch = await fetch(`${retryPath}?t=${Date.now()}`, {
-                  cache: 'no-store'
-                });
-                
-                if (retryFetch.ok) {
-                  const data = await retryFetch.json();
-                  if (Array.isArray(data) && data.length > 0) {
-                    console.log(`初期化後、パス ${retryPath} からの再読み込みに成功: ${data.length}件`);
-                    retryData = data;
-                    break;
-                  }
-                }
-              } catch (retryErr) {
-                console.warn(`初期化後の再読み込み失敗 (${retryPath}):`, retryErr);
+          // 少し待機して再試行
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // 初期化後は知識ベースから試行
+          const retryPaths = [
+            '/knowledge-base/data/image_search_data.json'
+          ];
+          
+          let retryData = null;
+          for (const retryPath of retryPaths) {
+            try {
+              const retryFetch = await fetch(`${retryPath}?t=${Date.now()}`, {
+                cache: 'no-store'
+              });
+              if (!retryFetch.ok) {
+                const errorText = await retryFetch.text();
+                throw new Error(`初期化後の再読み込み失敗 (${retryPath}): ${retryFetch.status} ${errorText}`);
               }
-            }
-            
-            if (retryData) {
-              console.log(`初期化後、${retryData.length}件のデータを読み込みました`);
-              imageSearchData = retryData;
-              return;
+              const data = await retryFetch.json();
+              if (Array.isArray(data) && data.length > 0) {
+                console.log(`初期化後、パス ${retryPath} からの再読み込みに成功: ${data.length}件`);
+                retryData = data;
+                break;
+              }
+            } catch (retryErr) {
+              console.warn(`初期化後の再読み込み失敗 (${retryPath}):`, retryErr);
             }
           }
-        } catch (reinitErr) {
-          console.error('再初期化に失敗:', reinitErr);
+          
+          if (retryData) {
+            console.log(`初期化後、${retryData.length}件のデータを読み込みました`);
+            imageSearchData = retryData;
+            return;
+          }
+        } catch (retryError) {
+          console.error('画像検索データ再初期化API失敗:', retryError);
         }
         
         throw new Error("どのパスからもデータを読み込めませんでした");
       }
-    } catch (directError) {
-      console.error("直接JSONからの読み込みに失敗:", directError);
+    } catch (finalError) {
+      console.error('最終的な画像検索データ読み込み失敗:', finalError);
     }
-    
-    // サンプルデータは使用せず、空の配列を返す（ユーザー要求により）
-    console.log("サンプル画像データを表示しないように設定しました");
-    imageSearchData = [];
   }
 }
 

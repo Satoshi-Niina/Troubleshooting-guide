@@ -8,15 +8,14 @@ import { LoginCredentials } from '@shared/schema';
  */
 export const login = async (credentials: LoginCredentials) => {
   try {
-    // サーバーに送信（ハードコードされたチェックを削除）
-    const response = await apiRequest('POST', '/api/auth/login', credentials);
+    const response = await apiRequest('POST', '/api/login', credentials);
     if (!response.ok) {
-      throw new Error('認証サーバーからのレスポンスエラー');
+      throw new Error('認証に失敗しました');
     }
     return await response.json();
   } catch (error) {
     console.error('Login error:', error);
-    throw new Error('ログインに失敗しました');
+    throw error;
   }
 };
 
@@ -25,10 +24,23 @@ export const login = async (credentials: LoginCredentials) => {
  */
 export const logout = async () => {
   try {
-    await apiRequest('POST', '/api/auth/logout');
+    // チャット履歴をクリア
+    const response = await apiRequest('POST', '/api/chats/clear-history');
+    if (!response.ok) {
+      console.error('Failed to clear chat history');
+    }
+
+    // ログアウト処理
+    const logoutResponse = await apiRequest('POST', '/api/logout');
+    if (!logoutResponse.ok) {
+      throw new Error('ログアウトに失敗しました');
+    }
+
+    // ローカルストレージをクリア
+    localStorage.clear();
   } catch (error) {
     console.error('Logout error:', error);
-    throw new Error('ログアウトに失敗しました');
+    throw error;
   }
 };
 
@@ -38,17 +50,13 @@ export const logout = async () => {
  */
 export const getCurrentUser = async () => {
   try {
-    const response = await fetch('/api/auth/me', {
-      credentials: 'include'
-    });
-    
+    const response = await apiRequest('GET', '/api/user');
     if (!response.ok) {
       if (response.status === 401) {
         return null;
       }
-      throw new Error('Failed to get current user');
+      throw new Error('ユーザー情報の取得に失敗しました');
     }
-    
     return await response.json();
   } catch (error) {
     console.error('Get current user error:', error);

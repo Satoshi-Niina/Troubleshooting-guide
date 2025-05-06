@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Helmet } from 'react-helmet';
+import TroubleshootingTextEditor from '@/components/troubleshooting/troubleshooting-text-editor';
+import TroubleshootingCharacterEditor from '@/components/troubleshooting/troubleshooting-character-editor';
 
 // トラブルシューティングデータ型
 interface TroubleshootingData {
@@ -388,6 +390,27 @@ const TroubleshootingPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* テキスト編集コンポーネント */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">テキスト編集</h2>
+          <TroubleshootingTextEditor
+            flowId={currentId || ''}
+            onSave={handleSaved}
+            onCancel={handleCancelEdit}
+          />
+        </div>
+
+        {/* キャラクター編集コンポーネント */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">キャラクター編集</h2>
+          <TroubleshootingCharacterEditor
+            onSave={handleSaved}
+            onCancel={handleCancelEdit}
+          />
+        </div>
+      </div>
     </div>
   );
 };

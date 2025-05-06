@@ -58,6 +58,7 @@ interface GuideFile {
   title: string;
   createdAt: string;
   slideCount: number;
+  type: string;
 }
 
 // メタデータフィールドの型
@@ -142,14 +143,14 @@ const EmergencyGuideEdit: React.FC = () => {
   const fetchFlowList = useCallback(async () => {
     try {
       setIsLoadingFlowList(true);
-      const response = await fetch('/api/emergency-flow/list');
+      const response = await fetch('/api/tech-support/flows');
       
       if (!response.ok) {
         throw new Error('フローリストの取得に失敗しました');
       }
       
       const data = await response.json();
-      setFlowList(data);
+      setFlowList(data.flows || []);
     } catch (error) {
       console.error('フローリスト取得エラー:', error);
       toast({
@@ -804,6 +805,55 @@ const EmergencyGuideEdit: React.FC = () => {
     );
   }, [flowList, isLoadingFlowList]);
 
+  // Add flow files to the list
+  useEffect(() => {
+    const fetchFlowFiles = async () => {
+      try {
+        const response = await fetch('/api/emergency-flow/list');
+        const data = await response.json();
+        
+        if (data && Array.isArray(data)) {
+          // Convert flow files to guide file format
+          const flowFiles = data.map(flow => ({
+            id: flow.id,
+            filePath: flow.filePath,
+            fileName: flow.fileName,
+            title: flow.title,
+            createdAt: flow.createdAt,
+            slideCount: flow.slideCount,
+            type: 'flow'
+          }));
+          
+          // Combine with existing guide files
+          setGuideFiles(prevFiles => {
+            const existingFiles = prevFiles.filter(f => f.type !== 'flow');
+            return [...existingFiles, ...flowFiles];
+          });
+        }
+      } catch (error) {
+        console.error('フローファイルの取得に失敗:', error);
+        toast({
+          title: "エラー",
+          description: "フローファイルの取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchFlowFiles();
+  }, []);
+
+  // guideFilesの重複（fileNameまたはtitleが同じもの）を除外
+  const uniqueGuideFiles = useMemo(() => {
+    const seen = new Set();
+    return guideFiles.filter(file => {
+      const key = `${file.id}_${(file.fileName || file.title).trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [guideFiles]);
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col gap-6">
@@ -846,11 +896,12 @@ const EmergencyGuideEdit: React.FC = () => {
                       <TableHead>タイトル</TableHead>
                       <TableHead>作成日</TableHead>
                       <TableHead>スライド数</TableHead>
+                      <TableHead>タイプ</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {guideFiles.map((file) => (
+                    {uniqueGuideFiles.map((file) => (
                       <TableRow 
                         key={file.id}
                         className={selectedGuideId === file.id ? 'bg-indigo-50' : ''}
@@ -858,30 +909,29 @@ const EmergencyGuideEdit: React.FC = () => {
                         <TableCell className="font-medium">{file.title}</TableCell>
                         <TableCell>{formatDate(file.createdAt)}</TableCell>
                         <TableCell>{file.slideCount}</TableCell>
+                        <TableCell>
+                          <Badge variant={file.type === 'flow' ? 'default' : 'outline'}>
+                            {file.type === 'flow' ? 'フロー' : 'ガイド'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                // ファイル選択から直接テキスト編集状態に移動
                                 setSelectedGuideId(file.id);
                                 setIsEditing(true);
-                                
-                                // ファイル読み込み開始
                                 fetchGuideData(file.id);
                               }}
                             >
                               <Pencil className="h-4 w-4 mr-1" />
                               編集
                             </Button>
-
                             <Button
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
-                              className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800"
                               onClick={() => {
-                                // 削除確認ダイアログを表示するためのデータをセット
                                 setFileToDelete(file);
                                 setShowDeleteDialog(true);
                               }}
@@ -1029,91 +1079,196 @@ const EmergencyGuideEdit: React.FC = () => {
                 <TabsContent value="slides">
                   <div className="space-y-8">
                     {(isEditing ? editedGuideData.slides : guideData?.data.slides || []).map((slide: any, slideIndex: number) => (
-                      <Card key={slideIndex} className="border-indigo-200">
-                        <CardHeader className="bg-indigo-50 rounded-t-lg">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg">
-                              スライド {slide.スライド番号}: {slide.タイトル}
-                            </CardTitle>
+                      <React.Fragment key={slideIndex}>
+                        {/* スライド間の挿入ボタン */}
+                        {isEditing && (
+                          <div className="flex justify-center my-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (!editedGuideData) return;
+                                const newSlideNumber = slideIndex + 1;
+                                const newSlide = {
+                                  スライド番号: newSlideNumber,
+                                  タイトル: `新しいステップ${newSlideNumber}`,
+                                  本文: [""],
+                                  ノート: "",
+                                  画像テキスト: [],
+                                  確認: "",
+                                  分岐: []
+                                };
+                                
+                                // 既存のスライドの番号を更新
+                                const updatedSlides = editedGuideData.slides.map((s: any, idx: number) => ({
+                                  ...s,
+                                  スライド番号: idx >= slideIndex ? idx + 2 : idx + 1
+                                }));
+                                
+                                // 新しいスライドを挿入
+                                updatedSlides.splice(slideIndex, 0, newSlide);
+                                
+                                setEditedGuideData({
+                                  ...editedGuideData,
+                                  slides: updatedSlides
+                                });
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              ここにスライドを挿入
+                            </Button>
                           </div>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor={`slide-${slideIndex}-title`}>タイトル</Label>
-                            <Input
-                              id={`slide-${slideIndex}-title`}
-                              value={slide.タイトル}
-                              onChange={(e) => handleSlideChange(slideIndex, 'タイトル', e.target.value)}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label htmlFor={`slide-${slideIndex}-text`}>本文</Label>
-                            {slide.本文.map((text: string, textIndex: number) => (
-                              <Textarea
-                                key={textIndex}
-                                id={`slide-${slideIndex}-text-${textIndex}`}
-                                rows={3}
-                                value={text}
-                                onChange={(e) => handleSlideTextChange(slideIndex, textIndex, e.target.value)}
-                                disabled={!isEditing}
-                                className="mb-2"
-                              />
-                            ))}
-                          </div>
-                          
-                          <div className="grid gap-2">
-                            <Label htmlFor={`slide-${slideIndex}-note`}>ノート</Label>
-                            <Textarea
-                              id={`slide-${slideIndex}-note`}
-                              rows={3}
-                              value={slide.ノート}
-                              onChange={(e) => handleSlideChange(slideIndex, 'ノート', e.target.value)}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                          
-                          {/* リアルタイムプレビュー */}
-                          {isEditing && (
-                            <div className="mt-4 border rounded-lg p-4 bg-slate-50">
-                              <div className="text-xs text-blue-600 mb-2">スライドプレビュー（リアルタイム更新）</div>
-                              <div className="space-y-3">
-                                {slide.タイトル && (
-                                  <h3 className="font-bold text-lg">{slide.タイトル}</h3>
-                                )}
-                                {slide.本文.map((text: string, textIdx: number) => (
-                                  <p key={textIdx} className="text-gray-700 whitespace-pre-line">{text}</p>
-                                ))}
-                                {slide.ノート && (
-                                  <div className="mt-2 pt-2 border-t border-gray-200">
-                                    <span className="text-xs text-gray-500">ノート:</span>
-                                    <p className="text-sm text-gray-600 italic">{slide.ノート}</p>
-                                  </div>
-                                )}
-                              </div>
+                        )}
+                        
+                        <Card className="border-indigo-200">
+                          <CardHeader className="bg-indigo-50 rounded-t-lg">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-lg">
+                                スライド {slide.スライド番号}: {slide.タイトル}
+                              </CardTitle>
                             </div>
-                          )}
-                          
-                          {slide.画像テキスト && slide.画像テキスト.length > 0 && (
+                          </CardHeader>
+                          <CardContent className="pt-4 space-y-4">
                             <div className="grid gap-2">
-                              <Label>画像</Label>
-                              <div className="grid grid-cols-2 gap-4">
-                                {slide.画像テキスト.map((imgText: any, imgIndex: number) => (
-                                  <div key={imgIndex} className="border rounded-lg p-2">
-                                    <img 
-                                      src={imgText.画像パス} 
-                                      alt={`スライド${slide.スライド番号}の画像${imgIndex + 1}`}
-                                      className="w-full h-auto mb-2 rounded"
-                                    />
-                                    <p className="text-sm text-gray-600">{imgText.テキスト}</p>
-                                  </div>
-                                ))}
-                              </div>
+                              <Label htmlFor={`slide-${slideIndex}-title`}>タイトル</Label>
+                              <Input
+                                id={`slide-${slideIndex}-title`}
+                                value={slide.タイトル}
+                                onChange={(e) => handleSlideChange(slideIndex, 'タイトル', e.target.value)}
+                                disabled={!isEditing}
+                              />
                             </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                            <div className="grid gap-2">
+                              <Label htmlFor={`slide-${slideIndex}-text`}>本文</Label>
+                              {slide.本文.map((text: string, textIndex: number) => (
+                                <Textarea
+                                  key={textIndex}
+                                  id={`slide-${slideIndex}-text-${textIndex}`}
+                                  rows={3}
+                                  value={text}
+                                  onChange={(e) => handleSlideTextChange(slideIndex, textIndex, e.target.value)}
+                                  disabled={!isEditing}
+                                  className="mb-2"
+                                />
+                              ))}
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor={`slide-${slideIndex}-note`}>ノート</Label>
+                              <Textarea
+                                id={`slide-${slideIndex}-note`}
+                                rows={3}
+                                value={slide.ノート}
+                                onChange={(e) => handleSlideChange(slideIndex, 'ノート', e.target.value)}
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            {/* 確認フィールド */}
+                            <div className="grid gap-2">
+                              <Label htmlFor={`slide-${slideIndex}-confirm`}>確認</Label>
+                              <Input
+                                id={`slide-${slideIndex}-confirm`}
+                                value={slide.確認 || ""}
+                                onChange={e => handleSlideChange(slideIndex, '確認', e.target.value)}
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            {/* 条件分岐リスト */}
+                            <div className="grid gap-2">
+                              <Label>条件分岐</Label>
+                              {(slide.分岐 || []).map((branch: any, branchIdx: number) => (
+                                <div key={branchIdx} className="flex gap-2 items-center mb-1">
+                                  <Input
+                                    className="flex-1"
+                                    placeholder="条件 (例: 12V以上)"
+                                    value={branch.条件 || ""}
+                                    onChange={e => {
+                                      const newBranches = [...(slide.分岐 || [])];
+                                      newBranches[branchIdx] = { ...newBranches[branchIdx], 条件: e.target.value };
+                                      handleSlideChange(slideIndex, '分岐', newBranches);
+                                    }}
+                                    disabled={!isEditing}
+                                  />
+                                  <Input
+                                    className="w-24"
+                                    placeholder="次ステップ"
+                                    value={branch.次ステップ || ""}
+                                    onChange={e => {
+                                      const newBranches = [...(slide.分岐 || [])];
+                                      newBranches[branchIdx] = { ...newBranches[branchIdx], 次ステップ: e.target.value };
+                                      handleSlideChange(slideIndex, '分岐', newBranches);
+                                    }}
+                                    disabled={!isEditing}
+                                  />
+                                  {isEditing && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newBranches = [...(slide.分岐 || [])];
+                                        newBranches.splice(branchIdx, 1);
+                                        handleSlideChange(slideIndex, '分岐', newBranches);
+                                      }}
+                                    >
+                                      削除
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                              {isEditing && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newBranches = [...(slide.分岐 || []), { 条件: "", 次ステップ: "" }];
+                                    handleSlideChange(slideIndex, '分岐', newBranches);
+                                  }}
+                                >
+                                  ＋ 条件分岐追加
+                                </Button>
+                              )}
+                            </div>
+                            
+                            {/* リアルタイムプレビュー */}
+                            {isEditing && (
+                              <div className="mt-4 border rounded-lg p-4 bg-slate-50">
+                                <div className="text-xs text-blue-600 mb-2">スライドプレビュー（リアルタイム更新）</div>
+                                <div className="space-y-3">
+                                  {slide.タイトル && (
+                                    <h3 className="font-bold text-lg">{slide.タイトル}</h3>
+                                  )}
+                                  {slide.本文.map((text: string, textIdx: number) => (
+                                    <p key={textIdx} className="text-gray-700 whitespace-pre-line">{text}</p>
+                                  ))}
+                                  {slide.ノート && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                      <span className="text-xs text-gray-500">ノート:</span>
+                                      <p className="text-sm text-gray-600 italic">{slide.ノート}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {slide.画像テキスト && slide.画像テキスト.length > 0 && (
+                              <div className="grid gap-2">
+                                <Label>画像</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                  {slide.画像テキスト.map((imgText: any, imgIndex: number) => (
+                                    <div key={imgIndex} className="border rounded-lg p-2">
+                                      <img 
+                                        src={imgText.画像パス} 
+                                        alt={`スライド${slide.スライド番号}の画像${imgIndex + 1}`}
+                                        className="w-full h-auto mb-2 rounded"
+                                      />
+                                      <p className="text-sm text-gray-600">{imgText.テキスト}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </React.Fragment>
                     ))}
                   </div>
                 </TabsContent>

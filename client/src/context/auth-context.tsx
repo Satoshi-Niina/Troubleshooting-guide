@@ -1,14 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { User } from '@shared/schema';
+import * as auth from '@/lib/auth';
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-
-interface User {
-  id: number;
-  username: string;
-  displayName: string;
-  role: "employee" | "admin";
-  department?: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -33,65 +26,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const initAuth = async () => {
       try {
-        const response = await fetch("/api/user", {
-          credentials: "include",
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+        const userData = await auth.getCurrentUser();
+        if (userData?.success && userData.user) {
+          setUser(userData.user);
         }
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        console.error('Auth initialization error:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchUser();
+
+    initAuth();
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
-      setIsLoading(true);
-      const response = await apiRequest("POST", "/api/login", { username, password });
-      const userData = await response.json();
-      setUser(userData);
-      toast({
-        title: "ログイン成功",
-        description: `ようこそ、${userData.displayName}さん`,
-      });
+      const response = await auth.login({ username, password });
+      if (response.success && response.user) {
+        setUser(response.user);
+        // セッションの保存を確認
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const currentUser = await auth.getCurrentUser();
+        if (currentUser?.success && currentUser.user) {
+          toast({
+            title: "ログイン成功",
+            description: "ようこそ！",
+          });
+          return response;
+        } else {
+          throw new Error("セッションの保存に失敗しました");
+        }
+      } else {
+        throw new Error(response.message || "ログインに失敗しました");
+      }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "ログイン失敗",
-        description: "ユーザー名またはパスワードが間違っています",
+        title: "ログインエラー",
+        description: error instanceof Error ? error.message : "ログインに失敗しました",
         variant: "destructive",
       });
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      setIsLoading(true);
-      await apiRequest("POST", "/api/logout");
+      await auth.logout();
       setUser(null);
       toast({
-        title: "ログアウト成功",
+        title: "ログアウト",
         description: "ログアウトしました",
       });
     } catch (error) {
+      console.error('Logout error:', error);
       toast({
-        title: "ログアウト失敗",
+        title: "ログアウトエラー",
         description: "ログアウトに失敗しました",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
   };
 

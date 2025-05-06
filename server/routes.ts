@@ -21,7 +21,7 @@ import techSupportRouter from './routes/tech-support';
 import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
 import emergencyGuideRouter from './routes/emergency-guide';
-import { emergencyFlowRouter } from './routes/emergency-flow-router';
+import emergencyFlowRouter from './routes/emergency-flow-router';
 import { registerSyncRoutes } from './routes/sync-routes';
 import { flowGeneratorRouter } from './routes/flow-generator';
 import { registerKnowledgeBaseRoutes } from './routes/knowledge-base';
@@ -37,28 +37,178 @@ declare module 'express-session' {
 // Session will now use Postgres via storage.sessionStore
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Register knowledge base routes
+  // Setup session middleware first
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "emergency-recovery-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      },
+      store: storage.sessionStore,
+    })
+  );
+
+  // Auth middleware
+  const requireAuth = (req: Request, res: Response, next: Function) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ 
+        success: false,
+        message: "認証されていません" 
+      });
+    }
+    next();
+  };
+
+  // Admin middleware
+  const requireAdmin = async (req: Request, res: Response, next: Function) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({ 
+        success: false,
+        message: "認証されていません" 
+      });
+    }
+    
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false,
+        message: "管理者権限が必要です" 
+      });
+    }
+    
+    next();
+  };
+
+  // Auth routes
+  app.post("/api/login", async (req, res) => {
+    try {
+      const credentials = loginSchema.parse(req.body);
+      const user = await storage.getUserByUsername(credentials.username);
+      
+      if (!user || user.password !== credentials.password) {
+        return res.status(401).json({ 
+          success: false,
+          message: "ユーザー名またはパスワードが正しくありません" 
+        });
+      }
+      
+      // セッションの保存を確実に行う
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+      
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            reject(err);
+          } else {
+            resolve(undefined);
+          }
+        });
+      });
+      
+      // セッションが正しく保存されたことを確認
+      if (!req.session.userId) {
+        throw new Error('セッションの保存に失敗しました');
+      }
+      
+      return res.json({ 
+        success: true,
+        user: {
+          id: user.id, 
+          username: user.username, 
+          displayName: user.displayName, 
+          role: user.role,
+          department: user.department
+        }
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          success: false,
+          message: "入力データが不正です",
+          errors: error.errors 
+        });
+      }
+      return res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "サーバーエラーが発生しました" 
+      });
+    }
+  });
+
+  app.post("/api/logout", (req, res) => {
+    if (!req.session) {
+      return res.json({ 
+        success: true,
+        message: "既にログアウトしています" 
+      });
+    }
+    
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ 
+          success: false,
+          message: "ログアウトに失敗しました" 
+        });
+      }
+      res.clearCookie("connect.sid");
+      return res.json({ 
+        success: true,
+        message: "ログアウトしました" 
+      });
+    });
+  });
+
+  app.get("/api/user", async (req, res) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ 
+          success: false,
+          message: "認証されていません" 
+        });
+      }
+      
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false,
+          message: "ユーザーが見つかりません" 
+        });
+      }
+      
+      return res.json({
+        success: true,
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          displayName: user.displayName, 
+          role: user.role,
+          department: user.department
+        }
+      });
+    } catch (error) {
+      console.error('Get user error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "ユーザー情報の取得に失敗しました" 
+      });
+    }
+  });
+  
+  // Register other routes
   registerKnowledgeBaseRoutes(app);
-  
-  // Register tech support router
   app.use('/api/tech-support', techSupportRouter);
-  
-  // Register troubleshooting routes
   registerTroubleshootingRoutes(app);
-  
-  // Register data processor routes
   registerDataProcessorRoutes(app);
-  
-  // Register emergency guide routes
   app.use('/api/emergency-guide', emergencyGuideRouter);
-  
-  // Register emergency flow routes
   app.use('/api/emergency-flow', emergencyFlowRouter);
-  
-  // Register flow generator routes
   app.use('/api/flow-generator', flowGeneratorRouter);
-  
-  // Register sync routes for offline capabilities
   registerSyncRoutes(app);
   
   // Add a health check endpoint for testing
@@ -110,98 +260,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Setup session middleware
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "emergency-recovery-secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { 
-        secure: false, // Set to false for development in Replit
-        maxAge: 86400000 // 24 hours
-      },
-      store: storage.sessionStore,
-    })
-  );
-
-  // Auth middleware
-  const requireAuth = (req: Request, res: Response, next: Function) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    next();
-  };
-
-  // Admin middleware
-  const requireAdmin = async (req: Request, res: Response, next: Function) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    const user = await storage.getUser(req.session.userId);
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    
-    next();
-  };
-
-  // Auth routes
-  app.post("/api/login", async (req, res) => {
-    try {
-      const credentials = loginSchema.parse(req.body);
-      const user = await storage.getUserByUsername(credentials.username);
-      
-      if (!user || user.password !== credentials.password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      req.session.userId = user.id;
-      req.session.userRole = user.role;
-      
-      return res.json({ 
-        id: user.id, 
-        username: user.username, 
-        displayName: user.displayName, 
-        role: user.role 
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Failed to logout" });
-      }
-      res.clearCookie("connect.sid");
-      return res.json({ message: "Logged out successfully" });
-    });
-  });
-
-  app.get("/api/user", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const user = await storage.getUser(req.session.userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    
-    return res.json({ 
-      id: user.id, 
-      username: user.username, 
-      displayName: user.displayName, 
-      role: user.role,
-      department: user.department
-    });
-  });
-  
   // User management routes (admin only)
   app.get("/api/users", requireAuth, requireAdmin, async (req, res) => {
     try {
@@ -938,6 +996,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in /api/analyze-image:", error);
       return res.status(500).json({ message: "Error analyzing image" });
+    }
+  });
+
+  // チャット履歴をクリアするエンドポイント
+  app.post("/api/chats/clear-history", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false,
+          message: "認証が必要です" 
+        });
+      }
+
+      // ユーザーの全チャットを取得
+      const userChats = await storage.getChatsForUser(userId);
+      
+      // 各チャットのメッセージをクリア
+      for (const chat of userChats) {
+        await storage.clearChatMessages(chat.id);
+      }
+
+      res.json({ 
+        success: true,
+        message: "チャット履歴をクリアしました" 
+      });
+    } catch (error) {
+      console.error('Clear chat history error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "チャット履歴のクリアに失敗しました" 
+      });
     }
   });
 

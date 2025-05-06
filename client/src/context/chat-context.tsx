@@ -257,18 +257,65 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // 現在のメディア状態を保持
       const currentMedia = draftMessage?.media || [];
       
-      // まずブラウザの標準音声認識を試す（マイク許可ダイアログが確実に表示される）
+      // iOS Safariの判定
+      const isIOSDevice = () => {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      };
+      
+      // iOS Safariの場合は直接Azure Speech APIを使用
+      if (isIOSDevice()) {
+        console.log('iOSデバイスを検出: Azure Speech APIを使用します');
+        startSpeechRecognition(
+          (text: string) => {
+            console.log('Azure音声認識結果:', text);
+            setRecordedText(text);
+            
+            if (text.trim()) {
+              // HTMLエスケープ処理を追加
+              const escapedText = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+              
+              setDraftMessage({
+                content: escapedText,
+                media: currentMedia
+              });
+            }
+          },
+          (error: string) => {
+            console.error('Azure音声認識エラー:', error);
+            toast({
+              title: '音声認識エラー',
+              description: error,
+              variant: 'destructive',
+            });
+            setIsRecording(false);
+          }
+        );
+        return;
+      }
+      
+      // 通常のブラウザでは標準音声認識を試す
       startBrowserSpeechRecognition(
         (text: string) => {
-          // 認識されたテキストをセット
+          console.log('ブラウザ音声認識結果:', text);
           setRecordedText(text);
           
-          // 音声認識の内容をリアルタイムでドラフトメッセージとして表示
-          // 既存のメディアは保持する
           if (text.trim()) {
-            // ドラフトメッセージとして表示 (入力欄に反映するのはクリック時のみ)
+            // HTMLエスケープ処理を追加
+            const escapedText = text
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
+            
             setDraftMessage({
-              content: text,
+              content: escapedText,
               media: currentMedia
             });
           }
@@ -276,29 +323,34 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         (error: string) => {
           console.log('ブラウザ音声認識エラー:', error);
           
-          // エラー時はAzure Speech APIをフォールバックとして使用
           toast({
             title: 'ブラウザ音声認識が使用できません',
             description: 'Azure音声認識を使用します',
             duration: 2000,
           });
           
-          // Azure Speech APIを使用して音声認識を開始
           startSpeechRecognition(
             (text: string) => {
+              console.log('Azure音声認識結果:', text);
               setRecordedText(text);
               
-              // Azure音声認識の内容もリアルタイムでドラフトメッセージとして表示
-              // 既存のメディアは保持する
               if (text.trim()) {
-                // ドラフトメッセージとして表示 (入力欄に反映するのはクリック時のみ)
+                // HTMLエスケープ処理を追加
+                const escapedText = text
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&#039;');
+                
                 setDraftMessage({
-                  content: text,
+                  content: escapedText,
                   media: currentMedia
                 });
               }
-            }, 
+            },
             (error: string) => {
+              console.error('Azure音声認識エラー:', error);
               toast({
                 title: '音声認識エラー',
                 description: error,
@@ -321,16 +373,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [toast, draftMessage]);
 
   const stopRecording = useCallback(() => {
+    console.log('録音停止時のテキスト:', recordedText); // デバッグログを追加
     setIsRecording(false);
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
     
-    // 録音停止時にdraftMessageはクリアしない（送信ボタンを押すまでバブル表示を維持）
-    // 録音テキストがない場合は、ドラフトメッセージをクリア
-    if (!recordedText.trim()) {
+    // 録音テキストがある場合は、自動的にメッセージを送信
+    if (recordedText.trim()) {
+      sendMessage(recordedText.trim());
+      setDraftMessage(null);
+    } else {
+      // 録音テキストがない場合は、ドラフトメッセージをクリア
       setDraftMessage(null);
     }
-  }, [recordedText]);
+  }, [recordedText, sendMessage]);
 
   const searchBySelectedText = async (text: string) => {
     // すでに検索中の場合は処理をスキップ
