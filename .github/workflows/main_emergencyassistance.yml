@@ -32,12 +32,13 @@ jobs:
         run: npm run build
 
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9783B716E8474FEBAC448BA9FEB87546 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1ECE5A66C13A4A79B9FD6D0B6105CD2E }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EFA7926A1F9B4F578B3F1E83BFE1374B }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+  
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
