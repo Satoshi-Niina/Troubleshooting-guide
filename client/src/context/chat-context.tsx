@@ -22,6 +22,7 @@ import { syncChat } from '@/lib/sync-api';
 import { registerServiceWorker, requestBackgroundSync } from '@/lib/service-worker';
 // トラブルシューティングフロー検索機能
 import { searchTroubleshootingFlow, searchTroubleshootingFlows, SearchResult, japaneseGuideTitles } from '../lib/troubleshooting-search';
+import { openDatabase } from "@/lib/indexed-db";
 
 interface Media {
   id: number;
@@ -63,7 +64,7 @@ interface ChatContextValue {
   hasUnexportedMessages: boolean;
   sendEmergencyGuide: (guideTitle: string, guideContent: string) => Promise<void>;
   draftMessage: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null;
-  clearChatHistory: () => void;
+  clearChatHistory: () => Promise<void>;
   isClearing: boolean;
 }
 
@@ -888,117 +889,105 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // チャット履歴をクリアする関数
   const clearChatHistory = async () => {
+    if (!chatId) return;
+    
     try {
       setIsClearing(true);
+      console.log('チャット履歴のクリアを開始:', chatId);
       
-      // UIからメッセージをクリア
-      setMessages([]);
-      setSearchResults([]);
-      setTempMedia([]);
-      setDraftMessage(null);
+      // クリアタイムスタンプを保存
+      const timestamp = Date.now().toString();
+      localStorage.setItem('chat_cleared_timestamp', timestamp);
+      console.log('クリアタイムスタンプを保存:', timestamp);
       
-      // クエリキャッシュのキーを定義
-      const chatKey = chatId ? `/api/tech-support/chats/${chatId}/messages` : '/api/tech-support/chats/1/messages';
+      // サーバーにクリアリクエストを送信
+      const response = await apiRequest(
+        'POST',
+        `/api/chats/${chatId}/clear`
+      );
       
-      // サーバーにクリア要求を送信
-      try {
-        await apiRequest('POST', `/api/tech-support/chats/${chatId || 1}/clear`);
-        console.log('サーバーサイドキャッシュクリア要求が成功しました');
-        // サーバーからクリア指示を受信したのでローカルも完全にクリア
-        console.log('サーバーからキャッシュクリア指示を受信');
-      } catch (serverError) {
-        console.error('サーバーサイドキャッシュクリアに失敗:', serverError);
-      }
-      
-      // React Queryのキャッシュを強制的に無効化する
-      queryClient.invalidateQueries({ queryKey: [chatKey] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tech-support/chats/1/messages'] });
-      
-      // リアクトクエリのキャッシュを完全にリセット
-      queryClient.removeQueries({ queryKey: [chatKey] });
-      queryClient.removeQueries({ queryKey: ['/api/tech-support/chats/1/messages'] });
-      
-      // 新しい空の配列をキャッシュに明示的に設定
-      queryClient.setQueryData([chatKey], []);
-      queryClient.setQueryData(['/api/tech-support/chats/1/messages'], []);
-      
-      // LocalStorageのリアクトクエリキャッシュをクリア
-      for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('rq-')) {
-          localStorage.removeItem(key);
-        }
-      }
-      
-      // クリアマーカーを設定 (10秒間有効なフラグ)
-      localStorage.setItem('chat_cleared_timestamp', Date.now().toString());
-      
-      // メッセージを強制的に空にする
-      setMessages([]);
-      
-      // 成功メッセージ表示
-      toast({
-        title: 'チャット履歴をクリアしました',
-        description: '履歴を完全にクリアしました。新しいメッセージを送信できます。',
-      });
-      
-      // クリア後にページをリロードする代わりに、URL に timestamp パラメータを追加
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('t', Date.now().toString());
-      window.history.replaceState({}, '', currentUrl.toString());
-      
-      // サーバーからの再取得をブロックする (長めの期間でブロック)
-      const checkAndBlockRefetch = () => {
-        const shouldBlockRefetch = localStorage.getItem('chat_cleared_timestamp');
-        if (shouldBlockRefetch) {
-          // 10秒以内のクリアなら再取得をブロック
-          const clearTime = parseInt(shouldBlockRefetch);
-          const now = Date.now();
-          if (now - clearTime < 15000) {
-            console.log('クエリキャッシュクリア直後のためメッセージを空にします');
-            queryClient.setQueryData([chatKey], []);
-            queryClient.setQueryData(['/api/tech-support/chats/1/messages'], []);
-            return true;
-          } else {
-            localStorage.removeItem('chat_cleared_timestamp');
+      if (response.ok) {
+        console.log('サーバー側のクリアが成功');
+        
+        // メッセージをクリア
+        setMessages([]);
+        console.log('クライアント側のメッセージをクリア');
+        
+        // エクスポート関連の状態をリセット
+        setLastExportTimestamp(null);
+        setHasUnexportedMessages(false);
+        console.log('エクスポート状態をリセット');
+        
+        // ローカルストレージのクエリキャッシュをクリア
+        let clearedCacheCount = 0;
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('rq-/api/chats/')) {
+            localStorage.removeItem(key);
+            clearedCacheCount++;
           }
         }
-        return false;
-      };
-      
-      // 長時間にわたって複数回クエリキャッシュをクリアし続ける
-      const intervals = [500, 1000, 2000, 3000, 5000, 7000, 10000, 15000];
-      intervals.forEach(time => {
-        setTimeout(() => {
-          checkAndBlockRefetch();
-        }, time);
-      });
-      
-      // メッセージクエリのデフォルト値として空の配列を優先的に使用
-      // queryClient.setDefaultQueryData([chatKey], blockRefetch); // この関数は利用不可
-      // 代わりに直接空配列を設定
-      queryClient.setQueryData([chatKey], []);
-      
-      // キャッシュ削除を安全に行うため、3秒間隔で3回試行
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-          queryClient.setQueryData([chatKey], []);
-          queryClient.removeQueries({ queryKey: [chatKey] });
-        }, i * 3000); // 0秒, 3秒, 6秒でリセット
+        console.log(`ローカルストレージのキャッシュをクリア: ${clearedCacheCount}件`);
+        
+        // クエリキャッシュを完全に削除
+        queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
+        queryClient.setQueryData(['/api/chats/1/messages'], []);
+        console.log('React Queryのキャッシュをクリア');
+        
+        // IndexedDBのメッセージをクリア
+        try {
+          const db = await openDatabase();
+          const tx = db.transaction('unsyncedMessages', 'readwrite');
+          const index = tx.store.index('by-chat');
+          const messages = await index.getAll(chatId);
+          let clearedMessageCount = 0;
+          
+          for (const message of messages) {
+            await tx.store.delete(message.localId);
+            clearedMessageCount++;
+          }
+          await tx.done;
+          console.log(`IndexedDBのメッセージをクリア: ${clearedMessageCount}件`);
+        } catch (dbError) {
+          console.error('IndexedDBクリアエラー:', dbError);
+        }
+        
+        // 特殊パラメータを付けて明示的にサーバーにクリア要求を送信
+        const clearUrl = `/api/chats/${chatId}/messages?clear=true&_t=${timestamp}`;
+        const clearResponse = await fetch(clearUrl, {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (clearResponse.ok) {
+          console.log('キャッシュクリアリクエストが成功');
+        } else {
+          console.warn('キャッシュクリアリクエストが失敗:', clearResponse.status);
+        }
+        
+        // クリア成功のトースト通知
+        toast({
+          title: 'チャット履歴をクリアしました',
+          description: 'すべてのメッセージが削除されました',
+        });
+      } else {
+        throw new Error('チャット履歴のクリアに失敗しました');
       }
-      
     } catch (error) {
-      console.error('チャット履歴クリアエラー:', error);
+      console.error('Failed to clear chat history:', error);
       toast({
         title: 'エラー',
-        description: 'チャット履歴のクリアに失敗しました。ページをリロードしてみてください。',
+        description: 'チャット履歴のクリアに失敗しました',
         variant: 'destructive',
       });
     } finally {
-      // クリア状態を解除 (10秒待ってから)
-      setTimeout(() => {
-        localStorage.removeItem('chat_cleared_timestamp');
-        setIsClearing(false);
-      }, 10000);
+      setIsClearing(false);
+      console.log('チャット履歴のクリア処理が完了');
     }
   };
 
