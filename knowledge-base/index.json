@@ -1,50 +1,15 @@
 {
-  "lastUpdated": "2025-04-22T08:12:29.945Z",
-  "guides": [
-    {
-      "id": "guide_1745308410009",
-      "title": "guide_1745308409150",
-      "filePath": "/home/runner/workspace/knowledge-base/json/guide_1745308410009_metadata.json",
-      "fileName": "guide_1745308410009_metadata.json"
-    },
-    {
-      "id": "mc_1745232652990",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745232652990_metadata.json",
-      "fileName": "mc_1745232652990_metadata.json"
-    },
-    {
-      "id": "mc_1745235933176",
-      "title": "MC応急処置（画像検索用サンプル）_1745235925869.pptx",
-      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1745235933176_metadata.json",
-      "fileName": "mc_1745235933176_metadata.json"
-    }
-  ],
-  "fileCount": 3,
+  "lastUpdated": "2025-05-04T08:42:19.593Z",
+  "guides": [],
+  "fileCount": 0,
   "documents": [
     {
-      "id": "doc_1745309609889_255",
+      "id": "doc_1746348176214_231",
       "title": "doc_1745235432958_161/railway_maintenance_knowledge_1745235432716.txt",
       "path": "/home/runner/workspace/knowledge-base/doc_1745235432958_161/railway_maintenance_knowledge_1745235432716.txt",
       "type": "text",
       "chunkCount": 1,
-      "addedAt": "2025-04-22T08:13:29.889Z"
-    },
-    {
-      "id": "guide_1745308410009",
-      "title": "guide_1745308409150",
-      "path": "/home/runner/workspace/knowledge-base/json/guide_1745308410009_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-22T07:53:30.263Z"
-    },
-    {
-      "id": "mc_1745232652990",
-      "title": "MC応急処置（画像検索用サンプル）_1745232651987.pptx",
-      "path": "/home/runner/workspace/knowledge-base/json/mc_1745232652990_metadata.json",
-      "type": "image_search_data",
-      "chunkCount": 1,
-      "addedAt": "2025-04-21T10:50:53.133Z"
+      "addedAt": "2025-05-04T08:42:56.214Z"
     }
   ]
 }
