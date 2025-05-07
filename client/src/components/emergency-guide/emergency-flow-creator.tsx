@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle, FileEdit } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -23,12 +23,16 @@ import EmergencyFlowEditor from './emergency-flow-editor';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableHeader, TableHead, TableRow, TableCell } from '@/components/ui/table';
 
-interface EmergencyFlow {
+interface Flow {
+  id: string;
   title: string;
-  steps: {
-    description: string;
-    imageUrl?: string;
-  }[];
+  type?: string;
+  createdAt?: string;
+  stepCount?: number;
+  nodes?: any[];
+  edges?: any[];
+  steps?: any[];
+  slides?: any[];
 }
 
 const EmergencyFlowCreator: React.FC = () => {
@@ -83,7 +87,7 @@ const EmergencyFlowCreator: React.FC = () => {
       }
 
       // データを整形して保存
-      const formattedData = data.flows.map(flow => ({
+      const formattedData = data.flows.map((flow: Flow) => ({
         ...flow,
         type: flow.type || '応急処置',
         createdAt: flow.createdAt || new Date().toISOString()
@@ -947,54 +951,95 @@ const EmergencyFlowCreator: React.FC = () => {
   };
   
   return (
-    <>
-      <Card className="w-full h-screen max-h-[calc(100vh-120px)] overflow-auto">
-        <CardHeader className="pb-2 sticky top-0 bg-white z-10">
-          <div className="flex justify-between items-center">
-            <CardDescription>応急処置データ管理</CardDescription>
-            {characterDesignTab === 'new' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSlideAddButtons(!showSlideAddButtons)}
-                className="ml-2"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                スライド追加モード
-              </Button>
-            )}
-          </div>
-        </CardHeader>
+    <div className="container mx-auto p-4">
+      <Tabs defaultValue="file" className="w-full" onValueChange={(value) => {
+        if (value === 'file') {
+          fetchFlowList();
+        }
+      }}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="file">ファイル一覧</TabsTrigger>
+          <TabsTrigger value="new">新規作成</TabsTrigger>
+        </TabsList>
         
-        <CardContent className="overflow-y-auto pb-24">
-          <Tabs defaultValue="new" value={characterDesignTab} onValueChange={(tab) => {
-            setCharacterDesignTab(tab);
-            if (tab === 'file') {
-              fetchFlowList();
-            }
-          }}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="new">
-                <Plus className="mr-2 h-4 w-4" />
-                新規作成
-              </TabsTrigger>
-              <TabsTrigger value="file">
-                <FolderOpen className="mr-2 h-4 w-4" />
-                ファイル編集
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* ファイル入力 (非表示) */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".json"
-              className="hidden"
-            />
+        <TabsContent value="file">
+          <Card>
+            <CardHeader>
+              <CardTitle>応急処置フローファイル一覧</CardTitle>
+              <CardDescription>作成済みの応急処置フローファイルを管理します</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingFlowList ? (
+                <div className="flex justify-center items-center p-4">
+                  <RefreshCw className="h-6 w-6 animate-spin" />
+                </div>
+              ) : flowList.length === 0 ? (
+                <div className="text-center p-4 text-muted-foreground">
+                  フローファイルがありません
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>タイトル</TableHead>
+                        <TableHead>作成日</TableHead>
+                        <TableHead>スライド数</TableHead>
+                        <TableHead>タイプ</TableHead>
+                        <TableHead className="text-right">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {flowList.map((flow: Flow) => (
+                        <TableRow key={flow.id}>
+                          <TableCell>{flow.title}</TableCell>
+                          <TableCell>{new Date(flow.createdAt || '').toLocaleDateString()}</TableCell>
+                          <TableCell>{flow.stepCount || 0}</TableCell>
+                          <TableCell>{flow.type || '応急処置'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const processedData = processFlowData(flow);
+                                  setFlowData(processedData);
+                                  setCharacterDesignTab('new');
+                                }}
+                              >
+                                <FileEdit className="h-4 w-4 mr-1" />
+                                編集
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setFlowToDelete(flow.id);
+                                  setShowConfirmDelete(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                削除
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* 新規作成タブ - フローチャート作成用のReactFlowコンポーネント */}
-            <TabsContent value="new" className="h-full">
+        <TabsContent value="new">
+          <Card>
+            <CardHeader>
+              <CardTitle>応急処置フロー作成</CardTitle>
+              <CardDescription>新しい応急処置フローを作成します</CardDescription>
+            </CardHeader>
+            <CardContent>
               <EmergencyFlowEditor 
                 onSave={handleSaveFlow}
                 onCancel={handleCancelFlow}
@@ -1022,287 +1067,18 @@ const EmergencyFlowCreator: React.FC = () => {
                   edges: []
                 }}
               />
-            </TabsContent>
-            
-            {/* ファイル編集タブ */}
-            <TabsContent value="file" className="h-full">
-              <div className="space-y-4">
-                {/* 保存済みキャラクター一覧 */}
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium">保存データ一覧</h3>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={fetchFlowList} disabled={isLoadingFlowList}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        更新
-                      </Button>
-                      <Button variant="default" size="sm" onClick={handleCreateNewFlow}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        新規作成
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {isLoadingFlowList ? (
-                    <div className="py-4 text-center text-gray-500">読込中...</div>
-                  ) : flowList.length === 0 ? (
-                    <div className="py-4 text-center text-gray-500">保存済みのデータはありません</div>
-                  ) : (
-                    <ScrollArea className="h-[300px]">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>タイトル</TableHead>
-                            <TableHead>作成日</TableHead>
-                            <TableHead>スライド数</TableHead>
-                            <TableHead>タイプ</TableHead>
-                            <TableHead className="text-right">操作</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {flowList.map((flow: any) => (
-                            <TableRow key={flow.id}>
-                              <TableCell className="font-medium">{flow.title}</TableCell>
-                              <TableCell>{new Date(flow.createdAt).toLocaleString()}</TableCell>
-                              <TableCell>{flow.slideCount || 0}</TableCell>
-                              <TableCell>
-                                <Badge variant={flow.type === 'flow' ? 'default' : 'outline'}>
-                                  {flow.type === 'flow' ? 'フロー' : 'ガイド'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex gap-2 justify-end">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      console.log("編集ボタンが押されました。対象フロー:", flow);
-                                      setCharacterDesignTab('new');
-                                      
-                                      if (flow.id) {
-                                        fetch(`/api/tech-support/metadata/flows/${flow.id.replace('ts_', '')}`)
-                                          .then(response => {
-                                            if (!response.ok) {
-                                              throw new Error(`APIエラー: ${response.status}`);
-                                            }
-                                            return response.json();
-                                          })
-                                          .then(troubleshootingData => {
-                                            console.log("トラブルシューティングデータを取得:", troubleshootingData);
-                                            
-                                            const flowNodes = [
-                                              {
-                                                id: 'start',
-                                                type: 'start',
-                                                position: { x: 250, y: 50 },
-                                                data: { label: '開始' }
-                                              }
-                                            ];
-                                            
-                                            if (troubleshootingData.steps && troubleshootingData.steps.length > 0) {
-                                              troubleshootingData.steps.forEach((step: any, index: number) => {
-                                                flowNodes.push({
-                                                  id: `step_${index + 1}`,
-                                                  type: 'step',
-                                                  position: { x: 250, y: 150 + (index * 100) },
-                                                  data: { 
-                                                    label: `ステップ ${index + 1}: ${step.title || '手順'}`
-                                                  }
-                                                });
-                                              });
-                                            } else {
-                                              flowNodes.push({
-                                                id: 'step_1',
-                                                type: 'step',
-                                                position: { x: 250, y: 150 },
-                                                data: { 
-                                                  label: `${flow.title || 'ステップ'} 1`
-                                                }
-                                              });
-                                            }
-                                            
-                                            flowNodes.push({
-                                              id: 'end',
-                                              type: 'end',
-                                              position: { x: 250, y: 250 + ((flowNodes.length-2) * 100) },
-                                              data: { label: '終了' }
-                                            });
-                                            
-                                            const flowEdges = [];
-                                            for (let i = 0; i < flowNodes.length - 1; i++) {
-                                              flowEdges.push({
-                                                id: `edge-${flowNodes[i].id}-${flowNodes[i+1].id}`,
-                                                source: flowNodes[i].id,
-                                                target: flowNodes[i+1].id,
-                                                animated: true,
-                                                type: 'smoothstep'
-                                              });
-                                            }
-                                            
-                                            const flowData = {
-                                              id: flow.id,
-                                              title: troubleshootingData.title || flow.title || 'エラー対応フロー',
-                                              description: troubleshootingData.description || flow.description || '',
-                                              fileName: flow.fileName || 'troubleshooting.json',
-                                              nodes: flowNodes,
-                                              edges: flowEdges
-                                            };
-                                            
-                                            setFlowData(flowData);
-                                            setUploadedFileName(flow.fileName || 'troubleshooting.json');
-                                            
-                                            toast({
-                                              title: "データ読込み完了",
-                                              description: `${flow.title} のフローを読み込みました`,
-                                            });
-                                          })
-                                          .catch(error => {
-                                            console.error("トラブルシューティングデータの取得エラー:", error);
-                                            
-                                            const fallbackData = {
-                                              id: flow.id || `flow_${Date.now()}`,
-                                              title: flow.title || 'フローデータ',
-                                              description: "APIからデータを取得できませんでした。",
-                                              fileName: flow.fileName || 'error.json',
-                                              nodes: [
-                                                {
-                                                  id: 'start',
-                                                  type: 'start',
-                                                  position: { x: 250, y: 50 },
-                                                  data: { label: '開始' }
-                                                },
-                                                {
-                                                  id: 'step_1',
-                                                  type: 'step',
-                                                  position: { x: 250, y: 150 },
-                                                  data: { 
-                                                    label: `エラー: ${flow.title}`, 
-                                                    message: `データの取得に失敗しました。\nエラー: ${error.message}` 
-                                                  }
-                                                },
-                                                {
-                                                  id: 'end',
-                                                  type: 'end',
-                                                  position: { x: 250, y: 250 },
-                                                  data: { label: '終了' }
-                                                }
-                                              ],
-                                              edges: [
-                                                {
-                                                  id: 'edge-start-step_1',
-                                                  source: 'start',
-                                                  target: 'step_1',
-                                                  animated: true,
-                                                  type: 'smoothstep'
-                                                },
-                                                {
-                                                  id: 'edge-step_1-end',
-                                                  source: 'step_1',
-                                                  target: 'end',
-                                                  animated: true,
-                                                  type: 'smoothstep'
-                                                }
-                                              ]
-                                            };
-                                            
-                                            setFlowData(fallbackData);
-                                            setUploadedFileName(flow.fileName || 'error.json');
-                                            
-                                            toast({
-                                              title: "データ取得エラー",
-                                              description: "APIからデータを取得できませんでした。空のフローを初期化します。",
-                                              variant: "destructive"
-                                            });
-                                          });
-                                      } else {
-                                        const emptyFlow = {
-                                          id: `flow_${Date.now()}`,
-                                          title: flow.title || '新規フロー',
-                                          description: flow.description || '',
-                                          fileName: flow.fileName || 'new.json',
-                                          nodes: [
-                                            {
-                                              id: 'start',
-                                              type: 'start',
-                                              position: { x: 250, y: 50 },
-                                              data: { label: '開始' }
-                                            },
-                                            {
-                                              id: 'step_1',
-                                              type: 'step',
-                                              position: { x: 250, y: 150 },
-                                              data: { 
-                                                label: `${flow.title || 'ステップ'} 1`
-                                              }
-                                            },
-                                            {
-                                              id: 'end',
-                                              type: 'end',
-                                              position: { x: 250, y: 250 },
-                                              data: { label: '終了' }
-                                            }
-                                          ],
-                                          edges: [
-                                            {
-                                              id: 'edge-start-step_1',
-                                              source: 'start',
-                                              target: 'step_1',
-                                              animated: true,
-                                              type: 'smoothstep'
-                                            },
-                                            {
-                                              id: 'edge-step_1-end',
-                                              source: 'step_1',
-                                              target: 'end',
-                                              animated: true,
-                                              type: 'smoothstep'
-                                            }
-                                          ]
-                                        };
-                                        
-                                        setFlowData(emptyFlow);
-                                        setUploadedFileName(flow.fileName || 'new.json');
-                                        
-                                        toast({
-                                          title: "新規データ作成",
-                                          description: "新しいフローを初期化しました",
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <Edit3 className="mr-2 h-3 w-3" />
-                                    編集
-                                  </Button>
-                                  <Button 
-                                    variant="destructive" 
-                                    size="sm"
-                                    onClick={() => handleDeleteCharacter(flow.id)}
-                                  >
-                                    <Trash2 className="mr-2 h-3 w-3" />
-                                    削除
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </ScrollArea>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       
       {/* キャラクター削除確認ダイアログ */}
       <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>キャラクターを削除しますか？</AlertDialogTitle>
+            <AlertDialogTitle>フローを削除しますか？</AlertDialogTitle>
             <AlertDialogDescription>
-              このキャラクターを削除すると、すべての関連データが失われます。この操作は元に戻すことができません。
+              このフローを削除すると、すべての関連データが失われます。この操作は元に戻すことができません。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1314,7 +1090,7 @@ const EmergencyFlowCreator: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };
 
