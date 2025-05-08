@@ -390,6 +390,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
     
+    // より厳格な類似性判定 - 先頭部分が同じかチェック
+    const minLength = Math.min(lowerText1.length, lowerText2.length);
+    if (minLength > 3) {
+      // 短い方の文字列の長さの70%以上が先頭から一致する場合は類似とみなす
+      const matchLength = Math.floor(minLength * 0.7);
+      if (lowerText1.substring(0, matchLength) === lowerText2.substring(0, matchLength)) {
+        return true;
+      }
+    }
+    
     // 80%以上の単語が一致するかチェック
     const words1 = lowerText1.split(/\s+/);
     const words2 = lowerText2.split(/\s+/);
@@ -404,7 +414,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const commonWords = words1.filter(word => words2.includes(word));
     const similarityRatio = commonWords.length / Math.max(words1.length, words2.length);
     
-    return similarityRatio >= 0.8; // 80%以上一致
+    return similarityRatio >= 0.7; // 70%以上一致に緩和
   };
   
   const startRecording = useCallback(() => {
@@ -864,6 +874,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           title: 'チャット履歴を送信しました',
           description: `${result.messageCount}件のメッセージが正常に送信されました。`,
         });
+        
+        // メッセージが全く残っていない場合は完全なリセット状態にする
+        if (newMessages.length === 0) {
+          setHasUnexportedMessages(false);
+          setLastExportTimestamp(new Date()); // 現在時刻をセットして「既に送信済み」状態にする
+        }
       }
     } catch (error) {
       // エラーがエクスポートテーブル未作成の場合は、テーブルがないためのエラーとして処理
@@ -1199,6 +1215,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSearchResults([]);
       setTempMedia([]);
       setDraftMessage(null);
+      
+      // 未送信メッセージフラグをリセット
+      setHasUnexportedMessages(false);
+      setLastExportTimestamp(null);
       
       // クエリキャッシュのキーを定義
       const chatKey = chatId ? `/api/chats/${chatId}/messages` : '/api/chats/1/messages';
