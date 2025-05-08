@@ -72,54 +72,66 @@ export default function Chat() {
     // メッセージが空になった場合（クリアされた場合）のハンドリング
     if (messages !== undefined && messages.length === 0) {
       const chatClearedTimestamp = localStorage.getItem('chat_cleared_timestamp');
-      if (chatClearedTimestamp) {
-        console.log('チャット履歴クリア後の状態を維持します');
-        
-        // ローカルストレージのクエリキャッシュをクリア
-        for (const key of Object.keys(localStorage)) {
-          if (key.startsWith('rq-/api/chats/')) {
-            localStorage.removeItem(key);
-          }
+      
+      // キャッシュクリア処理（タイムスタンプの有無に関わらず実行）
+      console.log('チャット履歴クリア後の状態を維持します');
+      
+      // ローカルストレージのクエリキャッシュをクリア
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('rq-/api/chats/')) {
+          localStorage.removeItem(key);
         }
-        
-        // クエリキャッシュを完全に削除
-        queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
-        
-        // 空の配列を強制的にセット
-        queryClient.setQueryData(['/api/chats/1/messages'], []);
-        
-        // 特殊パラメータを付けて明示的にサーバーにクリア要求を送信
-        const fetchClearedData = async () => {
-          try {
-            const clearUrl = `/api/chats/1/messages?clear=true&_t=${Date.now()}`;
-            await fetch(clearUrl, {
-              credentials: 'include',
-              cache: 'no-cache',
-              headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-              }
-            });
-          } catch (error) {
-            console.error('クリア要求送信エラー:', error);
-          }
-        };
-        
-        fetchClearedData();
-        
-        // 少し間をおいて再確認
-        const intervalId = setInterval(() => {
-          queryClient.setQueryData(['/api/chats/1/messages'], []);
-        }, 500);
-        
-        // 10秒後にクリア監視を終了
-        setTimeout(() => {
-          clearInterval(intervalId);
-        }, 10000);
       }
+      
+      // クエリキャッシュを完全に削除
+      queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
+      
+      // 空の配列を強制的にセット
+      queryClient.setQueryData(['/api/chats/1/messages'], []);
+      
+      // React Queryのキャッシュ操作用にグローバル変数としてqueryClientを設定
+      // @ts-ignore - これにより他のコンポーネントからもアクセス可能
+      window.queryClient = queryClient;
+      
+      // 特殊パラメータを付けて明示的にサーバーにクリア要求を送信
+      const fetchClearedData = async () => {
+        try {
+          // タイムスタンプパラメータを使用してキャッシュバスティング
+          const clearUrl = `/api/chats/1/messages?clear=true&_t=${Date.now()}`;
+          await fetch(clearUrl, {
+            credentials: 'include',
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          });
+          console.log('履歴クリアを確認するリクエストを送信しました');
+        } catch (error) {
+          console.error('クリア要求送信エラー:', error);
+        }
+      };
+      
+      fetchClearedData();
+      
+      // クリアフラグを削除（1度だけ実行するため）
+      if (chatClearedTimestamp) {
+        localStorage.removeItem('chat_cleared_timestamp');
+        console.log('チャットクリアタイムスタンプをクリア');
+      }
+      
+      // 少し間をおいて再確認
+      const intervalId = setInterval(() => {
+        queryClient.setQueryData(['/api/chats/1/messages'], []);
+      }, 500);
+      
+      // 10秒後にクリア監視を終了
+      setTimeout(() => {
+        clearInterval(intervalId);
+      }, 10000);
     }
-  }, [messages]);
+  }, [messages, queryClient]);
 
   // woutorのLocationフックを取得
   const [, setLocation] = useLocation();

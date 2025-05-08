@@ -507,18 +507,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             clearTimeout(sendTimeoutId);
           }
           
-          // 沈黙検出用のタイマー（短い間隔でチェック）
+          // 沈黙検出用のタイマー（より長い間隔でチェック）
           const silenceCheckId = setTimeout(() => {
-            // 最後の音声認識から2秒経過したかチェック
-            if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
+            // 最後の音声認識から4秒経過したかチェック（より長く変更）
+            if (Date.now() - lastRecognitionTime >= 4000 && !silenceDetected) {
               console.log('沈黙を検出しました - 現在の認識テキストを送信します');
               setSilenceDetected(true);
               
               // 沈黙を検出したら、現在の認識結果を送信
+              // 最長の認識フレーズを選択（通常は最も完全な文章）
               const bestPhrase = recognitionPhrases
                 .sort((a, b) => b.length - a.length)[0] || text;
               
               console.log('沈黙検出時の送信フレーズ:', bestPhrase);
+              
+              // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
+              if (bestPhrase.trim().length <= 2) {
+                console.log('沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
+                return;
+              }
               
               // 前回の送信テキストとの重複チェック
               if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
@@ -536,16 +543,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }).catch(error => {
                   console.error('沈黙検出: メッセージ送信エラー:', error);
                 }).finally(() => {
-                  // 3秒後にブロックを解除
+                  // 5秒後にブロックを解除（より長く変更）
                   setTimeout(() => {
                     setBlockSending(false);
-                  }, 3000);
+                  }, 5000);
                 });
               } else {
                 console.log('沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
               }
             }
-          }, 2000); // 2秒の沈黙を検出するためのタイマー
+          }, 4000); // 4秒の沈黙を検出するためのタイマー（より長く変更）
           
           // タイマーIDを保存
           setSendTimeoutId(silenceCheckId);
@@ -598,18 +605,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(sendTimeoutId);
               }
               
-              // 沈黙検出用のタイマー（短い間隔でチェック）
+              // 沈黙検出用のタイマー（より長い間隔でチェック）
               const silenceCheckId = setTimeout(() => {
-                // 最後の音声認識から2秒経過したかチェック
-                if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
+                // 最後の音声認識から4秒経過したかチェック（より長く変更）
+                if (Date.now() - lastRecognitionTime >= 4000 && !silenceDetected) {
                   console.log('Azure: 沈黙を検出しました - 現在の認識テキストを送信します');
                   setSilenceDetected(true);
                   
                   // 沈黙を検出したら、現在の認識結果を送信
+                  // 最長の認識フレーズを選択（通常は最も完全な文章）
                   const bestPhrase = recognitionPhrases
                     .sort((a, b) => b.length - a.length)[0] || text;
                   
                   console.log('Azure: 沈黙検出時の送信フレーズ:', bestPhrase);
+                  
+                  // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
+                  if (bestPhrase.trim().length <= 2) {
+                    console.log('Azure: 沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
+                    return;
+                  }
                   
                   // 前回の送信テキストとの重複チェック
                   if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
@@ -627,16 +641,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }).catch(error => {
                       console.error('Azure: 沈黙検出: メッセージ送信エラー:', error);
                     }).finally(() => {
-                      // 3秒後にブロックを解除
+                      // 5秒後にブロックを解除（より長く変更）
                       setTimeout(() => {
                         setBlockSending(false);
-                      }, 3000);
+                      }, 5000);
                     });
                   } else {
                     console.log('Azure: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
                   }
                 }
-              }, 2000); // 2秒の沈黙を検出するためのタイマー
+              }, 4000); // 4秒の沈黙を検出するためのタイマー（より長く変更）
               
               // タイマーIDを保存
               setSendTimeoutId(silenceCheckId);
@@ -816,6 +830,23 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSearchResults([]);
       setHasUnexportedMessages(false);
       setLastExportTimestamp(null);
+      
+      // クリア時のタイムスタンプをローカルストレージに保存（キャッシュクリア処理用）
+      const clearTimestamp = Date.now().toString();
+      localStorage.setItem('chat_cleared_timestamp', clearTimestamp);
+      console.log('チャットクリアタイムスタンプを設定:', clearTimestamp);
+      
+      // React Queryのキャッシュをクリア
+      try {
+        // @ts-ignore - globalにqueryClientが定義されている場合
+        if (window.queryClient) {
+          window.queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
+          window.queryClient.setQueryData(['/api/chats/1/messages'], []);
+          console.log('React Queryキャッシュをクリア');
+        }
+      } catch (cacheError) {
+        console.error('キャッシュクリアエラー:', cacheError);
+      }
       
       toast({
         title: 'チャット履歴を削除しました',
