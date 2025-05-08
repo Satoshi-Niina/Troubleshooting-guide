@@ -17,15 +17,24 @@ export default function MessageInput() {
     startRecording,
     stopRecording,
     isRecording,
-    draftMessage
+    draftMessage,
+    setDraftMessage
   } = useChat();
   
-  // 型の問題を解決するため、ChatContextからsetDraftMessageを直接使用する代わりに
-  // 新しいイベントを発火する方法を使用
+  // ドラフトメッセージを更新する（イベント発火とコンテキスト直接更新の両方を行う）
   const updateDraftMessage = (content: string) => {
+    // イベントを発火（他のコンポーネントに通知）
     window.dispatchEvent(new CustomEvent('update-draft-message', { 
       detail: { content }
     }));
+    
+    // コンテキスト内のドラフトメッセージを直接更新
+    if (setDraftMessage) {
+      setDraftMessage({
+        content,
+        media: draftMessage?.media || []
+      });
+    }
   };
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,12 +57,7 @@ export default function MessageInput() {
     if (isRecording && recordedText) {
       // 入力欄には反映せず、チャット側（左側）にのみドラフトメッセージとして表示
       if (recordedText.trim()) {
-        // リアルタイム表示のためにイベントとして発火
-        window.dispatchEvent(new CustomEvent('update-draft-message', { 
-          detail: { content: recordedText }
-        }));
-        
-        // 新しい関数を使用してドラフトメッセージを更新
+        // 新しい関数を使用してドラフトメッセージを更新（イベント発火とコンテキスト更新を両方行う）
         console.log('関数から直接ドラフトメッセージを設定:', recordedText);
         updateDraftMessage(recordedText);
         
@@ -63,7 +67,7 @@ export default function MessageInput() {
         }
       }
     }
-  }, [recordedText, isRecording]);
+  }, [recordedText, isRecording, draftMessage, setDraftMessage, updateDraftMessage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -142,12 +146,7 @@ export default function MessageInput() {
       if (recordedText.trim()) {
         // 入力欄には反映しない (setMessage を呼び出さない)
         
-        // 録音停止時にもドラフトメッセージ更新イベントを発火して確実に表示する
-        window.dispatchEvent(new CustomEvent('update-draft-message', { 
-          detail: { content: recordedText.trim() }
-        }));
-        
-        // 新しい関数を使用してドラフトメッセージを更新
+        // 新しい関数を使用してドラフトメッセージを更新（イベント発火とコンテキスト更新を両方行う）
         console.log('録音停止：関数から直接ドラフトメッセージを設定:', recordedText.trim());
         updateDraftMessage(recordedText.trim());
         
