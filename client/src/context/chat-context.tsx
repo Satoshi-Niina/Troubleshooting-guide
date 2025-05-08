@@ -637,7 +637,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   sendMessage(text);
                   setBlockSending(true); // 送信後はブロック
                   // 5秒後にブロックを解除
-                  setTimeout(() => setBlockSending(false), 5000);
+                  setTimeout(() => setBlockSending(false), 3000);
                 } else {
                   console.log('ブラウザ: ブロック中のため送信をスキップ:', text);
                 }
@@ -711,12 +711,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                       setRecognitionPhrases([]);
                       console.log('ブラウザ: 沈黙検出: メッセージを送信しました:', bestPhrase);
                     }).catch(error => {
-                      console.error('Azure: 沈黙検出: メッセージ送信エラー:', error);
+                      console.error('ブラウザ: 沈黙検出: メッセージ送信エラー:', error);
                     }).finally(() => {
-                      // 5秒後にブロックを解除（より長く変更）
+                      // 3秒後にブロックを解除
                       setTimeout(() => {
                         setBlockSending(false);
-                      }, 5000);
+                      }, 3000);
                     });
                   } else {
                     console.log('ブラウザ: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
