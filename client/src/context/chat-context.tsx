@@ -328,11 +328,47 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 最後に送信したテキストを保存する変数（重複送信防止用）
   const [lastSentText, setLastSentText] = useState<string>('');
+  // 音声認識による送信を防止するタイマー
+  const [sendTimeoutId, setSendTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  // 音声認識テキストの完了度を追跡するための変数
+  const [recognitionPhrases, setRecognitionPhrases] = useState<string[]>([]);
+  // 音声認識テキストの送信をブロックするフラグ
+  const [blockSending, setBlockSending] = useState<boolean>(false);
+  
+  // 認識テキストの類似度を確認する関数（部分文字列か判定）
+  const isSubstringOrSimilar = (text1: string, text2: string): boolean => {
+    if (!text1 || !text2) return false;
+    const lowerText1 = text1.toLowerCase().trim();
+    const lowerText2 = text2.toLowerCase().trim();
+    
+    // 完全一致または部分文字列かチェック
+    if (lowerText1 === lowerText2 || lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1)) {
+      return true;
+    }
+    
+    // 80%以上の単語が一致するかチェック
+    const words1 = lowerText1.split(/\s+/);
+    const words2 = lowerText2.split(/\s+/);
+    
+    // 単語数が少ない場合は直接比較
+    if (words1.length <= 2 || words2.length <= 2) {
+      return lowerText1.length > 0 && lowerText2.length > 0 && 
+        (lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1));
+    }
+    
+    // 共通する単語の数をカウント
+    const commonWords = words1.filter(word => words2.includes(word));
+    const similarityRatio = commonWords.length / Math.max(words1.length, words2.length);
+    
+    return similarityRatio >= 0.8; // 80%以上一致
+  };
   
   const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordedText(''); // 録音開始時にテキストをクリア
     setLastSentText(''); // 録音開始時に最後に送信したテキストもクリア
+    setRecognitionPhrases([]); // 認識フレーズをクリア
+    setBlockSending(false); // 送信ブロックを解除
     
     try {
       // 現在のメディア状態を保持
@@ -344,17 +380,72 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // 認識されたテキストをセット
           setRecordedText(text);
           
-          // 音声認識の内容は視覚的に確認できるようにするが、ドラフトメッセージとして表示はしない
-          console.log('録音中のテキストをチャット側のみに表示:', text);
+          // ドラフトメッセージは更新するが表示しない（デバッグ用）
+          console.log('録音中のテキスト:', text);
           
-          // リアルタイムでメッセージ送信（重複チェック）
-          if (text.trim() && text !== lastSentText) {
-            // 最後に送信したテキストを更新
-            setLastSentText(text);
-            
-            // リアルタイムで自動送信
-            await sendMessage(text);
+          // 空のテキストは処理しない
+          if (!text.trim()) return;
+          
+          // 現在の認識フレーズを保存
+          setRecognitionPhrases(prev => {
+            // すでに類似したフレーズがあるかチェック
+            const similarExists = prev.some(phrase => isSubstringOrSimilar(phrase, text));
+            if (!similarExists) {
+              return [...prev, text];
+            }
+            return prev;
+          });
+          
+          // ブロックフラグが立っていたら送信しない
+          if (blockSending) {
+            console.log('送信ブロック中のため送信をスキップします:', text);
+            return;
           }
+          
+          // 既存のタイマーをクリア
+          if (sendTimeoutId) {
+            clearTimeout(sendTimeoutId);
+          }
+          
+          // 新しいタイマーを設定（1.5秒の遅延で安定したテキストのみを送信）
+          const timeoutId = setTimeout(async () => {
+            // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
+            let bestPhrase = recognitionPhrases
+              .sort((a, b) => b.length - a.length)[0] || text;
+            
+            console.log('送信する最適なフレーズを選択:', bestPhrase);
+            
+            // 前回の送信テキストとの重複チェック（類似テキストも含む）
+            if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
+              try {
+                // 送信をブロック（次の音声認識が完了するまで）
+                setBlockSending(true);
+                
+                // 最後に送信したテキストを更新
+                setLastSentText(bestPhrase);
+                
+                // メッセージを送信
+                await sendMessage(bestPhrase);
+                
+                // 認識フレーズをリセット
+                setRecognitionPhrases([]);
+                
+                console.log('メッセージを送信しました:', bestPhrase);
+              } catch (error) {
+                console.error('メッセージ送信エラー:', error);
+              } finally {
+                // 3秒後にブロックを解除（複数回送信を防止）
+                setTimeout(() => {
+                  setBlockSending(false);
+                }, 3000);
+              }
+            } else {
+              console.log('類似テキストが既に送信されているため送信をスキップします');
+            }
+          }, 1500); // 1.5秒の遅延
+          
+          // タイマーIDを保存
+          setSendTimeoutId(timeoutId);
         },
         (error: string) => {
           console.log('ブラウザ音声認識エラー:', error);
@@ -369,19 +460,75 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Azure Speech APIを使用して音声認識を開始
           startSpeechRecognition(
             async (text: string) => {
+              // 認識されたテキストをセット
               setRecordedText(text);
               
-              // 音声認識の内容は視覚的に確認できるようにするが、ドラフトメッセージとして表示はしない
-              console.log('Azure音声認識中のテキスト:', text);
+              // ドラフトメッセージは更新するが表示しない
+              console.log('Azure録音中のテキスト:', text);
               
-              // リアルタイムでメッセージ送信（重複チェック）
-              if (text.trim() && text !== lastSentText) {
-                // 最後に送信したテキストを更新
-                setLastSentText(text);
-                
-                // リアルタイムで自動送信
-                await sendMessage(text);
+              // 空のテキストは処理しない
+              if (!text.trim()) return;
+              
+              // 現在の認識フレーズを保存
+              setRecognitionPhrases(prev => {
+                // すでに類似したフレーズがあるかチェック
+                const similarExists = prev.some(phrase => isSubstringOrSimilar(phrase, text));
+                if (!similarExists) {
+                  return [...prev, text];
+                }
+                return prev;
+              });
+              
+              // ブロックフラグが立っていたら送信しない
+              if (blockSending) {
+                console.log('送信ブロック中のため送信をスキップします:', text);
+                return;
               }
+              
+              // 既存のタイマーをクリア
+              if (sendTimeoutId) {
+                clearTimeout(sendTimeoutId);
+              }
+              
+              // 新しいタイマーを設定（1.5秒の遅延で安定したテキストのみを送信）
+              const timeoutId = setTimeout(async () => {
+                // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
+                let bestPhrase = recognitionPhrases
+                  .sort((a, b) => b.length - a.length)[0] || text;
+                
+                console.log('Azure: 送信する最適なフレーズを選択:', bestPhrase);
+                
+                // 前回の送信テキストとの重複チェック（類似テキストも含む）
+                if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
+                  try {
+                    // 送信をブロック（次の音声認識が完了するまで）
+                    setBlockSending(true);
+                    
+                    // 最後に送信したテキストを更新
+                    setLastSentText(bestPhrase);
+                    
+                    // メッセージを送信
+                    await sendMessage(bestPhrase);
+                    
+                    // 認識フレーズをリセット
+                    setRecognitionPhrases([]);
+                    
+                    console.log('Azure: メッセージを送信しました:', bestPhrase);
+                  } catch (error) {
+                    console.error('Azure: メッセージ送信エラー:', error);
+                  } finally {
+                    // 3秒後にブロックを解除（複数回送信を防止）
+                    setTimeout(() => {
+                      setBlockSending(false);
+                    }, 3000);
+                  }
+                } else {
+                  console.log('Azure: 類似テキストが既に送信されているため送信をスキップします');
+                }
+              }, 1500); // 1.5秒の遅延
+              
+              // タイマーIDを保存
+              setSendTimeoutId(timeoutId);
             }, 
             (error: string) => {
               toast({
@@ -403,7 +550,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       setIsRecording(false);
     }
-  }, [toast, draftMessage, sendMessage, lastSentText]);
+  }, [toast, draftMessage, sendMessage, lastSentText, blockSending, sendTimeoutId, recognitionPhrases, isSubstringOrSimilar]);
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);
@@ -414,9 +561,21 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // (リアルタイム送信方式に変更したため、録音停止時の送信は不要)
     setDraftMessage(null);
     
+    // 既存のタイマーをクリア
+    if (sendTimeoutId) {
+      clearTimeout(sendTimeoutId);
+      setSendTimeoutId(null);
+    }
+    
+    // 送信ブロックを解除
+    setBlockSending(false);
+    
+    // 認識フレーズをクリア
+    setRecognitionPhrases([]);
+    
     // デバッグログ
     console.log('録音を停止しました');
-  }, []);
+  }, [sendTimeoutId]);
 
   const searchBySelectedText = async (text: string) => {
     // すでに検索中の場合は処理をスキップ
