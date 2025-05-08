@@ -691,11 +691,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // 録音停止関数
   const stopRecording = useCallback(() => {
     setIsRecording(false);
+    
+    // 録音テキストとドラフトメッセージを確実にクリア
     setRecordedText('');
     setDraftMessage(null);
     
+    // 前回のメッセージとの類似チェック用の情報もリセット
+    setLastSentText('');
+    
     // 音声認識を停止
     console.log('録音停止');
+    console.log('録音停止：関数から直接ドラフトメッセージを設定:', '');
+    console.log('録音停止時のテキストをチャット側のみに表示:', '');
+    
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
     
@@ -704,7 +712,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearTimeout(sendTimeoutId);
       setSendTimeoutId(null);
     }
-  }, [sendTimeoutId]);
+  }, [sendTimeoutId, setDraftMessage, setRecordedText, setLastSentText]);
   
   // チャット履歴をエクスポートする関数
   const exportChatHistory = useCallback(async () => {
@@ -830,6 +838,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSearchResults([]);
       setHasUnexportedMessages(false);
       setLastExportTimestamp(null);
+      
+      // ドラフトメッセージも確実にクリア（音声認識テキストなど）
+      setDraftMessage(null);
+      setRecordedText('');
       
       // クリア時のタイムスタンプをローカルストレージに保存（キャッシュクリア処理用）
       const clearTimestamp = Date.now().toString();

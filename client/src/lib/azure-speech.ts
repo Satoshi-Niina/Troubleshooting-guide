@@ -88,10 +88,10 @@ const initAzureSpeechConfig = () => {
       'TrueText'
     );
     
-    // エンドポイント検出の設定
+    // エンドポイント検出の設定（4秒の無音で検出）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '2000'
+      '4000'
     );
 
     return speechConfig;
@@ -118,7 +118,7 @@ const resetSilenceTimer = (onSilenceTimeout: () => void) => {
   }
 
   silenceTimer = setTimeout(() => {
-    console.log('無音タイムアウト: 2秒間音声入力がありませんでした');
+    console.log('無音タイムアウト: 4秒間音声入力がありませんでした');
     silenceDetected = true;
     onSilenceTimeout();
   }, SILENCE_TIMEOUT);
@@ -159,7 +159,7 @@ export const startSpeechRecognition = (
     const sendAndReset = () => {
       if (blockSending) {
         console.log('送信ブロック中: スキップします');
-        setTimeout(() => { blockSending = false; }, 500); // 500ms後にブロックを解除
+        setTimeout(() => { blockSending = false; }, 1000); // 1000ms後にブロックを解除
         return;
       }
       
@@ -183,9 +183,9 @@ export const startSpeechRecognition = (
         onResult(trimmedText);
         currentSentence = '';
         
-        // 送信後、短時間の送信ブロックを設定（連続送信を防止）
+        // 送信後、送信ブロックを設定（連続送信を防止）- 5秒間
         blockSending = true;
-        setTimeout(() => { blockSending = false; }, 800);
+        setTimeout(() => { blockSending = false; }, 5000);
       }
     };
 
