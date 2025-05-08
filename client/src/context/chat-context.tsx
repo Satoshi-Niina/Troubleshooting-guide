@@ -506,8 +506,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!blockSending) {
               sendMessage(text);
               setBlockSending(true); // 送信後はブロック
-              // 5秒後にブロックを解除
-              setTimeout(() => setBlockSending(false), 5000);
+              // 3秒後にブロックを解除
+              setTimeout(() => setBlockSending(false), 3000);
             } else {
               console.log('ブロック中のため送信をスキップ:', text);
             }
@@ -547,10 +547,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             clearTimeout(sendTimeoutId);
           }
           
-          // 沈黙検出用のタイマー（より長い間隔でチェック）
+          // 沈黙検出用のタイマー（2秒間隔でチェック）
           const silenceCheckId = setTimeout(() => {
-            // 最後の音声認識から4秒経過したかチェック（より長く変更）
-            if (Date.now() - lastRecognitionTime >= 4000 && !silenceDetected) {
+            // 最後の音声認識から2秒経過したかチェック
+            if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
               console.log('沈黙を検出しました - 現在の認識テキストを送信します');
               setSilenceDetected(true);
               
@@ -583,16 +583,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }).catch(error => {
                   console.error('沈黙検出: メッセージ送信エラー:', error);
                 }).finally(() => {
-                  // 5秒後にブロックを解除（より長く変更）
+                  // 3秒後にブロックを解除
                   setTimeout(() => {
                     setBlockSending(false);
-                  }, 5000);
+                  }, 3000);
                 });
               } else {
                 console.log('沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
               }
             }
-          }, 4000); // 4秒の沈黙を検出するためのタイマー（より長く変更）
+          }, 2000); // 2秒の沈黙を検出するためのタイマー
           
           // タイマーIDを保存
           setSendTimeoutId(silenceCheckId);
@@ -636,7 +636,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!blockSending) {
                   sendMessage(text);
                   setBlockSending(true); // 送信後はブロック
-                  // 5秒後にブロックを解除
+                  // 3秒後にブロックを解除
                   setTimeout(() => setBlockSending(false), 3000);
                 } else {
                   console.log('ブラウザ: ブロック中のため送信をスキップ:', text);
@@ -677,10 +677,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(sendTimeoutId);
               }
               
-              // 沈黙検出用のタイマー（より長い間隔でチェック）
+              // 沈黙検出用のタイマー（2秒間隔でチェック）
               const silenceCheckId = setTimeout(() => {
-                // 最後の音声認識から4秒経過したかチェック（より長く変更）
-                if (Date.now() - lastRecognitionTime >= 4000 && !silenceDetected) {
+                // 最後の音声認識から2秒経過したかチェック
+                if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
                   console.log('ブラウザ: 沈黙を検出しました - 現在の認識テキストを送信します');
                   setSilenceDetected(true);
                   
