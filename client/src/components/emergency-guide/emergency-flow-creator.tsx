@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle, Wand2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,10 @@ const EmergencyFlowCreator: React.FC = () => {
   // 保存済みフローのリスト
   const [flowList, setFlowList] = useState<any[]>([]);
   const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
+  
+  // キーワードベースのフロー生成機能
+  const [keywordsInput, setKeywordsInput] = useState<string>('');
+  const [isGeneratingFlow, setIsGeneratingFlow] = useState(false);
   
   // フロー一覧を取得
   const fetchFlowList = async () => {
