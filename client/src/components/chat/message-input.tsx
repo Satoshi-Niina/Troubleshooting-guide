@@ -16,7 +16,9 @@ export default function MessageInput() {
     searchBySelectedText,
     startRecording,
     stopRecording,
-    isRecording
+    isRecording,
+    setDraftMessage,
+    draftMessage
   } = useChat();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,13 +46,22 @@ export default function MessageInput() {
           detail: { content: recordedText }
         }));
         
+        // ChatContextの関数が使えない場合の直接設定を追加（コンテキストのドラフトメッセージを直接設定）
+        if (setDraftMessage) {
+          console.log('関数から直接ドラフトメッセージを設定:', recordedText);
+          setDraftMessage({
+            content: recordedText,
+            media: []
+          });
+        }
+        
         // デバッグログ
         if (isRecording) {
           console.log('録音中のテキストをチャット側のみに表示:', recordedText);
         }
       }
     }
-  }, [recordedText, isRecording]);
+  }, [recordedText, isRecording, setDraftMessage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -133,6 +144,16 @@ export default function MessageInput() {
         window.dispatchEvent(new CustomEvent('update-draft-message', { 
           detail: { content: recordedText.trim() }
         }));
+        
+        // ChatContextの関数が使えない場合の直接設定を追加（コンテキストのドラフトメッセージを直接設定）
+        if (setDraftMessage) {
+          console.log('録音停止：関数から直接ドラフトメッセージを設定:', recordedText.trim());
+          setDraftMessage({
+            content: recordedText.trim(),
+            media: []
+          });
+        }
+        
         console.log('録音停止時のテキストをチャット側のみに表示:', recordedText.trim());
       }
     }

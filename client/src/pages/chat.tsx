@@ -346,7 +346,7 @@ export default function Chat() {
             )}
             
             {/* プレビュー用の一時メッセージ (録音中テキストと撮影した画像のプレビュー) */}
-            {draftMessage && (
+            {draftMessage && draftMessage.content && (
               <div className="w-full md:max-w-2xl mx-auto">
                 <MessageBubble
                   message={{
@@ -365,6 +365,12 @@ export default function Chat() {
                 />
               </div>
             )}
+            
+            {/* デバッグ表示 - ドラフトメッセージの状態を確認 */}
+            <div className="hidden">
+              <p>draftMessage: {draftMessage ? JSON.stringify(draftMessage) : 'null'}</p>
+            </div>
+            
           </div>
 
           {/* エクスポート状態表示 */}

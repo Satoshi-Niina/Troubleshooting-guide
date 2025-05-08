@@ -199,11 +199,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
     window.addEventListener('camera-capture', handleCameraCapture as EventListener);
     
+    // カスタムイベント発火によるデバッグ
+    console.log('ドラフトメッセージイベントリスナーをセットアップしました');
+    
     return () => {
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
       window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
     };
-  }, [draftMessage]);
+  }, []);
 
   // チャットメッセージの初期読み込み
   useEffect(() => {
