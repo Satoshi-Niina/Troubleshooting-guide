@@ -5,6 +5,62 @@ import { log } from '../vite';
 
 const router = express.Router();
 
+// トラブルシューティングデータを更新
+router.post('/update-troubleshooting/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'IDが指定されていません'
+      });
+    }
+    
+    // IDがts_から始まる場合、prefixを削除
+    const fileId = id.startsWith('ts_') ? id.replace('ts_', '') : id;
+    
+    // トラブルシューティングディレクトリのパス
+    const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+    if (!fs.existsSync(troubleshootingDir)) {
+      fs.mkdirSync(troubleshootingDir, { recursive: true });
+    }
+    
+    // ファイルパス
+    const filePath = path.join(troubleshootingDir, `${fileId}.json`);
+    
+    // リクエストボディからデータを取得
+    const troubleshootingData = req.body;
+    
+    // ファイルが存在するか確認
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: '指定されたトラブルシューティングファイルが見つかりません'
+      });
+    }
+    
+    // 更新日時を設定
+    troubleshootingData.updatedAt = new Date().toISOString();
+    
+    // ファイルに書き込み
+    fs.writeFileSync(filePath, JSON.stringify(troubleshootingData, null, 2));
+    
+    log(`トラブルシューティングデータを更新しました: ${fileId}.json`);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'トラブルシューティングデータが更新されました'
+    });
+  } catch (error) {
+    console.error('トラブルシューティング更新エラー:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'トラブルシューティングデータの更新中にエラーが発生しました'
+    });
+  }
+});
+
 // 応急処置フローの保存
 router.post('/save-flow', async (req: Request, res: Response) => {
   try {

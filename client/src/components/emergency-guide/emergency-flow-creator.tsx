@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, Save, X, Edit, Edit3, File, FileText, Plus, Download, FolderOpen, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import TroubleshootingViewer from './troubleshooting-viewer';
 import {
   AlertDialog,
   AlertDialogAction,
