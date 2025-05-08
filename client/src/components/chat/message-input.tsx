@@ -21,19 +21,17 @@ export default function MessageInput() {
     setDraftMessage
   } = useChat();
   
-  // ドラフトメッセージを更新する（イベント発火とコンテキスト直接更新の両方を行う）
+  // ドラフトメッセージを更新する（ユーザー入力用）
   const updateDraftMessage = (content: string) => {
-    // イベントを発火（他のコンポーネントに通知）
-    window.dispatchEvent(new CustomEvent('update-draft-message', { 
-      detail: { content }
-    }));
-    
-    // コンテキスト内のドラフトメッセージを直接更新
-    if (setDraftMessage) {
+    // 手動入力の場合のみコンテキスト直接更新（音声認識との重複防止）
+    if (setDraftMessage && !isRecording) {
+      console.log('手動入力からドラフトメッセージを更新:', content);
       setDraftMessage({
         content,
         media: draftMessage?.media || []
       });
+    } else if (isRecording) {
+      console.log('録音中のため手動ドラフト更新をスキップ:', content);
     }
   };
   const isMobile = useIsMobile();

@@ -492,18 +492,27 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // 認識されたテキストをセット（内部状態のみ）
           setRecordedText(text);
           
-          // テキストが一定の条件を満たす場合のみドラフトメッセージとして表示
+          // テキストが一定の条件を満たす場合には直接送信
           // 1. 文末の句読点で終わる（完全な文とみなす）
           // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
           const isCompleteSentence = /[。！？!?]$/.test(text.trim());
           const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
           
           if (isCompleteSentence || isLongEnough) {
-            // ドラフトメッセージを更新
-            console.log('完成した文章なので、ドラフトメッセージを表示:', text);
-            setDraftMessage({ content: text });
+            // 完成した文章は直接メッセージとして送信
+            console.log('完成した文章なので、メッセージとして送信:', text);
+            
+            // ブロックフラグが立っていなければ送信
+            if (!blockSending) {
+              sendMessage(text);
+              setBlockSending(true); // 送信後はブロック
+              // 5秒後にブロックを解除
+              setTimeout(() => setBlockSending(false), 5000);
+            } else {
+              console.log('ブロック中のため送信をスキップ:', text);
+            }
           } else {
-            // メモリ内にのみ保持し、表示しない
+            // メモリ内にのみ保持し、表示も送信もしない
             console.log('未完成の文章はメモリ内にのみ保持:', text);
             // recordedTextには保存するがドラフトメッセージには表示しない
             setRecordedText(text);
@@ -604,18 +613,27 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               // 認識されたテキストをセット（内部状態のみ）
               setRecordedText(text);
               
-              // テキストが一定の条件を満たす場合のみドラフトメッセージとして表示
+              // テキストが一定の条件を満たす場合には直接送信
               // 1. 文末の句読点で終わる（完全な文とみなす）
               // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
               const isCompleteSentence = /[。！？!?]$/.test(text.trim());
               const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
               
               if (isCompleteSentence || isLongEnough) {
-                // ドラフトメッセージを更新
-                console.log('Azure: 完成した文章なので、ドラフトメッセージを表示:', text);
-                setDraftMessage({ content: text });
+                // 完成した文章は直接メッセージとして送信
+                console.log('Azure: 完成した文章なので、メッセージとして送信:', text);
+                
+                // ブロックフラグが立っていなければ送信
+                if (!blockSending) {
+                  sendMessage(text);
+                  setBlockSending(true); // 送信後はブロック
+                  // 5秒後にブロックを解除
+                  setTimeout(() => setBlockSending(false), 5000);
+                } else {
+                  console.log('Azure: ブロック中のため送信をスキップ:', text);
+                }
               } else {
-                // メモリ内にのみ保持し、表示しない
+                // メモリ内にのみ保持し、表示も送信もしない
                 console.log('Azure: 未完成の文章はメモリ内にのみ保持:', text);
                 // recordedTextには保存するがドラフトメッセージには表示しない
                 setRecordedText(text);
@@ -712,15 +730,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       );
       
-      // リアルタイムプレビュー用のイベント発火
+      // リアルタイムプレビュー用のイベント発火（完全に無効化）
+      // イベントリスナーはセットするが、実際の更新は行わない（重複送信防止）
       window.addEventListener('update-draft-message', ((e: CustomEvent) => {
-        console.log('録音中のテキストをチャット側のみに表示:', e.detail.content);
-        // ドラフトメッセージを直接設定
-        console.log('関数から直接ドラフトメッセージを設定:', e.detail.content);
-        setDraftMessage({
-          content: e.detail.content,
-          media: currentMedia
-        });
+        console.log('録音中のテキスト（イベントは無視）:', e.detail.content);
+        // ドラフトメッセージの更新はしない（重複送信を防止）
       }) as EventListener);
     } catch (error) {
       console.error('音声認識開始エラー:', error);

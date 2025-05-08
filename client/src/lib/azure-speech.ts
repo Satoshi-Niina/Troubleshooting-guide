@@ -419,8 +419,13 @@ export const startBrowserSpeechRecognition = (
       .join('');
 
     if (transcript !== lastTranscript) {
-      onResult(transcript);
-      lastTranscript = transcript;
+      // 前回の認識結果と異なる場合にのみ処理
+      if (transcript.length > 0) {
+        // 認識結果をブロックなしで一度だけコールバックに渡す
+        // ドラフトメッセージの更新はcontext-chat.tsxで判断される
+        lastTranscript = transcript;
+        onResult(transcript);
+      }
     }
   };
 
