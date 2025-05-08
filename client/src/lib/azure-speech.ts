@@ -3,7 +3,7 @@ import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 
 let recognizer: sdk.SpeechRecognizer | null = null;
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-const SILENCE_TIMEOUT = 30000; // 30秒の無音タイムアウト
+const SILENCE_TIMEOUT = 20000; // 20秒の無音タイムアウト（要件に合わせて変更）
 
 // Azure Speech設定を初期化
 const initAzureSpeechConfig = () => {
@@ -35,7 +35,7 @@ const resetSilenceTimer = (onSilenceTimeout: () => void) => {
   
   // 新しいタイマーを設定
   silenceTimer = setTimeout(() => {
-    console.log('無音タイムアウト: 30秒間音声入力がありませんでした');
+    console.log('無音タイムアウト: 20秒間音声入力がありませんでした');
     onSilenceTimeout();
   }, SILENCE_TIMEOUT);
 };
@@ -64,7 +64,7 @@ export const startSpeechRecognition = (
     resetSilenceTimer(() => {
       // タイムアウト時は音声認識を停止
       stopSpeechRecognition();
-      onError('30秒間音声が検出されなかったため、音声認識を停止しました。');
+      onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
     });
     
     // 音声認識結果のイベントハンドラ - 最終結果のみを通知
@@ -79,7 +79,7 @@ export const startSpeechRecognition = (
           // 音声が検出されたので無音タイマーをリセット
           resetSilenceTimer(() => {
             stopSpeechRecognition();
-            onError('30秒間音声が検出されなかったため、音声認識を停止しました。');
+            onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
           });
         }
       }
