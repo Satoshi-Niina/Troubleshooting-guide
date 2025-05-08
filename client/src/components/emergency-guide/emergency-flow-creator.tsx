@@ -959,11 +959,117 @@ const EmergencyFlowCreator: React.FC = () => {
     }
   };
   
+  // キーワードからフローを生成する
+  const generateFlowFromKeywords = async () => {
+    if (!keywordsInput.trim()) {
+      toast({
+        title: "入力エラー",
+        description: "キーワードを入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsGeneratingFlow(true);
+      
+      toast({
+        title: "フロー生成中",
+        description: `キーワード「${keywordsInput}」からフローを生成しています...`,
+      });
+      
+      const response = await fetch('/api/flow-generator/generate-from-keywords', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keywords: keywordsInput }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '生成に失敗しました');
+      }
+      
+      const data = await response.json();
+      console.log("APIからの応答データ:", data);
+      
+      if (data.success && data.flowData) {
+        // 生成されたフローデータを処理
+        const enhancedData = processFlowData(data.flowData);
+        
+        // フローを表示
+        setFlowData(enhancedData);
+        setCharacterDesignTab('new');
+        
+        toast({
+          title: "フロー生成完了",
+          description: `「${data.flowData.title || 'タイトルなし'}」が生成されました。内容を確認して保存してください。`,
+        });
+        
+        // フローリストを更新
+        fetchFlowList();
+        
+        // キーワード入力をクリア
+        setKeywordsInput('');
+      } else {
+        throw new Error('フローデータの形式が無効です');
+      }
+    } catch (error) {
+      console.error('フロー生成エラー:', error);
+      toast({
+        title: "生成エラー",
+        description: error instanceof Error ? error.message : "フローの生成に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingFlow(false);
+    }
+  };
   return (
     <>
       <Card className="w-full h-screen max-h-[calc(100vh-120px)] overflow-auto">
         <CardHeader className="pb-2 sticky top-0 bg-white z-10">
           <CardDescription>応急処置データ管理</CardDescription>
+          
+          {/* キーワードベースのGPTフロー生成フォーム */}
+          <div className="mt-4 p-4 border rounded-lg bg-blue-50 border-blue-200">
+            <h3 className="font-medium text-blue-800 flex items-center mb-2">
+              <Wand2 className="h-4 w-4 mr-2" />
+              GPTフロー生成
+            </h3>
+            <p className="text-xs text-blue-700 mb-3">
+              キーワードを入力して、AIによる応急処置フローを自動生成します。
+            </p>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Textarea
+                  placeholder="キーワード（例: エンジン 過熱 センサー エラー）"
+                  value={keywordsInput}
+                  onChange={(e) => setKeywordsInput(e.target.value)}
+                  className="h-20 resize-none"
+                  disabled={isGeneratingFlow}
+                />
+              </div>
+              <Button 
+                onClick={generateFlowFromKeywords} 
+                disabled={isGeneratingFlow || !keywordsInput.trim()}
+                className="h-auto"
+              >
+                {isGeneratingFlow ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    生成
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         
         <CardContent className="overflow-y-auto pb-24">
