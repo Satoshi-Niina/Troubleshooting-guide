@@ -1,124 +1,129 @@
-// Speech recognition service using Azure Cognitive Services
+// Azure Cognitive Servicesを使用した音声認識サービス
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 
+// 音声認識のインスタンス
 let recognizer: sdk.SpeechRecognizer | null = null;
+// 無音タイマーのインスタンス
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-const SILENCE_TIMEOUT = 20000; // 20秒の無音タイムアウト（要件に合わせて変更）
+// 無音タイムアウトの時間（ミリ秒）
+const SILENCE_TIMEOUT = 2000; // 2秒の無音タイムアウト
 
-// Azure Speech設定を初期化
+// Azure Speech設定を初期化する関数
 const initAzureSpeechConfig = () => {
   try {
     const speechKey = import.meta.env.VITE_AZURE_SPEECH_KEY;
     const speechRegion = import.meta.env.VITE_AZURE_SPEECH_REGION;
-    
+
     if (!speechKey || !speechRegion) {
-      console.error('Azure Speech credentials are not set');
+      console.error('Azure Speech認証情報が設定されていません');
       return null;
     }
-    
+
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechRecognitionLanguage = 'ja-JP';
+
+    // 自動句読点を有効化
+    speechConfig.setProperty(
+      sdk.PropertyId.SpeechServiceResponse_PostProcessingOption,
+      'TrueText'
+    );
+
     return speechConfig;
   } catch (error) {
-    console.error('Failed to initialize Azure Speech config:', error);
+    console.error('Azure Speech設定の初期化に失敗しました:', error);
     return null;
   }
 };
 
 // 無音タイマーをリセットする関数
 const resetSilenceTimer = (onSilenceTimeout: () => void) => {
-  // 既存のタイマーをクリア
   if (silenceTimer) {
     clearTimeout(silenceTimer);
     silenceTimer = null;
   }
-  
-  // 新しいタイマーを設定
+
   silenceTimer = setTimeout(() => {
-    console.log('無音タイムアウト: 20秒間音声入力がありませんでした');
+    console.log('無音タイムアウト: 2秒間音声入力がありませんでした');
     onSilenceTimeout();
   }, SILENCE_TIMEOUT);
 };
 
-// Start speech recognition
+// 音声認識を開始する関数
 export const startSpeechRecognition = (
-  onResult: (text: string) => void, 
+  onResult: (text: string) => void,
   onError: (error: string) => void
 ) => {
   try {
     const speechConfig = initAzureSpeechConfig();
-    
+
     if (!speechConfig) {
       onError('Azure Speech認証情報が設定されていません。');
       return;
     }
-    
-    // マイクからの音声入力を設定
+
     const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
     recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
-    
-    // 前回の認識テキストを保存する変数
-    let lastRecognizedText = '';
-    
-    // 無音タイマーの初期設定
+
+    let currentSentence = ''; // 現在の文を保持
+    let lastRecognizedText = ''; // 前回の認識結果を保持
+    let lastText = ''; // 厳密な比較用の変数
+
+    // 文を送信してリセットする関数
+    const sendAndReset = () => {
+      if (currentSentence.trim()) {
+        onResult(currentSentence.trim());
+        currentSentence = '';
+      }
+    };
+
+    // 無音タイマーを初期化
     resetSilenceTimer(() => {
-      // タイムアウト時は音声認識を停止
+      sendAndReset();
       stopSpeechRecognition();
-      onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
+      onError('2秒間音声が検出されなかったため、音声認識を停止しました。');
     });
-    
-    // 音声認識結果のイベントハンドラ - 最終結果のみを通知
+
+    // 音声認識結果のイベントハンドラ
     recognizer.recognized = (s, e) => {
       if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
         const newText = e.result.text.trim();
-        if (newText && newText !== lastRecognizedText) {
-          // 重複を防ぐため、前回の結果と異なる場合のみ通知
-          onResult(newText);
+        if (newText && newText !== lastRecognizedText && newText !== lastText) {
           lastRecognizedText = newText;
-          
-          // 音声が検出されたので無音タイマーをリセット
+          lastText = newText; // 厳密な比較用に更新
+          currentSentence += newText;
+
+          // 文末判定（句読点が含まれている場合）
+          if (/[。！？]$/.test(currentSentence)) {
+            sendAndReset();
+          }
+
+          // 無音タイマーをリセット
           resetSilenceTimer(() => {
+            sendAndReset();
             stopSpeechRecognition();
-            onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
+            onError('2秒間音声が検出されなかったため、音声認識を停止しました。');
           });
         }
       }
     };
-    
+
     // 音声認識キャンセル時のイベントハンドラ
     recognizer.canceled = (s, e) => {
       if (e.reason === sdk.CancellationReason.Error) {
         onError(`音声認識エラー: ${e.errorDetails}`);
       }
-      // タイマーをクリア
       if (silenceTimer) {
         clearTimeout(silenceTimer);
         silenceTimer = null;
       }
     };
-    
-    // 途中結果をリアルタイムで表示
-    recognizer.recognizing = (s, e) => {
-      const interimText = e.result.text;
-      console.log(`認識中: ${interimText}`);
-      // 途中結果も通知
-      if (interimText) {
-        onResult(interimText);
-      }
-      // 音声が検出されたので無音タイマーをリセット
-      resetSilenceTimer(() => {
-        stopSpeechRecognition();
-        onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
-      });
-    };
-    
+
     // 連続認識を開始
     recognizer.startContinuousRecognitionAsync(
-      () => console.log('Azure Speech認識を開始しました'), 
+      () => console.log('Azure Speech認識を開始しました'),
       (error) => {
         console.error('認識開始エラー:', error);
         onError(`認識開始エラー: ${error}`);
-        // エラー発生時はタイマーをクリア
         if (silenceTimer) {
           clearTimeout(silenceTimer);
           silenceTimer = null;
@@ -128,7 +133,6 @@ export const startSpeechRecognition = (
   } catch (error) {
     console.error('Azure Speech初期化エラー:', error);
     onError(`Azure Speech初期化エラー: ${error}`);
-    // エラー発生時はタイマーをクリア
     if (silenceTimer) {
       clearTimeout(silenceTimer);
       silenceTimer = null;
@@ -136,14 +140,13 @@ export const startSpeechRecognition = (
   }
 };
 
-// Stop speech recognition
+// 音声認識を停止する関数
 export const stopSpeechRecognition = () => {
-  // 無音タイマーをクリア
   if (silenceTimer) {
     clearTimeout(silenceTimer);
     silenceTimer = null;
   }
-  
+
   if (recognizer) {
     recognizer.stopContinuousRecognitionAsync(
       () => {
@@ -155,10 +158,11 @@ export const stopSpeechRecognition = () => {
   }
 };
 
-// ブラウザによるフォールバック実装（Azureが使えない場合用）
+// 以下はブラウザの音声認識APIを使用したフォールバック実装です
+// Azure Speechが利用できない場合に使用します
+
 let browserRecognition: any = null;
 
-// ブラウザのSpeechRecognitionインターフェースの型定義
 interface BrowserSpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -169,31 +173,26 @@ interface BrowserSpeechRecognition extends EventTarget {
   onerror: (event: any) => void;
 }
 
-// windowオブジェクトを拡張
 interface Window {
   webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
   SpeechRecognition?: new () => BrowserSpeechRecognition;
 }
 
-// Check if browser supports speech recognition
 const browserSupportsSpeechRecognition = () => {
-  // Safari on iOS/iPadOS doesn't support SpeechRecognition API properly
   const isIOSDevice = () => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   };
-  
-  // iOS/iPadOSデバイスの場合はfalseを返す（Azureを使用する）
+
   if (isIOSDevice()) {
     return false;
   }
-  
+
   return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
 };
 
-// Start browser speech recognition (fallback)
 export const startBrowserSpeechRecognition = (
-  onResult: (text: string) => void, 
+  onResult: (text: string) => void,
   onError: (error: string) => void
 ) => {
   if (!browserSupportsSpeechRecognition()) {
@@ -201,24 +200,21 @@ export const startBrowserSpeechRecognition = (
     return;
   }
 
-  // TypeScriptに型を教えるためのキャスト
-  const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
-                          (window as any).webkitSpeechRecognition;
+  const SpeechRecognitionAPI = (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
   browserRecognition = new SpeechRecognitionAPI();
   browserRecognition.continuous = true;
   browserRecognition.interimResults = true;
   browserRecognition.lang = 'ja-JP';
 
-  // 前回の認識結果を保存
   let lastTranscript = '';
-  
+
   browserRecognition.onresult = (event: any) => {
     const transcript = Array.from(event.results)
       .map((result: any) => result[0])
       .map((result) => result.transcript)
       .join('');
-    
-    // 重複を防ぐために前回と同じ結果でない場合のみ通知
+
     if (transcript !== lastTranscript) {
       onResult(transcript);
       lastTranscript = transcript;
@@ -232,7 +228,6 @@ export const startBrowserSpeechRecognition = (
   browserRecognition.start();
 };
 
-// Stop browser speech recognition
 export const stopBrowserSpeechRecognition = () => {
   if (browserRecognition) {
     browserRecognition.stop();
