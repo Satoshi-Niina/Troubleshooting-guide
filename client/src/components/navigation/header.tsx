@@ -32,7 +32,7 @@ export default function Header() {
           </SheetContent>
         </Sheet>
         <div className="flex items-center">
-          <h1 className="text-xl font-semibold mr-3">応急復旧サポート</h1>
+          <h1 className="text-xl font-semibold mr-3">応急処置チャットシステム</h1>
           {location === "/chat" && (
             <Button
               variant="outline"

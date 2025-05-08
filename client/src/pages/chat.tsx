@@ -252,7 +252,7 @@ export default function Chat() {
       <div className="border-b border-blue-200 p-1 md:p-2 flex justify-between items-center bg-blue-100 mobile-landscape-header" style={{ minHeight: 'auto' }}>
         <div className="flex items-center">
           {/* シンプルなタイトル表示 */}
-          <h1 className="text-base md:text-lg font-bold text-blue-800">応急復旧サポート</h1>
+          <h1 className="text-base md:text-lg font-bold text-blue-800">応急処置サポート</h1>
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
@@ -475,7 +475,7 @@ export default function Chat() {
                         <div className="relative w-full h-24 flex-shrink-0">
                           <img 
                             src={result.url} 
-                            alt={result.title || "応急復旧サポート"} 
+                            alt={result.title || "応急処置サポート"} 
                             className="w-full h-full object-contain bg-white p-1"
                             loading="eager"
                             decoding="async"

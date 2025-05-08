@@ -193,7 +193,7 @@ export default function SearchResults({ results, onClear }: SearchResultsProps) 
                   {/* メイン画像表示 - 用途に応じた適切な画像形式を使用 */}
                   <img 
                     src={fixImagePath(result.url || '')} 
-                    alt={result.title || "応急復旧サポート"} 
+                    alt={result.title || "応急処置サポート"} 
                     className="w-full h-full object-contain bg-white p-1 z-10 relative"
                     style={{ minHeight: '96px', minWidth: '96px' }} // 最小サイズを設定して白い画像問題を防止
                     loading="eager" // 急いで読み込んで点滅を防止
