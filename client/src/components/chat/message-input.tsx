@@ -40,16 +40,17 @@ export default function MessageInput() {
       // 入力欄に反映
       setMessage(recordedText);
       
-      // chat-context のドラフトメッセージも更新し、チャットエリア（左側）にも表示
+      // 録音中は直接ChatContextの関数を呼び出してドラフトメッセージを更新
       if (recordedText.trim()) {
-        // チャットエリア側にドラフトメッセージを設定
-        const setDraftMessage = async () => {
-          // ドラフトメッセージの更新イベントを発火
-          window.dispatchEvent(new CustomEvent('update-draft-message', { 
-            detail: { content: recordedText }
-          }));
-        };
-        setDraftMessage();
+        // リアルタイム表示のためにイベントとして発火
+        window.dispatchEvent(new CustomEvent('update-draft-message', { 
+          detail: { content: recordedText }
+        }));
+        
+        // 念のため直接関数も呼び出す（イベントが失敗した場合の保険）
+        if (isRecording) {
+          console.log('録音中のテキストをドラフトメッセージに設定:', recordedText);
+        }
       }
     }
   }, [recordedText, isRecording]);
@@ -126,6 +127,12 @@ export default function MessageInput() {
       // 録音停止時も入力欄に反映する
       if (recordedText.trim()) {
         setMessage(recordedText.trim());
+        
+        // 録音停止時にもドラフトメッセージ更新イベントを発火して確実に表示する
+        window.dispatchEvent(new CustomEvent('update-draft-message', { 
+          detail: { content: recordedText.trim() }
+        }));
+        console.log('録音停止時のテキストをドラフトメッセージに設定:', recordedText.trim());
       }
     }
   };

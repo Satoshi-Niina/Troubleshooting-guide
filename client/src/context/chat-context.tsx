@@ -153,13 +153,22 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // ドラフトメッセージ更新のイベントリスナーを設定
     const handleUpdateDraftMessage = (event: CustomEvent) => {
-      const { content } = event.detail;
-      // 既存のメディアは保持する
-      const currentMedia = draftMessage?.media || [];
-      setDraftMessage({
-        content,
-        media: currentMedia
-      });
+      console.log('ドラフトメッセージ更新イベント受信:', event.detail);
+      
+      if (event.detail && typeof event.detail.content === 'string') {
+        const { content } = event.detail;
+        // 既存のメディアは保持する
+        const currentMedia = draftMessage?.media || [];
+        
+        // ドラフトメッセージを更新（空でない場合のみ）
+        if (content.trim()) {
+          console.log('ドラフトメッセージを更新:', content);
+          setDraftMessage({
+            content,
+            media: currentMedia
+          });
+        }
+      }
     };
 
     // TypeScriptにカスタムイベントを認識させるための型アサーション
@@ -168,7 +177,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
     };
-  }, [draftMessage]);
+  }, []);
 
   // チャットメッセージの初期読み込み
   useEffect(() => {
