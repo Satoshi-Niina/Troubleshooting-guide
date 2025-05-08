@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, FileText, CheckCircle, Sparkles, Wand2, RefreshCw, UploadCloud } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, Sparkles, Wand2, RefreshCw } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -201,107 +201,169 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
     <Card className="w-full">
       <CardHeader>
         <CardTitle>応急処置フロー生成</CardTitle>
-        <CardDescription>PowerPoint、Excel、PDF、またはJSONファイルから応急処置フローを生成します</CardDescription>
+        <CardDescription>キーワードやファイルから応急処置フローを生成・編集できます</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* ファイル入力 (非表示) */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept=".pptx,.ppt,.xlsx,.xls,.pdf,.json"
-          className="hidden"
-        />
-        
-        {/* ドラッグ&ドロップエリア */}
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-colors ${
-            selectedFile
-              ? 'border-indigo-600 bg-indigo-50'
-              : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-          }`}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onClick={handleFileSelectClick}
-        >
-          {selectedFile ? (
-            <div className="flex flex-col items-center">
-              <FileText className="h-10 w-10 text-indigo-600 mb-2" />
-              <p className="text-indigo-700 font-medium">{selectedFile.name}</p>
-              <p className="text-sm text-gray-500 mt-1">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+        <Tabs defaultValue="keywords" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="keywords">キーワードから生成</TabsTrigger>
+            <TabsTrigger value="file">ファイルから生成</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="keywords" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">発生事象キーワード</h3>
+                <Textarea
+                  placeholder="具体的な事象や状況、機器名などを入力してください！自動的に判断します。"
+                  value={keywordsInput}
+                  onChange={(e) => setKeywordsInput(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>{keywordsInput.length}/100文字</span>
+                </div>
+              </div>
+              
+              <Button
+                className="w-full"
+                variant="default"
+                onClick={generateFlowFromKeywords}
+                disabled={isGeneratingFlow || !keywordsInput.trim()}
+              >
+                {isGeneratingFlow ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    GPTフロー生成
+                  </>
+                )}
+              </Button>
+              
+              <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+                <Sparkles className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                <div className="text-sm text-gray-700">
+                  <p className="font-medium mb-1">主な流れ:</p>
+                  <ol className="list-decimal list-inside space-y-1 pl-1">
+                    <li>キーワードを入力してGPTフロー生成</li>
+                    <li>生成された最適な応急処置フローを選択</li>
+                    <li>選択したフローは以下の方法で編集可能：</li>
+                    <ul className="list-disc list-inside pl-6 space-y-1">
+                      <li>「テキスト編集」タブ：フローの内容をテキストベースで編集</li>
+                      <li>「キャラクター編集」タブ：フローチャートとして視覚的に編集</li>
+                    </ul>
+                  </ol>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <UploadCloud className="h-10 w-10 text-gray-400 mb-2" />
-              <p className="text-gray-700">
-                ファイルをドラッグ＆ドロップ
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                または<span className="text-indigo-600">クリックして選択</span>
-              </p>
+          </TabsContent>
+          
+          <TabsContent value="file" className="space-y-4">
+            <div>
+              {/* ファイル入力 (非表示) */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pptx,.ppt,.xlsx,.xls,.pdf,.json"
+                className="hidden"
+              />
+              
+              <div className="mb-4">
+                <h3 className="text-lg font-medium mb-2">ファイルアップロード</h3>
+                <Button 
+                  variant="outline" 
+                  className="w-full h-24 border-dashed" 
+                  onClick={handleFileSelectClick}
+                >
+                  <div className="flex flex-col items-center">
+                    <FileText className="h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-gray-700 font-medium">クリックしてファイルを選択</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PowerPoint、Excel、PDF、またはJSONファイル
+                    </p>
+                  </div>
+                </Button>
+              </div>
+              
+              {selectedFile && (
+                <div className="mb-4 p-3 bg-indigo-50 rounded-md border border-indigo-200">
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 text-indigo-600 mr-2" />
+                    <div>
+                      <p className="font-medium text-indigo-700">{selectedFile.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* アップロード進捗 */}
+              {(isUploading || uploadSuccess) && (
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-medium text-gray-700">
+                      {uploadSuccess ? "完了" : "処理中..."}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-2" />
+                </div>
+              )}
+              
+              {/* データ保存オプション */}
+              <div className="flex mb-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="saveOriginalFile" 
+                    checked={saveOriginalFile} 
+                    onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
+                  />
+                  <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
+                    元のファイルも保存する
+                  </Label>
+                </div>
+              </div>
+              
+              {/* 自動フロー生成の情報表示 */}
+              <div className="flex items-center space-x-2 mb-4 bg-amber-50 p-2 rounded-md border border-amber-200">
+                <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <p className="text-sm text-gray-700">
+                  アップロード後、自動的に応急処置フローが生成されます
+                </p>
+              </div>
+              
+              {/* アップロードボタン */}
+              <Button
+                className="w-full"
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading || uploadSuccess}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    処理中...
+                  </>
+                ) : uploadSuccess ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    完了しました
+                  </>
+                ) : (
+                  "アップロードして処理"
+                )}
+              </Button>
             </div>
-          )}
-        </div>
-        
-        {/* アップロード進捗 */}
-        {(isUploading || uploadSuccess) && (
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-gray-700">
-                {uploadSuccess ? "完了" : "処理中..."}
-              </span>
-              <span className="text-sm font-medium text-gray-700">
-                {uploadProgress}%
-              </span>
-            </div>
-            <Progress value={uploadProgress} className="h-2" />
-          </div>
-        )}
-        
-        {/* データ保存オプション */}
-        <div className="flex mb-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="saveOriginalFile" 
-              checked={saveOriginalFile} 
-              onCheckedChange={(checked) => setSaveOriginalFile(checked === true)}
-            />
-            <Label htmlFor="saveOriginalFile" className="text-sm text-gray-700">
-              元のファイルも保存する
-            </Label>
-          </div>
-        </div>
-        
-        {/* 自動フロー生成の情報表示 */}
-        <div className="flex items-center space-x-2 mb-4 bg-amber-50 p-2 rounded-md border border-amber-200">
-          <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
-          <p className="text-sm text-gray-700">
-            アップロード後、自動的に応急処置フローが生成されます
-          </p>
-        </div>
-        
-        {/* アップロードボタン */}
-        <Button
-          className="w-full"
-          onClick={handleUpload}
-          disabled={!selectedFile || isUploading || uploadSuccess}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              処理中...
-            </>
-          ) : uploadSuccess ? (
-            <>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              完了しました
-            </>
-          ) : (
-            "アップロードして処理"
-          )}
-        </Button>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
