@@ -516,10 +516,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               console.log('ブロック中のため送信をスキップ:', text);
             }
           } else {
-            // メモリ内にのみ保持し、表示も送信もしない
-            console.log('未完成の文章はメモリ内にのみ保持:', text);
-            // recordedTextには保存するがドラフトメッセージには表示しない
+            // 未完成の文章もUIに表示するが送信はしない
+            console.log('未完成の文章を表示:', text);
+            // recordedTextに保存し、ドラフトメッセージにも表示する
             setRecordedText(text);
+            
+            // ドラフトメッセージに表示するための設定
+            setDraftMessage({
+              content: text,
+              media: draftMessage?.media || []
+            });
+            console.log('録音中のテキストをチャット側のみに表示:', text);
           }
           
           // 空のテキストは処理しない
@@ -646,10 +653,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   console.log('ブラウザ: ブロック中のため送信をスキップ:', text);
                 }
               } else {
-                // メモリ内にのみ保持し、表示も送信もしない
-                console.log('ブラウザ: 未完成の文章はメモリ内にのみ保持:', text);
-                // recordedTextには保存するがドラフトメッセージには表示しない
+                // 未完成の文章もUIに表示するが送信はしない
+                console.log('ブラウザ: 未完成の文章を表示:', text);
+                // recordedTextに保存し、ドラフトメッセージにも表示する
                 setRecordedText(text);
+                
+                // ドラフトメッセージに表示するための設定
+                setDraftMessage({
+                  content: text,
+                  media: draftMessage?.media || []
+                });
+                console.log('ブラウザ: 録音中のテキストをチャット側のみに表示:', text);
               }
               
               // 空のテキストは処理しない

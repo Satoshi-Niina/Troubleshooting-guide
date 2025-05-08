@@ -248,20 +248,22 @@ export const startSpeechRecognition = (
           }
           
           // currentSentenceに追加（連続性を確保）
+          let updatedSentence = currentSentence;
+          
           if (currentSentence && !currentSentence.includes(newText) && !newText.includes(currentSentence)) {
             if (!currentSentence.endsWith(' ') && !newText.startsWith(' ')) {
-              currentSentence += ' ';
+              updatedSentence = currentSentence + ' ';
             }
-            currentSentence += newText;
-            console.log('現在の文に短いテキストを追加:', currentSentence);
-            
-            // 短いテキストでもUIに表示する（これを追加）
-            onResult(currentSentence);
+            updatedSentence += newText;
+            console.log('現在の文に短いテキストを追加:', updatedSentence);
+            currentSentence = updatedSentence;
           } else if (!currentSentence) {
+            updatedSentence = newText;
             currentSentence = newText;
-            // 短いテキストでもUIに表示する（これを追加）
-            onResult(newText);
           }
+          
+          // 常にUIに表示（文章を累積して表示）
+          onResult(currentSentence);
           
           // 無音タイマーをリセット
           resetSilenceTimer(() => {
@@ -296,6 +298,9 @@ export const startSpeechRecognition = (
             
             console.log('認識テキスト追加:', newText);
             console.log('現在の完全な文:', currentSentence);
+            
+            // 常に現在の文をUIに表示（累積表示を確実にする）
+            onResult(currentSentence);
 
             // 文末判定（句読点が含まれている場合）または文字数制限の判定
             if (/[。！？]$/.test(currentSentence) || currentSentence.length >= MAX_TEXT_LENGTH) {
