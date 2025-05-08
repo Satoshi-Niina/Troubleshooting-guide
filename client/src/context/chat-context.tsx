@@ -73,7 +73,34 @@ const ChatContext = createContext<ChatContextValue | null>(null);
 export const useChat = () => {
   const context = useContext(ChatContext);
   if (context === null) {
-    throw new Error("useChat must be used within a ChatProvider");
+    console.error("ChatContext is null - this likely means useChat was called outside of the ChatProvider");
+    // 代替として最小限のデフォルト値を返し、アプリがクラッシュするのを防ぐ
+    return {
+      messages: [],
+      isLoading: false,
+      searching: false,
+      searchResults: [],
+      selectedText: '',
+      setSelectedText: () => {},
+      sendMessage: async () => {},
+      startRecording: () => {},
+      stopRecording: () => {},
+      isRecording: false,
+      recordedText: '',
+      searchBySelectedText: async () => {},
+      clearSearchResults: () => {},
+      captureImage: async () => {},
+      exportChatHistory: async () => {},
+      exportFormattedData: async () => ({}),
+      lastExportTimestamp: null,
+      isExporting: false,
+      hasUnexportedMessages: false,
+      sendEmergencyGuide: async () => {},
+      draftMessage: null,
+      setDraftMessage: () => {},
+      clearChatHistory: () => {},
+      isClearing: false
+    } as ChatContextValue;
   }
   return context;
 };
