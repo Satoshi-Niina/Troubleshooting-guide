@@ -108,7 +108,7 @@ export const startSpeechRecognition = (
       // 音声が検出されたので無音タイマーをリセット
       resetSilenceTimer(() => {
         stopSpeechRecognition();
-        onError('30秒間音声が検出されなかったため、音声認識を停止しました。');
+        onError('20秒間音声が検出されなかったため、音声認識を停止しました。');
       });
     };
     

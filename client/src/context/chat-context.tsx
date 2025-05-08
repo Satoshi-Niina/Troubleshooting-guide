@@ -263,10 +263,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // 認識されたテキストをセット
           setRecordedText(text);
           
-          // 音声認識の内容をリアルタイムでドラフトメッセージとして表示
+          // 音声認識の内容をリアルタイムでドラフトメッセージとして表示（チャットの左側）
           // 既存のメディアは保持する
           if (text.trim()) {
-            // ドラフトメッセージとして表示 (入力欄に反映するのはクリック時のみ)
+            // ドラフトメッセージとして表示（入力欄とチャットの左側に両方表示する）
             setDraftMessage({
               content: text,
               media: currentMedia
@@ -291,7 +291,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               // Azure音声認識の内容もリアルタイムでドラフトメッセージとして表示
               // 既存のメディアは保持する
               if (text.trim()) {
-                // ドラフトメッセージとして表示 (入力欄に反映するのはクリック時のみ)
+                // ドラフトメッセージとして表示（入力欄とチャットの左側に両方表示する）
                 setDraftMessage({
                   content: text,
                   media: currentMedia
