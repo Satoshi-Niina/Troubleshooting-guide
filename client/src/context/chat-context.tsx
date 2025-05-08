@@ -639,11 +639,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   // 5秒後にブロックを解除
                   setTimeout(() => setBlockSending(false), 5000);
                 } else {
-                  console.log('Azure: ブロック中のため送信をスキップ:', text);
+                  console.log('ブラウザ: ブロック中のため送信をスキップ:', text);
                 }
               } else {
                 // メモリ内にのみ保持し、表示も送信もしない
-                console.log('Azure: 未完成の文章はメモリ内にのみ保持:', text);
+                console.log('ブラウザ: 未完成の文章はメモリ内にのみ保持:', text);
                 // recordedTextには保存するがドラフトメッセージには表示しない
                 setRecordedText(text);
               }
@@ -681,7 +681,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               const silenceCheckId = setTimeout(() => {
                 // 最後の音声認識から4秒経過したかチェック（より長く変更）
                 if (Date.now() - lastRecognitionTime >= 4000 && !silenceDetected) {
-                  console.log('Azure: 沈黙を検出しました - 現在の認識テキストを送信します');
+                  console.log('ブラウザ: 沈黙を検出しました - 現在の認識テキストを送信します');
                   setSilenceDetected(true);
                   
                   // 沈黙を検出したら、現在の認識結果を送信
@@ -689,11 +689,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   const bestPhrase = recognitionPhrases
                     .sort((a, b) => b.length - a.length)[0] || text;
                   
-                  console.log('Azure: 沈黙検出時の送信フレーズ:', bestPhrase);
+                  console.log('ブラウザ: 沈黙検出時の送信フレーズ:', bestPhrase);
                   
                   // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
                   if (bestPhrase.trim().length <= 2) {
-                    console.log('Azure: 沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
+                    console.log('ブラウザ: 沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
                     return;
                   }
                   
@@ -709,7 +709,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     sendMessage(bestPhrase).then(() => {
                       // 認識フレーズをリセット
                       setRecognitionPhrases([]);
-                      console.log('Azure: 沈黙検出: メッセージを送信しました:', bestPhrase);
+                      console.log('ブラウザ: 沈黙検出: メッセージを送信しました:', bestPhrase);
                     }).catch(error => {
                       console.error('Azure: 沈黙検出: メッセージ送信エラー:', error);
                     }).finally(() => {
@@ -719,10 +719,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                       }, 5000);
                     });
                   } else {
-                    console.log('Azure: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
+                    console.log('ブラウザ: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
                   }
                 }
-              }, 4000); // 4秒の沈黙を検出するためのタイマー（より長く変更）
+              }, 2000); // 2秒の沈黙を検出するためのタイマー
               
               // タイマーIDを保存
               setSendTimeoutId(silenceCheckId);
