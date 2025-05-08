@@ -336,18 +336,21 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // まずブラウザの標準音声認識を試す（マイク許可ダイアログが確実に表示される）
       startBrowserSpeechRecognition(
-        (text: string) => {
+        async (text: string) => {
           // 認識されたテキストをセット
           setRecordedText(text);
           
           // 音声認識の内容をリアルタイムでドラフトメッセージとして表示（チャットの左側）
           // 既存のメディアは保持する
           if (text.trim()) {
-            // ドラフトメッセージとして表示（入力欄とチャットの左側に両方表示する）
+            // ドラフトメッセージとして表示
             setDraftMessage({
               content: text,
               media: currentMedia
             });
+            
+            // リアルタイムで自動送信する
+            await sendMessage(text);
           }
         },
         (error: string) => {
@@ -362,17 +365,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           // Azure Speech APIを使用して音声認識を開始
           startSpeechRecognition(
-            (text: string) => {
+            async (text: string) => {
               setRecordedText(text);
               
               // Azure音声認識の内容もリアルタイムでドラフトメッセージとして表示
               // 既存のメディアは保持する
               if (text.trim()) {
-                // ドラフトメッセージとして表示（入力欄とチャットの左側に両方表示する）
+                // ドラフトメッセージとして表示
                 setDraftMessage({
                   content: text,
                   media: currentMedia
                 });
+                
+                // リアルタイムで自動送信する
+                await sendMessage(text);
               }
             }, 
             (error: string) => {
@@ -395,34 +401,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       setIsRecording(false);
     }
-  }, [toast, draftMessage]);
+  }, [toast, draftMessage, sendMessage]);
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(() => {
     setIsRecording(false);
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
     
-    // 録音テキストがある場合は自動送信
-    if (recordedText.trim()) {
-      try {
-        console.log('録音テキストを自動送信します:', recordedText.trim());
-        // 自動送信する
-        await sendMessage(recordedText.trim());
-        // 送信後はドラフトメッセージをクリア
-        setDraftMessage(null);
-      } catch (error) {
-        console.error('自動送信エラー:', error);
-        toast({
-          title: '自動送信エラー',
-          description: 'メッセージを自動送信できませんでした',
-          variant: 'destructive',
-        });
-      }
-    } else {
-      // 録音テキストがない場合は、ドラフトメッセージをクリア
-      setDraftMessage(null);
-    }
-  }, [recordedText, sendMessage, toast]);
+    // 録音終了時はドラフトメッセージをクリア
+    // (リアルタイム送信方式に変更したため、録音停止時の送信は不要)
+    setDraftMessage(null);
+    
+    // デバッグログ
+    console.log('録音を停止しました');
+  }, []);
 
   const searchBySelectedText = async (text: string) => {
     // すでに検索中の場合は処理をスキップ
