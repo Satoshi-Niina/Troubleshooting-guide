@@ -286,38 +286,63 @@ router.delete('/delete/:id', async (req: Request, res: Response) => {
       });
     }
     
-    const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
-    const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
-    
-    if (!fs.existsSync(metadataPath)) {
-      return res.status(404).json({
-        success: false,
-        error: '指定されたフローが見つかりません'
+    // トラブルシューティングIDの場合
+    if (id.startsWith('ts_')) {
+      const troubleshootingDir = path.join(process.cwd(), 'knowledge-base', 'troubleshooting');
+      const filename = id.replace('ts_', '') + '.json';
+      const filePath = path.join(troubleshootingDir, filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          error: '指定されたトラブルシューティングファイルが見つかりません'
+        });
+      }
+      
+      // ファイルの削除
+      fs.unlinkSync(filePath);
+      
+      log(`トラブルシューティングフローを削除しました: ${filename}`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'トラブルシューティングファイルが削除されました'
+      });
+    } else {
+      // 通常のフローファイルの場合
+      const jsonDir = path.join(process.cwd(), 'knowledge-base', 'json');
+      const metadataPath = path.join(jsonDir, `${id}_metadata.json`);
+      
+      if (!fs.existsSync(metadataPath)) {
+        return res.status(404).json({
+          success: false,
+          error: '指定されたフローが見つかりません'
+        });
+      }
+      
+      // メタデータからファイル名を取得
+      const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+      const metadata = JSON.parse(metadataContent);
+      const flowPath = path.join(jsonDir, metadata.fileName);
+      
+      // ファイルの削除
+      if (fs.existsSync(flowPath)) {
+        fs.unlinkSync(flowPath);
+      }
+      
+      // メタデータファイルの削除
+      fs.unlinkSync(metadataPath);
+      
+      // インデックスファイルを更新
+      updateIndexFileAfterDelete(id);
+      
+      log(`フローを削除しました: ${id}`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'フローが削除されました'
       });
     }
-    
-    // メタデータからファイル名を取得
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    const metadata = JSON.parse(metadataContent);
-    const flowPath = path.join(jsonDir, metadata.fileName);
-    
-    // ファイルの削除
-    if (fs.existsSync(flowPath)) {
-      fs.unlinkSync(flowPath);
-    }
-    
-    // メタデータファイルの削除
-    fs.unlinkSync(metadataPath);
-    
-    // インデックスファイルを更新
-    updateIndexFileAfterDelete(id);
-    
-    log(`フローを削除しました: ${id}`);
-    
-    return res.status(200).json({
-      success: true,
-      message: 'フローが削除されました'
-    });
   } catch (error) {
     console.error('フロー削除エラー:', error);
     return res.status(500).json({
