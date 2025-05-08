@@ -244,7 +244,7 @@ const UnifiedDataProcessor: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-md border border-blue-100">
-        <h2 className="text-xl font-semibold text-blue-800 mb-4">データ処理</h2>
+        <h2 className="text-xl font-semibold text-blue-800 mb-4">基礎データ処理</h2>
         
         {/* ドラッグ&ドロップエリア */}
         <div
