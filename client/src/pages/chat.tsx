@@ -251,8 +251,7 @@ export default function Chat() {
       {/* ヘッダー - 12インチノートPC向けにコンパクト化 */}
       <div className="border-b border-blue-200 p-1 md:p-2 flex justify-between items-center bg-blue-100 mobile-landscape-header" style={{ minHeight: 'auto' }}>
         <div className="flex items-center">
-          {/* シンプルなタイトル表示 */}
-          <h1 className="text-base md:text-lg font-bold text-blue-800">応急処置サポート</h1>
+          {/* タイトル表示を削除 */}
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">

@@ -97,9 +97,14 @@ export const startSpeechRecognition = (
       }
     };
     
-    // 途中結果は表示しない - 最終結果のみ使用
+    // 途中結果をリアルタイムで表示
     recognizer.recognizing = (s, e) => {
-      console.log(`認識中: ${e.result.text}`);
+      const interimText = e.result.text;
+      console.log(`認識中: ${interimText}`);
+      // 途中結果も通知
+      if (interimText) {
+        onResult(interimText);
+      }
       // 音声が検出されたので無音タイマーをリセット
       resetSilenceTimer(() => {
         stopSpeechRecognition();
