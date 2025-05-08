@@ -486,8 +486,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // 現在のメディア状態を保持
       const currentMedia = draftMessage?.media || [];
       
-      // まずブラウザの標準音声認識を試す（マイク許可ダイアログが確実に表示される）
-      startBrowserSpeechRecognition(
+      // まずAzure Speech APIを試す（精度が高い）
+      startSpeechRecognition(
         async (text: string) => {
           // 認識されたテキストをセット（内部状態のみ）
           setRecordedText(text);
@@ -598,17 +598,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setSendTimeoutId(silenceCheckId);
         },
         (error: string) => {
-          console.log('ブラウザ音声認識エラー:', error);
+          console.log('Azure音声認識エラー:', error);
           
-          // エラー時はAzure Speech APIをフォールバックとして使用
+          // エラー時はブラウザの標準音声認識APIをフォールバックとして使用
           toast({
-            title: 'ブラウザ音声認識が使用できません',
-            description: 'Azure音声認識を使用します',
-            duration: 2000,
+            title: 'AzureからブラウザAPIに切り替えます',
+            description: 'ブラウザの音声認識を初期化中...',
+            duration: 3000,
           });
           
-          // Azure Speech APIを使用して音声認識を開始
-          startSpeechRecognition(
+          // Azure音声認識を完全に停止
+          stopSpeechRecognition();
+          
+          // 状態をリセット
+          setRecordedText('');
+          setLastSentText('');
+          setRecognitionPhrases([]);
+          setBlockSending(false);
+          
+          // ブラウザの標準音声認識APIを使用
+          startBrowserSpeechRecognition(
             async (text: string) => {
               // 認識されたテキストをセット（内部状態のみ）
               setRecordedText(text);
@@ -621,7 +630,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               
               if (isCompleteSentence || isLongEnough) {
                 // 完成した文章は直接メッセージとして送信
-                console.log('Azure: 完成した文章なので、メッセージとして送信:', text);
+                console.log('ブラウザ: 完成した文章なので、メッセージとして送信:', text);
                 
                 // ブロックフラグが立っていなければ送信
                 if (!blockSending) {
@@ -731,11 +740,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       );
       
       // リアルタイムプレビュー用のイベント発火（完全に無効化）
-      // イベントリスナーはセットするが、実際の更新は行わない（重複送信防止）
-      window.addEventListener('update-draft-message', ((e: CustomEvent) => {
+      // TypeScriptエラーを回避するために、型指定を完全に省略
+      window.addEventListener('update-draft-message', function(e: any) {
         console.log('録音中のテキスト（イベントは無視）:', e.detail.content);
         // ドラフトメッセージの更新はしない（重複送信を防止）
-      }) as EventListener);
+      });
     } catch (error) {
       console.error('音声認識開始エラー:', error);
       setIsRecording(false);

@@ -6,7 +6,7 @@ let recognizer: sdk.SpeechRecognizer | null = null;
 // 無音タイマーのインスタンス
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 // 無音タイムアウトの時間（ミリ秒）
-const SILENCE_TIMEOUT = 4000; // 4秒の無音タイムアウト
+const SILENCE_TIMEOUT = 2000; // 2秒の無音タイムアウト
 // 最小文字数（これより短い認識結果は単独では送信しない）
 const MIN_TEXT_LENGTH = 5;
 // 最後に送信したテキスト
@@ -88,10 +88,10 @@ const initAzureSpeechConfig = () => {
       'TrueText'
     );
     
-    // エンドポイント検出の設定（4秒の無音で検出）
+    // エンドポイント検出の設定（2秒の無音で検出）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '4000'
+      '2000'
     );
 
     return speechConfig;
@@ -118,7 +118,7 @@ const resetSilenceTimer = (onSilenceTimeout: () => void) => {
   }
 
   silenceTimer = setTimeout(() => {
-    console.log('無音タイムアウト: 4秒間音声入力がありませんでした');
+    console.log('無音タイムアウト: 2秒間音声入力がありませんでした');
     silenceDetected = true;
     onSilenceTimeout();
   }, SILENCE_TIMEOUT);
@@ -205,9 +205,9 @@ export const startSpeechRecognition = (
         currentSentence = '';
         recognitionPhrases = [];
         
-        // 送信後、送信ブロックを設定（連続送信を防止）- 5秒間
+        // 送信後、送信ブロックを設定（連続送信を防止）- 3秒間
         blockSending = true;
-        setTimeout(() => { blockSending = false; }, 5000);
+        setTimeout(() => { blockSending = false; }, 3000);
       } else {
         console.log('有効な文章が見つからないため送信をスキップします');
       }
@@ -454,10 +454,10 @@ export const startBrowserSpeechRecognition = (
         // バッファをクリア
         storedPhrases = [];
         
-        // 5秒後にブロックを解除
+        // 3秒後にブロックを解除
         setTimeout(() => {
           blockBrowserSending = false;
-        }, 5000);
+        }, 3000);
       }
     } else {
       // 未完成の文章は送信せず、バッファに保持するだけ
