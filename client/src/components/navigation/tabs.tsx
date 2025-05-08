@@ -27,7 +27,8 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
     {
       title: "チャット",
       path: "/chat",
-      icon: <MessageSquare className="mr-2 h-4 w-4" />,
+      icon: <MessageSquare className="mr-2 h-4 w-4 text-blue-600" />,
+      className: "text-blue-600 font-bold", // 青文字・太字にするカスタムのスタイル追加
     },
     {
       title: "基礎データ管理",
