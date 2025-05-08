@@ -1088,6 +1088,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setSelectedText,
         sendMessage,
         startRecording,
+        setDraftMessage,
         stopRecording,
         isRecording,
         recordedText,

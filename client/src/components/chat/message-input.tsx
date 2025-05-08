@@ -17,9 +17,16 @@ export default function MessageInput() {
     startRecording,
     stopRecording,
     isRecording,
-    setDraftMessage,
     draftMessage
   } = useChat();
+  
+  // 型の問題を解決するため、ChatContextからsetDraftMessageを直接使用する代わりに
+  // 新しいイベントを発火する方法を使用
+  const updateDraftMessage = (content: string) => {
+    window.dispatchEvent(new CustomEvent('update-draft-message', { 
+      detail: { content }
+    }));
+  };
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -46,14 +53,9 @@ export default function MessageInput() {
           detail: { content: recordedText }
         }));
         
-        // ChatContextの関数が使えない場合の直接設定を追加（コンテキストのドラフトメッセージを直接設定）
-        if (setDraftMessage) {
-          console.log('関数から直接ドラフトメッセージを設定:', recordedText);
-          setDraftMessage({
-            content: recordedText,
-            media: []
-          });
-        }
+        // 新しい関数を使用してドラフトメッセージを更新
+        console.log('関数から直接ドラフトメッセージを設定:', recordedText);
+        updateDraftMessage(recordedText);
         
         // デバッグログ
         if (isRecording) {
@@ -61,7 +63,7 @@ export default function MessageInput() {
         }
       }
     }
-  }, [recordedText, isRecording, setDraftMessage]);
+  }, [recordedText, isRecording]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -145,14 +147,9 @@ export default function MessageInput() {
           detail: { content: recordedText.trim() }
         }));
         
-        // ChatContextの関数が使えない場合の直接設定を追加（コンテキストのドラフトメッセージを直接設定）
-        if (setDraftMessage) {
-          console.log('録音停止：関数から直接ドラフトメッセージを設定:', recordedText.trim());
-          setDraftMessage({
-            content: recordedText.trim(),
-            media: []
-          });
-        }
+        // 新しい関数を使用してドラフトメッセージを更新
+        console.log('録音停止：関数から直接ドラフトメッセージを設定:', recordedText.trim());
+        updateDraftMessage(recordedText.trim());
         
         console.log('録音停止時のテキストをチャット側のみに表示:', recordedText.trim());
       }
