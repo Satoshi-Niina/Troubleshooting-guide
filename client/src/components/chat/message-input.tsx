@@ -34,22 +34,19 @@ export default function MessageInput() {
     }
   }, [selectedText, isMobile]);
   
-  // 録音テキストをリアルタイムで入力欄とチャットエリアの両方に反映する
+  // 録音テキストをリアルタイムでチャットエリア（左側）のみに反映する
   useEffect(() => {
     if (isRecording && recordedText) {
-      // 入力欄に反映
-      setMessage(recordedText);
-      
-      // 録音中は直接ChatContextの関数を呼び出してドラフトメッセージを更新
+      // 入力欄には反映せず、チャット側（左側）にのみドラフトメッセージとして表示
       if (recordedText.trim()) {
         // リアルタイム表示のためにイベントとして発火
         window.dispatchEvent(new CustomEvent('update-draft-message', { 
           detail: { content: recordedText }
         }));
         
-        // 念のため直接関数も呼び出す（イベントが失敗した場合の保険）
+        // デバッグログ
         if (isRecording) {
-          console.log('録音中のテキストをドラフトメッセージに設定:', recordedText);
+          console.log('録音中のテキストをチャット側のみに表示:', recordedText);
         }
       }
     }
@@ -62,8 +59,12 @@ export default function MessageInput() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const textToSend = recordedText.trim() || message.trim();
+    // 録音テキストか入力テキストのいずれかを使用
+    // 入力欄にテキストがある場合は優先的に使用し、なければ録音テキストを使用
+    const textToSend = message.trim() || recordedText.trim();
     if (!textToSend || isLoading) return;
+    
+    console.log('送信するテキスト:', textToSend);
     
     // メッセージを送信
     await sendMessage(textToSend);
@@ -124,15 +125,15 @@ export default function MessageInput() {
       console.log('録音停止');
       stopRecording();
       
-      // 録音停止時も入力欄に反映する
+      // 録音停止時はチャット側にのみ反映し、入力欄には反映しない
       if (recordedText.trim()) {
-        setMessage(recordedText.trim());
+        // 入力欄には反映しない (setMessage を呼び出さない)
         
         // 録音停止時にもドラフトメッセージ更新イベントを発火して確実に表示する
         window.dispatchEvent(new CustomEvent('update-draft-message', { 
           detail: { content: recordedText.trim() }
         }));
-        console.log('録音停止時のテキストをドラフトメッセージに設定:', recordedText.trim());
+        console.log('録音停止時のテキストをチャット側のみに表示:', recordedText.trim());
       }
     }
   };
