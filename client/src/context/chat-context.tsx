@@ -285,6 +285,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener('camera-capture', handleCameraCapture as EventListener);
     window.addEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     
+    // ドラフトメッセージクリア用のイベントリスナー
+    const handleClearDraftMessage = (event: Event) => {
+      console.log('クリアドラフトメッセージイベント受信');
+      setDraftMessage(null);
+      setRecordedText('');
+      setLastSentText('');
+    };
+    
+    // clear-draft-messageイベントリスナーを追加
+    window.addEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
+    
     // カスタムイベント発火によるデバッグ
     console.log('ドラフトメッセージイベントリスナーをセットアップしました');
     
@@ -293,6 +304,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // イベントリスナーの解除
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
       window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
+      window.removeEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
       window.removeEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     };
   }, [draftMessage]);
@@ -842,6 +854,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // ドラフトメッセージも確実にクリア（音声認識テキストなど）
       setDraftMessage(null);
       setRecordedText('');
+      // lastSentTextもクリア
+      setLastSentText('');
+      
+      // カスタムイベントを発行してUIにも反映
+      if (typeof window !== 'undefined') {
+        // ドラフトクリアイベントを発行
+        window.dispatchEvent(new CustomEvent('clear-draft-message'));
+        // 記録済みの認識フレーズもクリア
+        window.dispatchEvent(new CustomEvent('reset-recognition-phrases'));
+      }
       
       // クリア時のタイムスタンプをローカルストレージに保存（キャッシュクリア処理用）
       const clearTimestamp = Date.now().toString();

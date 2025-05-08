@@ -125,6 +125,17 @@ const resetSilenceTimer = (onSilenceTimeout: () => void) => {
 };
 
 // 音声認識を開始する関数
+// フレーズリセットのリスナーを設定
+if (typeof window !== 'undefined') {
+  window.addEventListener('reset-recognition-phrases', () => {
+    console.log('認識フレーズリセットコマンド受信');
+    recognitionPhrases = [];
+    lastSentText = '';
+    blockSending = false;
+    silenceDetected = false;
+  });
+}
+
 export const startSpeechRecognition = (
   onResult: (text: string) => void,
   onError: (error: string) => void
