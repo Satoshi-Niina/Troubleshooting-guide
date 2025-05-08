@@ -407,7 +407,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             clearTimeout(sendTimeoutId);
           }
           
-          // 新しいタイマーを設定（1.5秒の遅延で安定したテキストのみを送信）
+          // 新しいタイマーを設定（3秒の遅延で安定したテキストのみを送信）
           const timeoutId = setTimeout(async () => {
             // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
             let bestPhrase = recognitionPhrases
@@ -442,7 +442,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } else {
               console.log('類似テキストが既に送信されているため送信をスキップします');
             }
-          }, 1500); // 1.5秒の遅延
+          }, 3000); // 3秒の遅延
           
           // タイマーIDを保存
           setSendTimeoutId(timeoutId);
@@ -490,7 +490,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(sendTimeoutId);
               }
               
-              // 新しいタイマーを設定（1.5秒の遅延で安定したテキストのみを送信）
+              // 新しいタイマーを設定（3秒の遅延で安定したテキストのみを送信）
               const timeoutId = setTimeout(async () => {
                 // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
                 let bestPhrase = recognitionPhrases
@@ -525,7 +525,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 } else {
                   console.log('Azure: 類似テキストが既に送信されているため送信をスキップします');
                 }
-              }, 1500); // 1.5秒の遅延
+              }, 3000); // 3秒の遅延
               
               // タイマーIDを保存
               setSendTimeoutId(timeoutId);
