@@ -6,6 +6,8 @@ import { Message } from '@shared/schema';
 
 // 十分な文とみなす最小文字数
 const MIN_TEXT_LENGTH = 5;
+// 最大文字数（これを超えたら自動的に送信）
+const MAX_TEXT_LENGTH = 50;
 
 // チャットコンテキストの型定義
 interface ChatContextValue {
@@ -103,6 +105,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [sendTimeoutId, setSendTimeoutId] = useState<NodeJS.Timeout | null>(null);
   // 十分な文とみなす最小文字数
   const MIN_TEXT_LENGTH = 5;
+  // 最大文字数（これを超えたら自動的に送信）
+  const MAX_TEXT_LENGTH = 50;
   // 音声認識テキストの完了度を追跡するための変数
   const [recognitionPhrases, setRecognitionPhrases] = useState<string[]>([]);
   // 音声認識テキストの送信をブロックするフラグ

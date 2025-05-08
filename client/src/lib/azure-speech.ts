@@ -9,6 +9,8 @@ let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 const SILENCE_TIMEOUT = 2000; // 2秒の無音タイムアウト
 // 最小文字数（これより短い認識結果は単独では送信しない）
 const MIN_TEXT_LENGTH = 5;
+// 最大文字数（これを超えたら自動的に送信）
+const MAX_TEXT_LENGTH = 50;
 // 最後に送信したテキスト
 let lastSentText = '';
 // 前回の認識結果と類似しているかどうかを判定する関数
@@ -290,10 +292,14 @@ export const startSpeechRecognition = (
             console.log('認識テキスト追加:', newText);
             console.log('現在の完全な文:', currentSentence);
 
-            // 文末判定（句読点が含まれている場合）
-            if (/[。！？]$/.test(currentSentence)) {
-              // 句読点で終わる場合は文の区切りと判断して送信
-              console.log('文末記号を検出: 文を送信します');
+            // 文末判定（句読点が含まれている場合）または文字数制限の判定
+            if (/[。！？]$/.test(currentSentence) || currentSentence.length >= MAX_TEXT_LENGTH) {
+              // 句読点で終わる場合または最大文字数（50文字）に達した場合は文の区切りと判断して送信
+              if (currentSentence.length >= MAX_TEXT_LENGTH) {
+                console.log('最大文字数に達しました(50文字): 文を送信します');
+              } else {
+                console.log('文末記号を検出: 文を送信します');
+              }
               sendAndReset();
             }
           } else {
@@ -434,11 +440,16 @@ export const startBrowserSpeechRecognition = (
       storedPhrases.push(transcript);
     }
     
-    // 完全な文章かどうか判定（文末記号または長さによる判断）
+    // 完全な文章かどうか判定（文末記号、長さ、または最大文字数による判断）
     const isCompleteSentence = /[。！？!?]$/.test(transcript.trim());
     const isLongEnough = transcript.length >= 10;
+    const isMaxLengthReached = transcript.length >= MAX_TEXT_LENGTH;
     
-    if (isCompleteSentence || isLongEnough) {
+    if (isCompleteSentence || isLongEnough || isMaxLengthReached) {
+      // 最大文字数に達した場合のログ
+      if (isMaxLengthReached) {
+        console.log('ブラウザ音声認識: 最大文字数(50文字)に達したので送信します');
+      }
       if (!isSimilarText(transcript, lastSentText)) {
         console.log('ブラウザ音声認識: 完成した文章を送信:', transcript);
         
