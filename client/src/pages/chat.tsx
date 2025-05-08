@@ -129,18 +129,60 @@ export default function Chat() {
     if (hasUnexportedMessages) {
       setIsEndChatDialogOpen(true);
     } else {
-      // 未送信のメッセージがなければそのまま終了（チャットに直接遷移）
-      // wouter の setLocation を使用することで、リダイレクションなしで直接チャット画面に留まります
-      setLocation("/chat", { replace: true });
+      // 未送信のメッセージがなければログイン画面に戻る
+      // APIにログアウトリクエストを送信してからリダイレクト
+      fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      })
+      .then(() => {
+        // キャッシュをクリア
+        queryClient.clear();
+        // ローカルストレージのクエリキャッシュをクリア
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('rq-')) {
+            localStorage.removeItem(key);
+          }
+        }
+        // ログイン画面にリダイレクト
+        setLocation("/login", { replace: true });
+      })
+      .catch(error => {
+        console.error("ログアウトエラー:", error);
+        // エラーが発生してもログイン画面に遷移
+        setLocation("/login", { replace: true });
+      });
     }
   };
 
   // チャットを送信して終了
   const handleSendAndEnd = async () => {
-    await exportChatHistory();
-    setIsEndChatDialogOpen(false);
-    // 送信後に同じチャット画面に留まる
-    setLocation("/chat", { replace: true });
+    try {
+      await exportChatHistory();
+      setIsEndChatDialogOpen(false);
+      
+      // 送信完了後、ログアウト処理を実行
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+      
+      // キャッシュをクリア
+      queryClient.clear();
+      // ローカルストレージのクエリキャッシュをクリア
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('rq-')) {
+          localStorage.removeItem(key);
+        }
+      }
+      
+      // ログイン画面にリダイレクト
+      setLocation("/login", { replace: true });
+    } catch (error) {
+      console.error("チャット終了エラー:", error);
+      // エラーが発生してもログイン画面に遷移
+      setLocation("/login", { replace: true });
+    }
   };
 
   const isMobile = useIsMobile();
@@ -541,7 +583,20 @@ export default function Chat() {
                 variant="destructive" 
                 onClick={() => {
                   setIsEndChatDialogOpen(false);
-                  window.location.href = "/";
+                  // 直接ログアウト処理を実行
+                  fetch("/api/auth/logout", {
+                    method: "POST",
+                    credentials: "include"
+                  })
+                  .then(() => {
+                    queryClient.clear();
+                    // ログイン画面にリダイレクト
+                    setLocation("/login", { replace: true });
+                  })
+                  .catch(() => {
+                    // エラーが発生してもログイン画面に遷移
+                    setLocation("/login", { replace: true });
+                  });
                 }}
                 className="bg-red-500 hover:bg-red-600"
               >

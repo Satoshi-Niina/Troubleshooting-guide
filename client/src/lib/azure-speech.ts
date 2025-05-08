@@ -87,17 +87,31 @@ export const startSpeechRecognition = (
     recognizer.recognized = (s, e) => {
       if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
         const newText = e.result.text.trim();
+        // すでに認識済みのテキストとの重複を避ける
         if (newText && newText !== lastRecognizedText && newText !== lastText) {
-          lastRecognizedText = newText;
-          lastText = newText; // 厳密な比較用に更新
-          currentSentence += newText;
+          // 完全な新しい文章が認識された場合（前回の文章との重複がない場合）のみ更新
+          if (!currentSentence.includes(newText) && !newText.includes(currentSentence)) {
+            lastRecognizedText = newText;
+            lastText = newText; // 厳密な比較用に更新
+            
+            // 既存のテキストを置き換えるのではなく、追加する
+            if (currentSentence.length > 0 && !currentSentence.endsWith(' ')) {
+              currentSentence += ' '; // 適切にスペースを追加
+            }
+            currentSentence += newText;
+            
+            console.log('認識テキスト追加:', newText);
+            console.log('現在の完全な文:', currentSentence);
 
-          // 文末判定（句読点が含まれている場合）
-          if (/[。！？]$/.test(currentSentence)) {
-            sendAndReset();
+            // 文末判定（句読点が含まれている場合）
+            if (/[。！？]$/.test(currentSentence)) {
+              sendAndReset();
+            }
+          } else {
+            console.log('部分的に重複する認識をスキップ:', newText);
           }
 
-          // 無音タイマーをリセット
+          // 無音タイマーをリセット（これは常に行う）
           resetSilenceTimer(() => {
             sendAndReset();
             stopSpeechRecognition();
