@@ -326,9 +326,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // 最後に送信したテキストを保存する変数（重複送信防止用）
+  const [lastSentText, setLastSentText] = useState<string>('');
+  
   const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordedText(''); // 録音開始時にテキストをクリア
+    setLastSentText(''); // 録音開始時に最後に送信したテキストもクリア
     
     try {
       // 現在のメディア状態を保持
@@ -340,16 +344,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // 認識されたテキストをセット
           setRecordedText(text);
           
-          // 音声認識の内容をリアルタイムでドラフトメッセージとして表示（チャットの左側）
-          // 既存のメディアは保持する
-          if (text.trim()) {
-            // ドラフトメッセージとして表示
-            setDraftMessage({
-              content: text,
-              media: currentMedia
-            });
+          // 音声認識の内容は視覚的に確認できるようにするが、ドラフトメッセージとして表示はしない
+          console.log('録音中のテキストをチャット側のみに表示:', text);
+          
+          // リアルタイムでメッセージ送信（重複チェック）
+          if (text.trim() && text !== lastSentText) {
+            // 最後に送信したテキストを更新
+            setLastSentText(text);
             
-            // リアルタイムで自動送信する
+            // リアルタイムで自動送信
             await sendMessage(text);
           }
         },
@@ -368,16 +371,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             async (text: string) => {
               setRecordedText(text);
               
-              // Azure音声認識の内容もリアルタイムでドラフトメッセージとして表示
-              // 既存のメディアは保持する
-              if (text.trim()) {
-                // ドラフトメッセージとして表示
-                setDraftMessage({
-                  content: text,
-                  media: currentMedia
-                });
+              // 音声認識の内容は視覚的に確認できるようにするが、ドラフトメッセージとして表示はしない
+              console.log('Azure音声認識中のテキスト:', text);
+              
+              // リアルタイムでメッセージ送信（重複チェック）
+              if (text.trim() && text !== lastSentText) {
+                // 最後に送信したテキストを更新
+                setLastSentText(text);
                 
-                // リアルタイムで自動送信する
+                // リアルタイムで自動送信
                 await sendMessage(text);
               }
             }, 
@@ -401,7 +403,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       setIsRecording(false);
     }
-  }, [toast, draftMessage, sendMessage]);
+  }, [toast, draftMessage, sendMessage, lastSentText]);
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);
