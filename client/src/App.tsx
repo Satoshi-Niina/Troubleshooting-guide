@@ -55,6 +55,23 @@ function Router() {
   const { user } = useAuth();
   const [location] = useLocation();
 
+  const isLoginPage = location === '/login';
+
+  // Separate layout for login page
+  if (isLoginPage) {
+    return (
+      <div className="h-screen">
+        <Switch>
+          <Route path="/login" component={Login} />
+          <Route path="/">
+            <Redirect to="/login" />
+          </Route>
+        </Switch>
+      </div>
+    );
+  }
+
+  // Main app layout for authenticated routes
   return (
     <div className="h-screen flex flex-col">
       {user && <Header />}
@@ -67,7 +84,6 @@ function Router() {
       
       <main className="flex-1 flex overflow-hidden">
         <Switch>
-          <Route path="/login" component={Login} />
           
           <Route path="/chat">
             <ProtectedRoute>
