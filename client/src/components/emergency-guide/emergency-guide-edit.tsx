@@ -186,6 +186,15 @@ const EmergencyGuideEdit: React.FC = () => {
     deleted: number;
   }>({ added: 0, modified: 0, deleted: 0 });
   
+  // スライド追加ダイアログの状態
+  const [showAddSlideDialog, setShowAddSlideDialog] = useState(false);
+  const [addSlidePosition, setAddSlidePosition] = useState<number | null>(null);
+  const [newSlideData, setNewSlideData] = useState({
+    タイトル: '',
+    本文: [''],
+    ノート: ''
+  });
+  
   // 変更内容を分析する関数
   const analyzeChanges = () => {
     if (!guideData || !editedGuideData) return { added: 0, modified: 0, deleted: 0 };
@@ -432,6 +441,68 @@ const EmergencyGuideEdit: React.FC = () => {
         ...editedGuideData.metadata,
         [field]: value
       }
+    });
+  };
+  
+  // スライド追加ダイアログを表示する関数
+  const showAddSlideDialogAt = (position: number) => {
+    setAddSlidePosition(position);
+    setNewSlideData({
+      タイトル: '',
+      本文: [''],
+      ノート: ''
+    });
+    setShowAddSlideDialog(true);
+  };
+  
+  // 新しいスライドを追加する関数
+  const handleAddSlide = () => {
+    if (!editedGuideData) return;
+    if (!newSlideData.タイトル.trim()) {
+      toast({
+        title: "入力エラー",
+        description: "スライドのタイトルを入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const position = addSlidePosition !== null ? addSlidePosition : editedGuideData.slides.length;
+    const updatedSlides = [...editedGuideData.slides];
+    
+    // 新しいスライド番号を計算（追加位置のスライド番号）
+    const newSlideNumber = position + 1;
+    
+    // 新しいスライドを作成
+    const newSlide = {
+      スライド番号: newSlideNumber,
+      タイトル: newSlideData.タイトル,
+      本文: newSlideData.本文.filter(text => text.trim() !== ''),
+      ノート: newSlideData.ノート,
+      画像テキスト: []
+    };
+    
+    // スライドを指定位置に挿入
+    updatedSlides.splice(position, 0, newSlide);
+    
+    // 挿入後のスライドの番号を更新
+    for (let i = position + 1; i < updatedSlides.length; i++) {
+      updatedSlides[i].スライド番号 = i + 1;
+    }
+    
+    // データを更新
+    setEditedGuideData({
+      ...editedGuideData,
+      slides: updatedSlides
+    });
+    
+    // ダイアログを閉じる
+    setShowAddSlideDialog(false);
+    setAddSlidePosition(null);
+    
+    toast({
+      title: "スライド追加",
+      description: `新しいスライド「${newSlideData.タイトル}」を追加しました`,
     });
   };
   
@@ -886,13 +957,30 @@ const EmergencyGuideEdit: React.FC = () => {
                 {/* スライド内容タブ */}
                 <TabsContent value="slides">
                   <div className="space-y-8">
-                    {(isEditing ? editedGuideData.slides : guideData?.data.slides || []).map((slide: any, slideIndex: number) => (
-                      <Card key={slideIndex} className="border-indigo-200">
-                        <CardHeader className="bg-indigo-50 rounded-t-lg">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg">
-                              スライド {slide.スライド番号}: {slide.タイトル}
-                            </CardTitle>
+                    {/* スライド追加ボタン（最初のスライドの前） */}
+                    {isEditing && (
+                      <div className="flex justify-center mb-4">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="border border-dashed border-gray-300 text-gray-500 hover:text-blue-600 w-3/4"
+                          onClick={() => showAddSlideDialogAt(0)}
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-1" />
+                          先頭にスライドを追加
+                        </Button>
+                      </div>
+                    )}
+                  
+                    {(isEditing ? editedGuideData.slides : guideData?.data.slides || []).map((slide: any, slideIndex: number) => {
+                      return (
+                        <div key={slideIndex}>
+                          <Card className="border-indigo-200">
+                            <CardHeader className="bg-indigo-50 rounded-t-lg">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-lg">
+                                  スライド {slide.スライド番号}: {slide.タイトル}
+                                </CardTitle>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-4 space-y-4">
@@ -972,7 +1060,24 @@ const EmergencyGuideEdit: React.FC = () => {
                           )}
                         </CardContent>
                       </Card>
-                    ))}
+                      
+                      {/* スライド間に追加ボタン */}
+                      {isEditing && (
+                        <div className="flex justify-center my-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="border border-dashed border-gray-300 text-gray-500 hover:text-blue-600"
+                            onClick={() => showAddSlideDialogAt(slideIndex + 1)}
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            ここにスライドを追加
+                          </Button>
+                        </div>
+                      )}
+                      </div>
+                      );
+                    })}
                   </div>
                 </TabsContent>
                 
@@ -1216,6 +1321,61 @@ const EmergencyGuideEdit: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* スライド追加ダイアログ */}
+      <Dialog open={showAddSlideDialog} onOpenChange={setShowAddSlideDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新しいスライドを追加</DialogTitle>
+            <DialogDescription>
+              {addSlidePosition !== null && editedGuideData ? (
+                addSlidePosition < editedGuideData.slides.length ? 
+                  `スライド ${addSlidePosition + 1} と ${addSlidePosition + 2} の間に新しいスライドを追加します。` :
+                  `最後に新しいスライドを追加します。`
+              ) : '新しいスライドを追加します。'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="new-slide-title">タイトル</Label>
+              <Input 
+                id="new-slide-title" 
+                value={newSlideData.タイトル} 
+                onChange={e => setNewSlideData({...newSlideData, タイトル: e.target.value})}
+                placeholder="新しいスライドのタイトル"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new-slide-content">本文</Label>
+              <Textarea 
+                id="new-slide-content" 
+                value={newSlideData.本文[0] || ''} 
+                onChange={e => setNewSlideData({...newSlideData, 本文: [e.target.value]})}
+                placeholder="スライドの内容を入力してください"
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new-slide-note">ノート</Label>
+              <Textarea 
+                id="new-slide-note" 
+                value={newSlideData.ノート} 
+                onChange={e => setNewSlideData({...newSlideData, ノート: e.target.value})}
+                placeholder="補足説明やノート（オプション）"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowAddSlideDialog(false)}>
+              キャンセル
+            </Button>
+            <Button type="button" onClick={handleAddSlide}>
+              追加
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
