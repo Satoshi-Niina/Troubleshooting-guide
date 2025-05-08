@@ -334,6 +334,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [recognitionPhrases, setRecognitionPhrases] = useState<string[]>([]);
   // 音声認識テキストの送信をブロックするフラグ
   const [blockSending, setBlockSending] = useState<boolean>(false);
+  // 最後に音声認識を受信した時間（沈黙検出用）
+  const [lastRecognitionTime, setLastRecognitionTime] = useState<number>(0);
+  // 沈黙が検出されたかどうか
+  const [silenceDetected, setSilenceDetected] = useState<boolean>(false);
   
   // 認識テキストの類似度を確認する関数（部分文字列か判定）
   const isSubstringOrSimilar = (text1: string, text2: string): boolean => {
@@ -386,6 +390,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // 空のテキストは処理しない
           if (!text.trim()) return;
           
+          // 最後の認識時間を更新
+          const currentTime = Date.now();
+          setLastRecognitionTime(currentTime);
+          setSilenceDetected(false); // 音声入力があったのでサイレンス状態をリセット
+          
           // 現在の認識フレーズを保存
           setRecognitionPhrases(prev => {
             // すでに類似したフレーズがあるかチェック
@@ -407,8 +416,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             clearTimeout(sendTimeoutId);
           }
           
-          // 新しいタイマーを設定（3秒の遅延で安定したテキストのみを送信）
+          // 新しいタイマーを設定（沈黙検出用）
           const timeoutId = setTimeout(async () => {
+            // 最後の音声認識から2秒経過したかチェック
+            if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
+              console.log('沈黙を検出しました - 現在の認識テキストを送信します');
+              setSilenceDetected(true); // 沈黙状態をマーク
+            }
             // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
             let bestPhrase = recognitionPhrases
               .sort((a, b) => b.length - a.length)[0] || text;
@@ -469,6 +483,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               // 空のテキストは処理しない
               if (!text.trim()) return;
               
+              // 最後の認識時間を更新
+              const currentTime = Date.now();
+              setLastRecognitionTime(currentTime);
+              setSilenceDetected(false); // 音声入力があったのでサイレンス状態をリセット
+              
               // 現在の認識フレーズを保存
               setRecognitionPhrases(prev => {
                 // すでに類似したフレーズがあるかチェック
@@ -490,8 +509,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(sendTimeoutId);
               }
               
-              // 新しいタイマーを設定（3秒の遅延で安定したテキストのみを送信）
+              // 新しいタイマーを設定（沈黙検出用）
               const timeoutId = setTimeout(async () => {
+                // 最後の音声認識から2秒経過したかチェック
+                if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
+                  console.log('Azure: 沈黙を検出しました - 現在の認識テキストを送信します');
+                  setSilenceDetected(true); // 沈黙状態をマーク
+                }
                 // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
                 let bestPhrase = recognitionPhrases
                   .sort((a, b) => b.length - a.length)[0] || text;
