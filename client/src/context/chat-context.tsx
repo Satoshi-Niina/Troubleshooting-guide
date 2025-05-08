@@ -216,13 +216,53 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener('camera-capture', handleCameraCapture as EventListener);
     window.addEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     
+    // 沈黙検出用のバックグラウンドモニター（録音中のみ有効）
+    let silenceCheckInterval: NodeJS.Timeout | null = null;
+    if (isRecording) {
+      silenceCheckInterval = setInterval(() => {
+        const currentTime = Date.now();
+        // 最後の音声認識から2秒以上経過していて、沈黙状態でなく、かつ認識フレーズが存在する場合
+        if (currentTime - lastRecognitionTime >= 2000 && !silenceDetected && recognitionPhrases.length > 0) {
+          console.log('沈黙モニター: 2秒間の沈黙を検出しました - 認識テキストを送信します');
+          setSilenceDetected(true);
+          
+          // 最適なフレーズを選択
+          const bestPhrase = recognitionPhrases.sort((a, b) => b.length - a.length)[0];
+          
+          // 前回の送信テキストとの重複チェック
+          if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
+            // 送信をブロック
+            setBlockSending(true);
+            
+            // 最後に送信したテキストを更新
+            setLastSentText(bestPhrase);
+            
+            // メッセージを送信
+            sendMessage(bestPhrase).catch(err => {
+              console.error('沈黙検出時の送信エラー:', err);
+            });
+            
+            // 認識フレーズをリセット
+            setRecognitionPhrases([]);
+          }
+        }
+      }, 500); // 500ミリ秒ごとにチェック
+    }
+    
     // カスタムイベント発火によるデバッグ
     console.log('ドラフトメッセージイベントリスナーをセットアップしました');
     
+    // クリーンアップ関数
     return () => {
+      // イベントリスナーの解除
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
       window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
       window.removeEventListener('send-draft-message', handleSendDraftMessage as EventListener);
+      
+      // 沈黙検出インターバルのクリア
+      if (silenceCheckInterval) {
+        clearInterval(silenceCheckInterval);
+      }
     };
   }, []);
 
@@ -416,50 +456,48 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             clearTimeout(sendTimeoutId);
           }
           
-          // 新しいタイマーを設定（沈黙検出用）
-          const timeoutId = setTimeout(async () => {
+          // 沈黙検出用のタイマー（短い間隔でチェック）
+          const silenceCheckId = setTimeout(() => {
             // 最後の音声認識から2秒経過したかチェック
             if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
               console.log('沈黙を検出しました - 現在の認識テキストを送信します');
-              setSilenceDetected(true); // 沈黙状態をマーク
-            }
-            // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
-            let bestPhrase = recognitionPhrases
-              .sort((a, b) => b.length - a.length)[0] || text;
-            
-            console.log('送信する最適なフレーズを選択:', bestPhrase);
-            
-            // 前回の送信テキストとの重複チェック（類似テキストも含む）
-            if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
-              try {
-                // 送信をブロック（次の音声認識が完了するまで）
+              setSilenceDetected(true);
+              
+              // 沈黙を検出したら、現在の認識結果を送信
+              const bestPhrase = recognitionPhrases
+                .sort((a, b) => b.length - a.length)[0] || text;
+              
+              console.log('沈黙検出時の送信フレーズ:', bestPhrase);
+              
+              // 前回の送信テキストとの重複チェック
+              if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
+                // 送信をブロック
                 setBlockSending(true);
                 
                 // 最後に送信したテキストを更新
                 setLastSentText(bestPhrase);
                 
                 // メッセージを送信
-                await sendMessage(bestPhrase);
-                
-                // 認識フレーズをリセット
-                setRecognitionPhrases([]);
-                
-                console.log('メッセージを送信しました:', bestPhrase);
-              } catch (error) {
-                console.error('メッセージ送信エラー:', error);
-              } finally {
-                // 3秒後にブロックを解除（複数回送信を防止）
-                setTimeout(() => {
-                  setBlockSending(false);
-                }, 3000);
+                sendMessage(bestPhrase).then(() => {
+                  // 認識フレーズをリセット
+                  setRecognitionPhrases([]);
+                  console.log('沈黙検出: メッセージを送信しました:', bestPhrase);
+                }).catch(error => {
+                  console.error('沈黙検出: メッセージ送信エラー:', error);
+                }).finally(() => {
+                  // 3秒後にブロックを解除
+                  setTimeout(() => {
+                    setBlockSending(false);
+                  }, 3000);
+                });
+              } else {
+                console.log('沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
               }
-            } else {
-              console.log('類似テキストが既に送信されているため送信をスキップします');
             }
-          }, 3000); // 3秒の遅延
+          }, 2000); // 2秒の沈黙を検出するためのタイマー
           
           // タイマーIDを保存
-          setSendTimeoutId(timeoutId);
+          setSendTimeoutId(silenceCheckId);
         },
         (error: string) => {
           console.log('ブラウザ音声認識エラー:', error);
@@ -509,50 +547,48 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearTimeout(sendTimeoutId);
               }
               
-              // 新しいタイマーを設定（沈黙検出用）
-              const timeoutId = setTimeout(async () => {
+              // 沈黙検出用のタイマー（短い間隔でチェック）
+              const silenceCheckId = setTimeout(() => {
                 // 最後の音声認識から2秒経過したかチェック
                 if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
                   console.log('Azure: 沈黙を検出しました - 現在の認識テキストを送信します');
-                  setSilenceDetected(true); // 沈黙状態をマーク
-                }
-                // 複数の認識フレーズの中で最も長いものを選択（より完成しているものを選ぶ）
-                let bestPhrase = recognitionPhrases
-                  .sort((a, b) => b.length - a.length)[0] || text;
-                
-                console.log('Azure: 送信する最適なフレーズを選択:', bestPhrase);
-                
-                // 前回の送信テキストとの重複チェック（類似テキストも含む）
-                if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
-                  try {
-                    // 送信をブロック（次の音声認識が完了するまで）
+                  setSilenceDetected(true);
+                  
+                  // 沈黙を検出したら、現在の認識結果を送信
+                  const bestPhrase = recognitionPhrases
+                    .sort((a, b) => b.length - a.length)[0] || text;
+                  
+                  console.log('Azure: 沈黙検出時の送信フレーズ:', bestPhrase);
+                  
+                  // 前回の送信テキストとの重複チェック
+                  if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
+                    // 送信をブロック
                     setBlockSending(true);
                     
                     // 最後に送信したテキストを更新
                     setLastSentText(bestPhrase);
                     
                     // メッセージを送信
-                    await sendMessage(bestPhrase);
-                    
-                    // 認識フレーズをリセット
-                    setRecognitionPhrases([]);
-                    
-                    console.log('Azure: メッセージを送信しました:', bestPhrase);
-                  } catch (error) {
-                    console.error('Azure: メッセージ送信エラー:', error);
-                  } finally {
-                    // 3秒後にブロックを解除（複数回送信を防止）
-                    setTimeout(() => {
-                      setBlockSending(false);
-                    }, 3000);
+                    sendMessage(bestPhrase).then(() => {
+                      // 認識フレーズをリセット
+                      setRecognitionPhrases([]);
+                      console.log('Azure: 沈黙検出: メッセージを送信しました:', bestPhrase);
+                    }).catch(error => {
+                      console.error('Azure: 沈黙検出: メッセージ送信エラー:', error);
+                    }).finally(() => {
+                      // 3秒後にブロックを解除
+                      setTimeout(() => {
+                        setBlockSending(false);
+                      }, 3000);
+                    });
+                  } else {
+                    console.log('Azure: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
                   }
-                } else {
-                  console.log('Azure: 類似テキストが既に送信されているため送信をスキップします');
                 }
-              }, 3000); // 3秒の遅延
+              }, 2000); // 2秒の沈黙を検出するためのタイマー
               
               // タイマーIDを保存
-              setSendTimeoutId(timeoutId);
+              setSendTimeoutId(silenceCheckId);
             }, 
             (error: string) => {
               toast({
