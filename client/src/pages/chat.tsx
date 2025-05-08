@@ -32,7 +32,8 @@ export default function Chat() {
     hasUnexportedMessages,
     draftMessage,
     clearChatHistory,
-    isClearing
+    isClearing,
+    isRecording
   } = useChat();
   
   const [isEndChatDialogOpen, setIsEndChatDialogOpen] = useState(false);
