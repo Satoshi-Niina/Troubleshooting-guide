@@ -216,8 +216,16 @@ export default function UsersPage() {
       // エラーレスポンスをハンドリング
       if (!res.ok) {
         const errorData = await res.json();
+        
+        // サーバーエラーのチェック
+        if (res.status === 500) {
+          throw new Error("ユーザーに関連するデータが存在するため削除できません。関連データをすべて削除してから再度お試しください。");
+        }
+        
         throw new Error(errorData.message || "ユーザー削除中にエラーが発生しました");
       }
+      
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -539,8 +547,17 @@ export default function UsersPage() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="py-4 space-y-2">
             <p className="text-center font-medium">本当にこのユーザーを削除しますか？</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+              <p className="flex items-start">
+                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>注意:</strong> チャット、メッセージ、ドキュメントなど、このユーザーに関連するすべてのデータが削除されます。
+                  ユーザーがチャットやドキュメントを持っている場合、それらも同時に削除されます。
+                </span>
+              </p>
+            </div>
           </div>
 
           <DialogFooter>

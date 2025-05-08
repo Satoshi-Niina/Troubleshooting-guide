@@ -79,7 +79,61 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteUser(id: number): Promise<void> {
-    await db.delete(users).where(eq(users.id, id));
+    try {
+      // 関連するデータを削除する順序が重要
+      
+      // 1. ユーザーに関連するチャットを検索
+      const userChats = await db.select().from(chats).where(eq(chats.userId, id));
+      
+      // 2. 各チャットとその関連データを削除
+      for (const chat of userChats) {
+        // 2.1 チャットのエクスポート履歴を削除
+        await db.delete(chatExports).where(eq(chatExports.chatId, chat.id));
+        
+        // 2.2 チャットのメッセージを検索
+        const chatMessages = await db.select().from(messages).where(eq(messages.chatId, chat.id));
+        
+        // 2.3 各メッセージのメディアを削除
+        for (const message of chatMessages) {
+          await db.delete(media).where(eq(media.messageId, message.id));
+        }
+        
+        // 2.4 チャットのメッセージを削除
+        await db.delete(messages).where(eq(messages.chatId, chat.id));
+        
+        // 2.5 チャット自体を削除
+        await db.delete(chats).where(eq(chats.id, chat.id));
+      }
+      
+      // 3. ユーザーが送信者のメッセージを検索
+      const userMessages = await db.select().from(messages).where(eq(messages.senderId, id));
+      
+      // 4. 各メッセージとそのメディアを削除
+      for (const message of userMessages) {
+        await db.delete(media).where(eq(media.messageId, message.id));
+        await db.delete(messages).where(eq(messages.id, message.id));
+      }
+      
+      // 5. ユーザーに関連するドキュメントを検索
+      const userDocuments = await db.select().from(documents).where(eq(documents.userId, id));
+      
+      // 6. 各ドキュメントとそのキーワードを削除
+      for (const document of userDocuments) {
+        await db.delete(keywords).where(eq(keywords.documentId, document.id));
+        await db.delete(documents).where(eq(documents.id, document.id));
+      }
+      
+      // 7. ユーザーのエクスポート履歴を削除
+      await db.delete(chatExports).where(eq(chatExports.userId, id));
+      
+      // 8. 最後にユーザーを削除
+      await db.delete(users).where(eq(users.id, id));
+      
+      console.log(`[INFO] ユーザー(ID: ${id})とその関連データが正常に削除されました`);
+    } catch (error) {
+      console.error(`[ERROR] ユーザー削除中にエラーが発生しました(ID: ${id}):`, error);
+      throw error;
+    }
   }
   
   // Chat methods
