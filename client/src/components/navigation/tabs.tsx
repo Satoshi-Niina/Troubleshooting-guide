@@ -33,7 +33,7 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
 
   const tabs: TabItem[] = [
     {
-      title: "チャット",
+      title: "応急処置サポート",
       path: "/chat",
       icon: <MessageSquare className="mr-2 h-5 w-5 text-blue-600" />,
       className: "text-blue-600 font-bold text-[120%] border border-blue-300 rounded-md bg-blue-50", // 青文字・太字・1.2倍サイズ・囲み
