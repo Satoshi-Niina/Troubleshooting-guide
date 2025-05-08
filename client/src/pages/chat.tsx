@@ -136,6 +136,7 @@ export default function Chat() {
         credentials: "include"
       })
       .then(() => {
+        console.log("ログアウト成功 - ログイン画面に遷移します");
         // キャッシュをクリア
         queryClient.clear();
         // ローカルストレージのクエリキャッシュをクリア
@@ -144,13 +145,14 @@ export default function Chat() {
             localStorage.removeItem(key);
           }
         }
-        // ログイン画面にリダイレクト
-        setLocation("/login", { replace: true });
+        
+        // JavaScript直接のリダイレクトを使用（より確実なリダイレクト）
+        window.location.href = "/login";
       })
       .catch(error => {
         console.error("ログアウトエラー:", error);
         // エラーが発生してもログイン画面に遷移
-        setLocation("/login", { replace: true });
+        window.location.href = "/login";
       });
     }
   };
@@ -167,6 +169,8 @@ export default function Chat() {
         credentials: "include"
       });
       
+      console.log("送信して終了: ログアウト成功 - ログイン画面に遷移します");
+      
       // キャッシュをクリア
       queryClient.clear();
       // ローカルストレージのクエリキャッシュをクリア
@@ -176,12 +180,12 @@ export default function Chat() {
         }
       }
       
-      // ログイン画面にリダイレクト
-      setLocation("/login", { replace: true });
+      // JavaScript直接のリダイレクトを使用（より確実なリダイレクト）
+      window.location.href = "/login";
     } catch (error) {
       console.error("チャット終了エラー:", error);
       // エラーが発生してもログイン画面に遷移
-      setLocation("/login", { replace: true });
+      window.location.href = "/login";
     }
   };
 
@@ -589,13 +593,21 @@ export default function Chat() {
                     credentials: "include"
                   })
                   .then(() => {
+                    console.log("送信せずに終了: ログアウト成功");
                     queryClient.clear();
-                    // ログイン画面にリダイレクト
-                    setLocation("/login", { replace: true });
+                    // ローカルストレージのクエリキャッシュをクリア
+                    for (const key of Object.keys(localStorage)) {
+                      if (key.startsWith('rq-')) {
+                        localStorage.removeItem(key);
+                      }
+                    }
+                    // JavaScript直接のリダイレクトを使用（より確実なリダイレクト）
+                    window.location.href = "/login";
                   })
-                  .catch(() => {
+                  .catch((error) => {
+                    console.error("送信せずに終了: ログアウトエラー:", error);
                     // エラーが発生してもログイン画面に遷移
-                    setLocation("/login", { replace: true });
+                    window.location.href = "/login";
                   });
                 }}
                 className="bg-red-500 hover:bg-red-600"
