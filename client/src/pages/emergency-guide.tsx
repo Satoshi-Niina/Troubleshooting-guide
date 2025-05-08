@@ -85,9 +85,6 @@ const EmergencyGuidePage: React.FC = () => {
         <h1 className="text-2xl font-bold text-blue-800 mb-2">
           応急処置フロー生成
         </h1>
-        <p className="text-gray-600">
-          PowerPoint、Excel、PDF、JSONファイルをアップロードして応急処置フローを生成・編集できます。
-        </p>
         
         {/* キーワード検索のみ表示 */}
         <div className="mt-4 space-y-2">
