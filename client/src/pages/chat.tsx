@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, AlertTriangle, Loader2, Trash2, LifeBuoy, Image, Hammer, Heart, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrientation } from "@/hooks/use-orientation";
 
@@ -119,13 +120,17 @@ export default function Chat() {
     }
   }, [messages]);
 
+  // woutorのLocationフックを取得
+  const [, setLocation] = useLocation();
+  
   // チャット終了確認ダイアログを表示
   const handleEndChat = () => {
     if (hasUnexportedMessages) {
       setIsEndChatDialogOpen(true);
     } else {
-      // 未送信のメッセージがなければそのまま終了（ここでは単純にトップページに戻るなど）
-      window.location.href = "/";
+      // 未送信のメッセージがなければそのまま終了（チャットに直接遷移）
+      // wouter の setLocation を使用することで、リダイレクションなしで直接チャット画面に留まります
+      setLocation("/chat", { replace: true });
     }
   };
 
@@ -133,8 +138,8 @@ export default function Chat() {
   const handleSendAndEnd = async () => {
     await exportChatHistory();
     setIsEndChatDialogOpen(false);
-    // 送信後にページを移動
-    window.location.href = "/";
+    // 送信後に同じチャット画面に留まる
+    setLocation("/chat", { replace: true });
   };
 
   const isMobile = useIsMobile();
