@@ -2,10 +2,13 @@ import React, { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, UploadCloud, FileText, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, Sparkles, Wand2, RefreshCw, UploadCloud } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 
 interface EmergencyGuideUploaderProps {
   onUploadSuccess?: (guideId: string) => void;
@@ -21,32 +24,71 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   const [saveOriginalFile, setSaveOriginalFile] = useState(false);
   // 自動フロー生成は常に有効
   const autoGenerateFlow = true;
-
-  // ドラッグ&ドロップエリアのイベントハンドラー
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  
+  // キーワードベースのフロー生成機能
+  const [keywordsInput, setKeywordsInput] = useState<string>('');
+  const [isGeneratingFlow, setIsGeneratingFlow] = useState(false);
+  
+  // キーワードからフローを生成する
+  const generateFlowFromKeywords = async () => {
+    if (!keywordsInput.trim()) {
+      toast({
+        title: "入力エラー",
+        description: "キーワードを入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      // 拡張子チェック
-      const extension = file.name.toLowerCase().split('.').pop() || '';
-      const allowedExtensions = ['pptx', 'ppt', 'xlsx', 'xls', 'pdf', 'json'];
+    try {
+      setIsGeneratingFlow(true);
       
-      if (!allowedExtensions.includes(extension)) {
-        toast({
-          title: "未対応のファイル形式",
-          description: "PowerPoint(.pptx, .ppt)、Excel(.xlsx, .xls)、PDF(.pdf)、またはJSON(.json)ファイルのみアップロード可能です",
-          variant: "destructive",
-        });
-        return;
+      toast({
+        title: "フロー生成中",
+        description: `キーワード「${keywordsInput}」からフローを生成しています...`,
+      });
+      
+      const response = await fetch('/api/flow-generator/generate-from-keywords', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keywords: keywordsInput }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '生成に失敗しました');
       }
-      setSelectedFile(file);
+      
+      const data = await response.json();
+      console.log("APIからの応答データ:", data);
+      
+      if (data.success && data.flowData) {
+        toast({
+          title: "フロー生成完了",
+          description: `「${data.flowData.title || 'タイトルなし'}」が生成されました。`,
+        });
+        
+        // 生成されたフローの詳細ページに移動するためのイベントを発火
+        if (onUploadSuccess) {
+          onUploadSuccess(data.flowData.id);
+        }
+        
+        // キーワード入力をクリア
+        setKeywordsInput('');
+      } else {
+        throw new Error('フローデータの形式が無効です');
+      }
+    } catch (error) {
+      console.error('フロー生成エラー:', error);
+      toast({
+        title: "生成エラー",
+        description: error instanceof Error ? error.message : "フローの生成に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingFlow(false);
     }
   };
 
