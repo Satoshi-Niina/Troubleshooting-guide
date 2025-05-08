@@ -30,7 +30,7 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
       icon: <MessageSquare className="mr-2 h-4 w-4" />,
     },
     {
-      title: "データ処理",
+      title: "基礎データ管理",
       path: "/processing",
       icon: <Database className="mr-2 h-4 w-4" />,
       adminOnly: true,
