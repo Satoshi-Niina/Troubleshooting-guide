@@ -397,17 +397,32 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [toast, draftMessage]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     setIsRecording(false);
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
     
-    // 録音停止時にdraftMessageはクリアしない（送信ボタンを押すまでバブル表示を維持）
-    // 録音テキストがない場合は、ドラフトメッセージをクリア
-    if (!recordedText.trim()) {
+    // 録音テキストがある場合は自動送信
+    if (recordedText.trim()) {
+      try {
+        console.log('録音テキストを自動送信します:', recordedText.trim());
+        // 自動送信する
+        await sendMessage(recordedText.trim());
+        // 送信後はドラフトメッセージをクリア
+        setDraftMessage(null);
+      } catch (error) {
+        console.error('自動送信エラー:', error);
+        toast({
+          title: '自動送信エラー',
+          description: 'メッセージを自動送信できませんでした',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      // 録音テキストがない場合は、ドラフトメッセージをクリア
       setDraftMessage(null);
     }
-  }, [recordedText]);
+  }, [recordedText, sendMessage, toast]);
 
   const searchBySelectedText = async (text: string) => {
     // すでに検索中の場合は処理をスキップ

@@ -128,17 +128,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
             isUserMessage 
               ? `chat-bubble-user bg-blue-50 rounded-[18px_18px_4px_18px] border ${isDraft ? "border-blue-400 border-dashed" : "border-blue-200"}` 
               : "chat-bubble-ai bg-white rounded-[18px_18px_18px_4px] border border-blue-200"
-          } ${isDraft ? "cursor-pointer hover:bg-blue-100 transition-colors" : ""}`}
-          onClick={() => {
-            // ドラフトメッセージの場合、クリックで直接送信する
-            if (isDraft && message.content) {
-              // 直接メッセージを送信するイベントを発行
-              window.dispatchEvent(new CustomEvent('send-draft-message', { 
-                detail: { content: message.content } 
-              }));
-              console.log('ドラフトメッセージをクリックして送信:', message.content);
-            }
-          }}
+          }`}
         >
           <div className="relative">
             <p className={`${!isUserMessage ? "text-blue-600" : "text-black"}`}>{message.content}</p>
