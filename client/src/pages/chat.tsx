@@ -345,7 +345,7 @@ export default function Chat() {
               </>
             )}
             
-            {/* プレビュー用の一時メッセージ (撮影した画像のプレビュー) */}
+            {/* プレビュー用の一時メッセージ (録音中テキストと撮影した画像のプレビュー) */}
             {draftMessage && (
               <div className="w-full md:max-w-2xl mx-auto">
                 <MessageBubble
