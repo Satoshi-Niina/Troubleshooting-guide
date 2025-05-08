@@ -167,17 +167,43 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             content,
             media: currentMedia
           });
+        } else {
+          // 空の場合はドラフトメッセージをクリア
+          setDraftMessage(null);
         }
+      }
+    };
+
+    // カメラで撮影した画像をドラフトメッセージに追加するイベントリスナー
+    const handleCameraCapture = (event: CustomEvent) => {
+      if (event.detail && event.detail.imageUrl) {
+        const currentContent = draftMessage?.content || '';
+        const currentMedia = draftMessage?.media || [];
+        
+        // 既存のメディア配列に新しい画像を追加
+        setDraftMessage({
+          content: currentContent,
+          media: [
+            ...currentMedia, 
+            {
+              type: 'image',
+              url: event.detail.imageUrl,
+              thumbnail: event.detail.thumbnailUrl || event.detail.imageUrl
+            }
+          ]
+        });
       }
     };
 
     // TypeScriptにカスタムイベントを認識させるための型アサーション
     window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
+    window.addEventListener('camera-capture', handleCameraCapture as EventListener);
     
     return () => {
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
+      window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
     };
-  }, []);
+  }, [draftMessage]);
 
   // チャットメッセージの初期読み込み
   useEffect(() => {
