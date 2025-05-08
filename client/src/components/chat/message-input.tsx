@@ -34,10 +34,23 @@ export default function MessageInput() {
     }
   }, [selectedText, isMobile]);
   
-  // 録音テキストをリアルタイムで入力欄に反映する
+  // 録音テキストをリアルタイムで入力欄とチャットエリアの両方に反映する
   useEffect(() => {
     if (isRecording && recordedText) {
+      // 入力欄に反映
       setMessage(recordedText);
+      
+      // chat-context のドラフトメッセージも更新し、チャットエリア（左側）にも表示
+      if (recordedText.trim()) {
+        // チャットエリア側にドラフトメッセージを設定
+        const setDraftMessage = async () => {
+          // ドラフトメッセージの更新イベントを発火
+          window.dispatchEvent(new CustomEvent('update-draft-message', { 
+            detail: { content: recordedText }
+          }));
+        };
+        setDraftMessage();
+      }
     }
   }, [recordedText, isRecording]);
 

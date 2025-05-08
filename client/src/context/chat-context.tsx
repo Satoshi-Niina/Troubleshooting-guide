@@ -148,6 +148,27 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     initializeChat();
   }, [initializeChat]);
+  
+  // 録音テキストのリアルタイム表示用イベントリスナー
+  useEffect(() => {
+    // ドラフトメッセージ更新のイベントリスナーを設定
+    const handleUpdateDraftMessage = (event: CustomEvent) => {
+      const { content } = event.detail;
+      // 既存のメディアは保持する
+      const currentMedia = draftMessage?.media || [];
+      setDraftMessage({
+        content,
+        media: currentMedia
+      });
+    };
+
+    // TypeScriptにカスタムイベントを認識させるための型アサーション
+    window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
+    
+    return () => {
+      window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
+    };
+  }, [draftMessage]);
 
   // チャットメッセージの初期読み込み
   useEffect(() => {
