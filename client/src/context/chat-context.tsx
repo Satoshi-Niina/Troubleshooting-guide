@@ -63,6 +63,7 @@ interface ChatContextValue {
   hasUnexportedMessages: boolean;
   sendEmergencyGuide: (guideTitle: string, guideContent: string) => Promise<void>;
   draftMessage: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null;
+  setDraftMessage: React.Dispatch<React.SetStateAction<{ content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null>>;
   clearChatHistory: () => void;
   isClearing: boolean;
 }
@@ -195,9 +196,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
+    // ドラフトメッセージ送信イベントのハンドラー（新規追加）
+    const handleSendDraftMessage = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.content) {
+        console.log('ドラフトメッセージ送信イベント受信:', customEvent.detail);
+        const content = customEvent.detail.content;
+        
+        // メッセージを送信し、ドラフトメッセージをクリア
+        if (content.trim()) {
+          sendMessage(content);
+          setDraftMessage(null);
+        }
+      }
+    };
+    
     // TypeScriptにカスタムイベントを認識させるための型アサーション
     window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
     window.addEventListener('camera-capture', handleCameraCapture as EventListener);
+    window.addEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     
     // カスタムイベント発火によるデバッグ
     console.log('ドラフトメッセージイベントリスナーをセットアップしました');
@@ -205,6 +222,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
       window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
+      window.removeEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     };
   }, []);
 
