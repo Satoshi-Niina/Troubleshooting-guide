@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Database, Settings, FileText, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
+interface TabItem {
+  title: string;
+  path: string;
+  icon: React.ReactNode;
+  adminOnly?: boolean;
+  className?: string;
+}
+
 interface TabsProps {
   currentPath: string;
   vertical?: boolean;
@@ -23,7 +31,7 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
 
   const isAdmin = user?.role === "admin";
 
-  const tabs = [
+  const tabs: TabItem[] = [
     {
       title: "チャット",
       path: "/chat",
@@ -67,7 +75,10 @@ export function Tabs({ currentPath, vertical = false, onNavigate }: TabsProps) {
             currentPath === tab.path
               ? "text-primary border-primary font-medium " + 
                 (vertical ? "" : "border-b-2")
-              : "text-neutral-300"
+              : tab.path === "/chat" 
+                ? tab.className 
+                : "text-neutral-300",
+            tab.className // Always apply the custom class if available
           )}
           onClick={() => handleNavigation(tab.path)}
         >
