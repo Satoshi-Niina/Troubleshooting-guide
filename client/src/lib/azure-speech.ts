@@ -166,60 +166,66 @@ export const startSpeechRecognition = (
     let lastRecognizedText = ''; // 前回の認識結果を保持
     let lastText = ''; // 厳密な比較用の変数
 
-    // 文を送信してリセットする関数（バッファリングと重複防止を強化）
+    // 文を送信してリセットする関数（一文完成時送信に強化）
     const sendAndReset = () => {
       if (blockSending) {
         console.log('送信ブロック中: スキップします');
-        setTimeout(() => { blockSending = false; }, 1000); // 1000ms後にブロックを解除
         return;
       }
       
+      // 既存の文字列を保持
       const trimmedText = currentSentence.trim();
-      if (trimmedText) {
-        // 最短文字数チェック（短すぎる場合は送信しない、ただしバッファリングは続ける）
-        if (trimmedText.length < MIN_TEXT_LENGTH) {
-          console.log(`テキストが短すぎます(${trimmedText.length}文字): 送信をスキップして記録のみ`, trimmedText);
-          recognitionPhrases.push(trimmedText);
+      
+      // 既存文字列または認識フレーズから最適な文を選ぶ
+      let bestText = '';
+      
+      // 最適なテキストを選択するロジック
+      if (trimmedText.length >= MIN_TEXT_LENGTH) {
+        // 現在の文が十分な長さならそれを使用
+        bestText = trimmedText;
+      } else if (recognitionPhrases.length > 0) {
+        // または最長の認識フレーズを使用（通常は最も完全な文章）
+        const sortedPhrases = [...recognitionPhrases].sort((a, b) => b.length - a.length);
+        bestText = sortedPhrases[0];
+      }
+      
+      // 有効な文章が見つかった場合のみ送信
+      if (bestText && bestText.length >= MIN_TEXT_LENGTH) {
+        // 重複チェック（前回送信したテキストとの類似性を確認）
+        if (isSimilarText(bestText, lastSentText)) {
+          console.log('類似テキストのため送信をスキップ:', bestText, 'vs', lastSentText);
           return;
         }
         
-        // 重複チェックの強化（前回送信したテキストとの類似性を確認）
-        if (isSimilarText(trimmedText, lastSentText)) {
-          console.log('類似テキストのため送信をスキップ:', trimmedText, 'vs', lastSentText);
-          return;
-        }
+        console.log('完成した文章なので、メッセージとして送信:', bestText);
+        lastSentText = bestText; // 送信したテキストを記録
+        onResult(bestText);
         
-        console.log('沈黙検出: メッセージを送信しました:', trimmedText);
-        lastSentText = trimmedText; // 送信したテキストを記録
-        onResult(trimmedText);
+        // 状態をリセット
         currentSentence = '';
+        recognitionPhrases = [];
         
         // 送信後、送信ブロックを設定（連続送信を防止）- 5秒間
         blockSending = true;
         setTimeout(() => { blockSending = false; }, 5000);
+      } else {
+        console.log('有効な文章が見つからないため送信をスキップします');
       }
     };
 
-    // 無音タイマーを初期化
+    // 無音タイマーを初期化（単一メッセージ送信に最適化）
     resetSilenceTimer(() => {
-      console.log('無音タイマーでメッセージ送信を試行', currentSentence);
-      sendAndReset();
-      if (recognitionPhrases.length > 0 && !currentSentence.trim()) {
-        // 現在の文が空で、認識フレーズがある場合は最長のフレーズを送信
-        const bestPhrase = recognitionPhrases.sort((a, b) => b.length - a.length)[0];
-        if (bestPhrase && !isSimilarText(bestPhrase, lastSentText)) {
-          console.log('無音検出: バッファから最適なフレーズを送信:', bestPhrase);
-          lastSentText = bestPhrase;
-          onResult(bestPhrase);
-        }
-      }
-      stopSpeechRecognition();
+      console.log('無音タイマーでメッセージ送信を試行');
+      console.log('現在のフレーズ数:', recognitionPhrases.length);
       
-      // フレーズをリセット
-      recognitionPhrases = [];
-      silenceDetected = false;
-      // エラーメッセージは通常の停止時には表示しない
-      // onError('2秒間音声が検出されなかったため、音声認識を停止しました。');
+      // 沈黙検出時は一度だけ送信する
+      silenceDetected = true;
+      
+      // 単一送信のみ実行
+      sendAndReset();
+      
+      // 即座に認識を停止
+      stopSpeechRecognition();
     });
 
     // 音声認識結果のイベントハンドラ
@@ -410,7 +416,54 @@ export const startBrowserSpeechRecognition = (
   browserRecognition.interimResults = true;
   browserRecognition.lang = 'ja-JP';
 
+  // 認識結果のバッファ
+  let storedPhrases: string[] = [];
   let lastTranscript = '';
+  let blockBrowserSending = false;
+
+  // ブラウザ音声認識結果の最適な送信を制御
+  const sendOptimalText = (transcript: string) => {
+    // 送信ブロック中ならスキップ
+    if (blockBrowserSending) {
+      console.log('ブラウザ音声認識: 送信ブロック中のためスキップ');
+      return;
+    }
+    
+    // バッファに追加
+    if (transcript.trim() && !storedPhrases.includes(transcript)) {
+      storedPhrases.push(transcript);
+    }
+    
+    // 完全な文章かどうか判定（文末記号または長さによる判断）
+    const isCompleteSentence = /[。！？!?]$/.test(transcript.trim());
+    const isLongEnough = transcript.length >= 10;
+    
+    if (isCompleteSentence || isLongEnough) {
+      if (!isSimilarText(transcript, lastSentText)) {
+        console.log('ブラウザ音声認識: 完成した文章を送信:', transcript);
+        
+        // 最後に送信したテキストを記録
+        lastSentText = transcript;
+        
+        // 送信
+        onResult(transcript);
+        
+        // 送信ブロックを有効化
+        blockBrowserSending = true;
+        
+        // バッファをクリア
+        storedPhrases = [];
+        
+        // 5秒後にブロックを解除
+        setTimeout(() => {
+          blockBrowserSending = false;
+        }, 5000);
+      }
+    } else {
+      // 未完成の文章は送信せず、バッファに保持するだけ
+      console.log('ブラウザ音声認識: 未完成の文章をバッファに保持:', transcript);
+    }
+  };
 
   browserRecognition.onresult = (event: any) => {
     const transcript = Array.from(event.results)
@@ -418,14 +471,12 @@ export const startBrowserSpeechRecognition = (
       .map((result) => result.transcript)
       .join('');
 
-    if (transcript !== lastTranscript) {
-      // 前回の認識結果と異なる場合にのみ処理
-      if (transcript.length > 0) {
-        // 認識結果をブロックなしで一度だけコールバックに渡す
-        // ドラフトメッセージの更新はcontext-chat.tsxで判断される
-        lastTranscript = transcript;
-        onResult(transcript);
-      }
+    if (transcript !== lastTranscript && transcript.length > 0) {
+      // バッファ更新
+      lastTranscript = transcript;
+      
+      // 最適な文章送信を試行
+      sendOptimalText(transcript);
     }
   };
 
