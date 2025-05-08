@@ -4,6 +4,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { startSpeechRecognition, stopSpeechRecognition, startBrowserSpeechRecognition, stopBrowserSpeechRecognition } from '../lib/azure-speech';
 import { Message } from '@shared/schema';
 
+// 十分な文とみなす最小文字数
+const MIN_TEXT_LENGTH = 5;
+
 // チャットコンテキストの型定義
 interface ChatContextValue {
   messages: Message[];
@@ -98,6 +101,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [lastSentText, setLastSentText] = useState<string>('');
   // 音声認識による送信を防止するタイマー
   const [sendTimeoutId, setSendTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  // 十分な文とみなす最小文字数
+  const MIN_TEXT_LENGTH = 5;
   // 音声認識テキストの完了度を追跡するための変数
   const [recognitionPhrases, setRecognitionPhrases] = useState<string[]>([]);
   // 音声認識テキストの送信をブロックするフラグ
@@ -484,11 +489,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // まずブラウザの標準音声認識を試す（マイク許可ダイアログが確実に表示される）
       startBrowserSpeechRecognition(
         async (text: string) => {
-          // 認識されたテキストをセット
+          // 認識されたテキストをセット（内部状態のみ）
           setRecordedText(text);
           
-          // ドラフトメッセージは更新するが表示しない（デバッグ用）
-          console.log('録音中のテキスト:', text);
+          // テキストが一定の条件を満たす場合のみドラフトメッセージとして表示
+          // 1. 文末の句読点で終わる（完全な文とみなす）
+          // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
+          const isCompleteSentence = /[。！？!?]$/.test(text.trim());
+          const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
+          
+          if (isCompleteSentence || isLongEnough) {
+            // ドラフトメッセージを更新
+            console.log('完成した文章なので、ドラフトメッセージを表示:', text);
+            setDraftMessage({ content: text });
+          } else {
+            // メモリ内にのみ保持し、表示しない
+            console.log('未完成の文章はメモリ内にのみ保持:', text);
+            // recordedTextには保存するがドラフトメッセージには表示しない
+            setRecordedText(text);
+          }
           
           // 空のテキストは処理しない
           if (!text.trim()) return;
@@ -582,11 +601,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Azure Speech APIを使用して音声認識を開始
           startSpeechRecognition(
             async (text: string) => {
-              // 認識されたテキストをセット
+              // 認識されたテキストをセット（内部状態のみ）
               setRecordedText(text);
               
-              // ドラフトメッセージは更新するが表示しない
-              console.log('Azure録音中のテキスト:', text);
+              // テキストが一定の条件を満たす場合のみドラフトメッセージとして表示
+              // 1. 文末の句読点で終わる（完全な文とみなす）
+              // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
+              const isCompleteSentence = /[。！？!?]$/.test(text.trim());
+              const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
+              
+              if (isCompleteSentence || isLongEnough) {
+                // ドラフトメッセージを更新
+                console.log('Azure: 完成した文章なので、ドラフトメッセージを表示:', text);
+                setDraftMessage({ content: text });
+              } else {
+                // メモリ内にのみ保持し、表示しない
+                console.log('Azure: 未完成の文章はメモリ内にのみ保持:', text);
+                // recordedTextには保存するがドラフトメッセージには表示しない
+                setRecordedText(text);
+              }
               
               // 空のテキストは処理しない
               if (!text.trim()) return;
