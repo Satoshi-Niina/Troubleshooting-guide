@@ -50,10 +50,6 @@ const EmergencyFlowCreator: React.FC = () => {
   const [flowList, setFlowList] = useState<any[]>([]);
   const [isLoadingFlowList, setIsLoadingFlowList] = useState(false);
   
-  // キーワードベースのフロー生成機能
-  const [keywordsInput, setKeywordsInput] = useState<string>('');
-  const [isGeneratingFlow, setIsGeneratingFlow] = useState(false);
-  
   // フロー一覧を取得
   const fetchFlowList = async () => {
     try {
