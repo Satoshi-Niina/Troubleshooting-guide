@@ -764,17 +764,31 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const stopRecording = useCallback(() => {
     setIsRecording(false);
     
-    // 録音テキストとドラフトメッセージを確実にクリア
+    // 音声認識を停止する前に現在のtextを取得
+    const currentText = recordedText;
+    console.log('録音停止時のテキスト:', currentText);
+    
+    // 録音テキストが存在する場合はドラフトメッセージに表示
+    if (currentText && currentText.trim().length > 0) {
+      setDraftMessage({
+        content: currentText,
+        media: draftMessage?.media || []
+      });
+      console.log('録音停止時のテキストをチャット側のみに表示:', currentText);
+    } else {
+      // テキストがない場合はクリア
+      setDraftMessage(null);
+      console.log('録音停止時のテキストをチャット側のみに表示:', '');
+    }
+    
+    // 録音テキストをクリア
     setRecordedText('');
-    setDraftMessage(null);
     
     // 前回のメッセージとの類似チェック用の情報もリセット
     setLastSentText('');
     
     // 音声認識を停止
     console.log('録音停止');
-    console.log('録音停止：関数から直接ドラフトメッセージを設定:', '');
-    console.log('録音停止時のテキストをチャット側のみに表示:', '');
     
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
@@ -784,7 +798,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearTimeout(sendTimeoutId);
       setSendTimeoutId(null);
     }
-  }, [sendTimeoutId, setDraftMessage, setRecordedText, setLastSentText]);
+  }, [sendTimeoutId, draftMessage, recordedText]);
   
   // チャット履歴をエクスポートする関数
   const exportChatHistory = useCallback(async () => {

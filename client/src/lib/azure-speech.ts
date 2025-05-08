@@ -240,7 +240,7 @@ export const startSpeechRecognition = (
       if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
         const newText = e.result.text.trim();
         
-        // 短いテキストの場合はバッファに追加するだけ
+        // 短いテキストの場合はバッファに追加し、UIにも表示する
         if (newText && newText.length < MIN_TEXT_LENGTH) {
           if (!recognitionPhrases.includes(newText)) {
             recognitionPhrases.push(newText);
@@ -254,8 +254,13 @@ export const startSpeechRecognition = (
             }
             currentSentence += newText;
             console.log('現在の文に短いテキストを追加:', currentSentence);
+            
+            // 短いテキストでもUIに表示する（これを追加）
+            onResult(currentSentence);
           } else if (!currentSentence) {
             currentSentence = newText;
+            // 短いテキストでもUIに表示する（これを追加）
+            onResult(newText);
           }
           
           // 無音タイマーをリセット
@@ -471,8 +476,10 @@ export const startBrowserSpeechRecognition = (
         }, 3000);
       }
     } else {
-      // 未完成の文章は送信せず、バッファに保持するだけ
+      // 未完成の文章もUIに表示する（ただし送信はしない）
       console.log('ブラウザ音声認識: 未完成の文章をバッファに保持:', transcript);
+      // 短いテキストでもUIに表示する
+      onResult(transcript);
     }
   };
 
