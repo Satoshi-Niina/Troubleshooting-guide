@@ -126,8 +126,8 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
         <div 
           className={`px-4 py-3 mb-1 shadow-sm w-full ${
             isUserMessage 
-              ? `chat-bubble-user bg-blue-50 rounded-[18px_18px_4px_18px] border ${isDraft ? "border-blue-400 border-dashed" : "border-blue-200"}` 
-              : "chat-bubble-ai bg-white rounded-[18px_18px_18px_4px] border border-blue-200"
+              ? `chat-bubble-user bg-blue-50 rounded-[18px_18px_4px_18px] border ${isDraft ? "border-blue-400 border-dashed" : "border-blue-200 border-solid"}` 
+              : "chat-bubble-ai bg-white rounded-[18px_18px_18px_4px] border border-blue-200 border-solid"
           }`}
         >
           <div className="relative">

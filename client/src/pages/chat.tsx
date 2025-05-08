@@ -328,7 +328,7 @@ export default function Chat() {
                 <p className="text-blue-700">メッセージを読み込み中...</p>
               </div>
             ) : !displayMessages || displayMessages.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-center">
+              <div className={`flex items-center justify-center h-full text-center ${isRecording ? 'hidden' : ''}`}>
                 <div>
                   <p className="text-xl font-semibold mb-2 text-blue-800">会話を始めましょう</p>
                   <p className="text-sm text-blue-500">保守用車に関する質問を入力するか、マイクボタンをタップして話しかけてください。</p>
