@@ -34,12 +34,12 @@ export default function MessageInput() {
     }
   }, [selectedText, isMobile]);
   
-  // 録音テキストは入力欄に自動反映せず、バブルのみに表示する
-  // useEffect(() => {
-  //   if (isRecording && recordedText) {
-  //     setMessage(recordedText);
-  //   }
-  // }, [recordedText, isRecording]);
+  // 録音テキストをリアルタイムで入力欄に反映する
+  useEffect(() => {
+    if (isRecording && recordedText) {
+      setMessage(recordedText);
+    }
+  }, [recordedText, isRecording]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessage(e.target.value);
@@ -110,10 +110,10 @@ export default function MessageInput() {
       console.log('録音停止');
       stopRecording();
       
-      // バブル表示のみで、入力欄には自動反映しない
-      // if (recordedText.trim()) {
-      //   setMessage(recordedText.trim());
-      // }
+      // 録音停止時も入力欄に反映する
+      if (recordedText.trim()) {
+        setMessage(recordedText.trim());
+      }
     }
   };
   
