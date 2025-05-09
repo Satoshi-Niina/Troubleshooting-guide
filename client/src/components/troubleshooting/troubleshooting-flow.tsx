@@ -502,7 +502,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       <CardContent>
         {/* メッセージ */}
         <div className="mb-4">
-          <p className="whitespace-pre-line">{currentStep.message}</p>
+          <p className="whitespace-pre-line">{currentStep.message || currentStep.content}</p>
         </div>
         
         {/* 画像（直接指定された場合）- ここでの表示とチャットエリアの関係画像表示を連携させる */}
