@@ -1,0 +1,177 @@
+{
+  "id": "brake_release_issue",
+  "title": "ブレーキ解放不良時の応急処置",
+  "description": "走行開始時にブレーキが解放しない場合の応急処置手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+  "triggerKeywords": [
+    "ブレーキ",
+    "解放しない",
+    "走行開始"
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "title": "開始",
+      "description": "この応急処置ガイドでは、ブレーキが解放しない問題に対処する手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+      "imageUrl": "",
+      "type": "start",
+      "options": [
+        {
+          "text": "状況を確認する",
+          "nextStepId": "step1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step1",
+      "title": "安全確保",
+      "description": "1. 二次災害を防ぐため、車両が安全な場所に停止していることを確認します。\n2. 接近する列車や障害物がないか周囲を確認します。\n3. 必要に応じて停止表示器や防護無線を使用します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "安全確認完了",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "ブレーキシステムの確認",
+      "description": "ブレーキシステムに異常があるか確認します。圧力計や警告灯を確認してください。",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "圧力が不足している",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "圧力は正常",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "圧力不足の対処",
+      "description": "1. エアコンプレッサーの動作を確認します。\n2. エアタンクのバルブを確認し、漏れがないか点検します。\n3. 必要に応じてエアタンクを再充填します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "圧力が回復した",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        },
+        {
+          "text": "圧力が回復しない",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "ブレーキ機構の確認",
+      "description": "1. ブレーキシリンダーやリンク機構を点検し、物理的な障害がないか確認します。\n2. ブレーキ制御装置の設定を確認し、異常がないか確認します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "物理的な障害を発見",
+          "nextStepId": "step3a",
+          "isTerminal": false,
+          "conditionType": "other"
+        },
+        {
+          "text": "異常なし",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step3a",
+      "title": "障害物の除去",
+      "description": "1. ブレーキシリンダーやリンク機構にある障害物を慎重に除去します。\n2. 再度ブレーキの解放を試みます。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "ブレーキが解放された",
+          "nextStepId": "step_success",
+          "isTerminal": false,
+          "conditionType": "other"
+        },
+        {
+          "text": "ブレーキが解放されない",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision2",
+      "title": "ブレーキ解放確認",
+      "description": "圧力回復後、ブレーキは正常に解放されましたか？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい、解放された",
+          "nextStepId": "step_success",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ、解放されない",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step_success",
+      "title": "運転再開手順",
+      "description": "1. ブレーキが正常に解放されたことを確認します。\n2. 各計器の値が正常範囲内にあることを確認します。\n3. 異常な音、振動、臭いがないか確認します。\n4. 全て正常であれば、運転を再開します。\n5. しばらくの間、ブレーキの状態に注意を払いながら走行してください。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step_failure",
+      "title": "専門的な支援要請",
+      "description": "1. 指令所または保守担当に連絡し、現在の状況と位置を報告します。\n2. これまでに実施した確認事項と対処内容を伝えます。\n3. 軌道モータカーの牽引または修理のための支援を要請します。\n4. 安全な場所で支援の到着を待ちます。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    }
+  ]
+}
