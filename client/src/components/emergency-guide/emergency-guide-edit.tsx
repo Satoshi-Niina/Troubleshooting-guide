@@ -798,6 +798,7 @@ const EmergencyGuideEdit: React.FC = () => {
                                 // ファイル選択から直接テキスト編集状態に移動
                                 setSelectedGuideId(file.id);
                                 setIsEditing(true);
+                                setShowEditCard(true); // 編集カードを表示
                                 
                                 // ファイル読み込み開始
                                 fetchGuideData(file.id);
@@ -832,7 +833,7 @@ const EmergencyGuideEdit: React.FC = () => {
         </Card>
         
         {/* ガイド編集エリア */}
-        {selectedGuideId && guideData && (
+        {selectedGuideId && guideData && showEditCard && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
