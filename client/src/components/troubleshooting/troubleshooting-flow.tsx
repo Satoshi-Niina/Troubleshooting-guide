@@ -278,10 +278,36 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       // チェックリストをリセット
       setChecklistItems({});
     } else {
+      // ステップが見つからない場合のフォールバック処理
+      // 1. 類似のIDを探す (例: "step2a" が見つからない場合、"step2"から始まるIDを探す)
+      const similarIdStep = flowData.steps.find(step => 
+        step.id && (nextStepId.startsWith(step.id) || step.id.startsWith(nextStepId))
+      );
+      
+      if (similarIdStep) {
+        console.log(`元のステップ「${nextStepId}」が見つからなかったため、類似ステップ「${similarIdStep.id}」に移動します`);
+        setCurrentStep(similarIdStep);
+        setChecklistItems({});
+        return;
+      }
+      
+      // 2. 現在のステップの次のステップを探す
+      if (currentStep && currentStep.id) {
+        const currentIndex = flowData.steps.findIndex(step => step.id === currentStep.id);
+        if (currentIndex !== -1 && currentIndex < flowData.steps.length - 1) {
+          const fallbackStep = flowData.steps[currentIndex + 1];
+          console.log(`指定されたステップ「${nextStepId}」が見つからなかったため、次のステップ「${fallbackStep.id}」に移動します`);
+          setCurrentStep(fallbackStep);
+          setChecklistItems({});
+          return;
+        }
+      }
+      
+      // フォールバックも失敗した場合は警告表示（エラーではなく警告に変更）
       toast({
-        title: 'エラー',
+        title: '警告',
         description: `次のステップ「${nextStepId}」が見つかりません`,
-        variant: 'destructive',
+        variant: 'default',
       });
     }
   }, [currentStep, flowData, toast]);
@@ -333,14 +359,26 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   }, [toast, onComplete]);
 
   // オプション選択時の処理
-  const handleOptionSelect = (option: { next?: string, nextStep?: string }) => {
+  const handleOptionSelect = (option: { next?: string, nextStep?: string, text?: string }) => {
     // nextStepを優先的に使用し、なければnextを使用
     const nextStepId = option.nextStep || option.next;
     if (!nextStepId) {
+      // 次のステップIDがない場合は、エラーを表示せずにデフォルトの次のステップを探す
+      if (flowData && currentStep) {
+        const currentIndex = flowData.steps.findIndex(step => step.id === currentStep.id);
+        if (currentIndex !== -1 && currentIndex < flowData.steps.length - 1) {
+          // 配列内の次のステップへ
+          const nextStep = flowData.steps[currentIndex + 1];
+          const generatedNextStepId = nextStep.id || `step_${currentIndex + 1}`;
+          goToNextStep(generatedNextStepId);
+          return;
+        }
+      }
+      
       toast({
-        title: 'エラー',
-        description: '次のステップが指定されていません',
-        variant: 'destructive',
+        title: '注意',
+        description: `選択肢「${option.text || ''}」の次のステップが指定されていません`,
+        variant: 'default',
       });
       return;
     }
