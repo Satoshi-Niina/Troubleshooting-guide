@@ -844,8 +844,8 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   duration: 2000,
                 });
                 
-                // チャットのシステムメッセージAPIを呼び出してユーザーメッセージを送信
-                fetch(`/api/chats/${chatId}/messages/system`, {
+                // 標準のチャットAPIを使用してユーザーメッセージを送信
+                fetch(`/api/chats/${chatId}/messages`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -864,8 +864,8 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 .then(result => {
                   console.log('ユーザーメッセージ送信結果:', result);
                   
-                  // AI応答を送信
-                  return fetch(`/api/chats/${chatId}/messages/system`, {
+                  // AI応答を送信 - 標準メッセージAPIを使用
+                  return fetch(`/api/chats/${chatId}/messages`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
