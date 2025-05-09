@@ -799,68 +799,94 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   flowData.steps.find(step => step.id === stepId)
                 ).filter(Boolean) as TroubleshootingStep[];
                 
-                // シンプルな日本語テキストでステップの流れを構築
-                let flowSummary = '';
+                // シンプルな日本語テキストでステップの詳細な流れを構築
+                let flowDetails = [];
                 
-                // 処理フローの履歴を人間が読みやすい形で追跡
+                // 各ステップでの選択内容と結果を記録
                 displayedSteps.forEach((step, index) => {
-                  // ステップタイトルを取得
+                  // ステップの基本情報
                   const stepTitle = step.title || `ステップ ${index + 1}`;
                   const stepDescription = step.message || step.content || '';
                   
-                  // ステップごとに行を作成
-                  let stepLine = '';
+                  // 各ステップの詳細を作成
+                  let stepDetail = {
+                    title: stepTitle,
+                    description: stepDescription,
+                    selected: null,
+                    result: null
+                  };
                   
-                  // 最初のステップ
-                  if (index === 0) {
-                    // 最初のステップには矢印なし
-                    stepLine = `${stepTitle}`;
-                    // 説明があれば追加
-                    if (stepDescription) {
-                      // 説明が長い場合は短くする
-                      const shortDesc = stepDescription.length > 50 
-                        ? stepDescription.substring(0, 50) + '...' 
-                        : stepDescription;
-                      stepLine += `（${shortDesc}）`;
-                    }
-                    flowSummary += stepLine;
-                  } 
-                  // 2つ目以降のステップ
-                  else {
-                    // 前のステップから選択した選択肢があれば追加
-                    const prevStep = displayedSteps[index - 1];
-                    if (prevStep.options && prevStep.options.length > 0) {
-                      // 選択肢を探す
-                      const selectedOption = prevStep.options.find(opt => 
-                        (opt.next === step.id) || (opt.nextStep === step.id)
+                  // 次のステップがある場合、このステップでの選択内容を記録
+                  if (index < displayedSteps.length - 1) {
+                    const nextStep = displayedSteps[index + 1];
+                    
+                    // 現在のステップに選択肢がある場合
+                    if (step.options && step.options.length > 0) {
+                      // 次のステップに繋がる選択肢を特定
+                      const selectedOption = step.options.find(opt => 
+                        (opt.next === nextStep.id) || (opt.nextStep === nextStep.id)
                       );
                       
+                      // 選択肢が見つかったら記録
                       if (selectedOption) {
-                        // 選択内容を追加
-                        const optionText = selectedOption.text || selectedOption.label || '次へ';
-                        flowSummary += ` → 「${optionText}」 → ${stepTitle}`;
-                      } else {
-                        // 選択肢が見つからない場合は単純に接続
-                        flowSummary += ` → ${stepTitle}`;
+                        stepDetail.selected = selectedOption.text || selectedOption.label || '次へ';
+                        stepDetail.result = nextStep.title;
                       }
-                    } else {
-                      // 選択肢がない場合は単純に接続
-                      flowSummary += ` → ${stepTitle}`;
                     }
+                  }
+                  
+                  // 詳細をリストに追加
+                  flowDetails.push(stepDetail);
+                });
+                
+                // フローのサマリーを作成（簡易表示用）
+                let flowSummary = '';
+                displayedSteps.forEach((step, index) => {
+                  const stepTitle = step.title || `ステップ ${index + 1}`;
+                  
+                  if (index === 0) {
+                    flowSummary = stepTitle;
+                  } else {
+                    flowSummary += ` → ${stepTitle}`;
                   }
                 });
                 
                 // 現在の状態を確認
                 const currentStepDescription = currentStep.message || currentStep.content || '';
                 
-                // メッセージを組み立て（シンプルなテキスト形式）
+                // メッセージを組み立て（詳細な日本語テキスト形式）
                 guideContent = `■ ${guideTitle}\n\n`;
-                guideContent += `【実施した手順】\n${flowSummary}\n\n`;
                 
-                // 現在の状態を追加（短く）
+                // 手順の詳細を表示
+                guideContent += `【実施した手順の詳細】\n`;
+                flowDetails.forEach((detail, index) => {
+                  // ステップ番号と名前
+                  guideContent += `${index + 1}. ${detail.title}\n`;
+                  
+                  // 短い説明を追加（あれば）
+                  if (detail.description) {
+                    const shortDesc = detail.description.length > 50 
+                      ? detail.description.substring(0, 50) + '...' 
+                      : detail.description;
+                    guideContent += `   ${shortDesc}\n`;
+                  }
+                  
+                  // 選択内容と結果を追加（あれば）
+                  if (detail.selected) {
+                    guideContent += `   選択: 「${detail.selected}」 → ${detail.result}\n`;
+                  }
+                  
+                  // ステップ間に空行を追加
+                  guideContent += '\n';
+                });
+                
+                // 簡易フロー概要を追加
+                guideContent += `【フロー概要】\n${flowSummary}\n\n`;
+                
+                // 現在の状態を追加
                 guideContent += `【現在の状態】\n${currentStep.title || '手順完了'}`;
                 if (currentStepDescription) {
-                  // 100文字以内に制限
+                  // 説明文を短く
                   const shortCurrentDesc = currentStepDescription.length > 100 
                     ? currentStepDescription.substring(0, 100) + '...' 
                     : currentStepDescription;
