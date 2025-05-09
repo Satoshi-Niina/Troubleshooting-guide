@@ -848,32 +848,60 @@ router.post('/send', async (req, res) => {
       });
     }
     
-    console.log(`応急処置ガイドデータをチャットに送信: chatId=${chatId}, title=${guideData.title || "無題"}`);
+    // ログ出力強化
+    console.log('------------------------------------');
+    console.log('応急処置ガイドデータをチャットに送信:');
+    console.log(`chatId: ${chatId}`);
+    console.log(`title: ${guideData.title || "無題"}`);
+    console.log(`content: ${guideData.content?.substring(0, 100)}...`);
+    console.log(`sessionUserId: ${req?.session?.userId || 'unknown'}`);
+    console.log('------------------------------------');
     
-    // データベースからchatを取得する代わりに、直接ストレージ層を使用
+    // ユーザーIDの取得（認証済みでない場合のフォールバック）
+    const senderId = req.session?.userId || 1; // 認証されていない場合はデフォルトユーザーIDを使用
+    
+    // ストレージの取得
     const storage = req.app.locals.storage;
+    if (!storage) {
+      console.error('ストレージが初期化されていません');
+      return res.status(500).json({ 
+        success: false,
+        message: "サーバー内部エラー: ストレージが初期化されていません" 
+      });
+    }
     
-    // 1. ユーザーのガイド内容メッセージを作成
-    const userMessage = await storage.createMessage({
-      chatId,
-      content: guideData.content || guideData.title || "応急処置ガイド",
-      isAiResponse: false,
-      senderId: req.session.userId
-    });
-    
-    // 2. AIの応答メッセージを作成（確認応答）
-    const aiMessage = await storage.createMessage({
-      chatId,
-      content: `応急処置ガイド「${guideData.title || ""}」を受け取りました。手順に従って作業を続けてください。`,
-      isAiResponse: true,
-      senderId: req.session.userId
-    });
-    
-    return res.json({
-      success: true,
-      userMessage,
-      aiMessage
-    });
+    try {
+      // 1. ユーザーのガイド内容メッセージを作成
+      const userMessage = await storage.createMessage({
+        chatId,
+        content: guideData.content || guideData.title || "応急処置ガイド",
+        isAiResponse: false,
+        senderId
+      });
+      
+      // 2. AIの応答メッセージを作成（確認応答）
+      const aiMessage = await storage.createMessage({
+        chatId,
+        content: `応急処置ガイド「${guideData.title || ""}」を受け取りました。手順に従って作業を続けてください。`,
+        isAiResponse: true,
+        senderId
+      });
+      
+      console.log('チャットメッセージを作成しました:', userMessage.id, aiMessage.id);
+      
+      return res.json({
+        success: true,
+        userMessage,
+        aiMessage
+      });
+    } catch (dbError) {
+      console.error('メッセージ作成中にデータベースエラーが発生しました:', dbError);
+      return res.status(500).json({ 
+        success: false,
+        message: "メッセージの保存中にエラーが発生しました",
+        error: dbError instanceof Error ? dbError.message : "データベースエラー"
+      });
+    }
   } catch (error) {
     console.error("緊急ガイド送信エラー:", error);
     return res.status(500).json({ 
