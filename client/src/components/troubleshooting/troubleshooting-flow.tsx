@@ -63,6 +63,10 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   const [loading, setLoading] = useState(true);
   const [flowData, setFlowData] = useState<{
     id: string;
+    title?: string;
+    description?: string;
+    keywords?: string[];
+    createdAt?: string;
     steps: TroubleshootingStep[];
   } | null>(null);
   const [currentStep, setCurrentStep] = useState<TroubleshootingStep | null>(null);
@@ -224,7 +228,9 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
         // キーワードがない場合は現在のステップの内容を使って検索
         console.log('キーワードがないため、ステップのメッセージから検索を実行');
         try {
-          const results = await searchByText(currentStep.message);
+          // undefinedの場合は空文字列を使用
+          const message = currentStep.message || '';
+          const results = await searchByText(message);
           setSearchResults(results);
           
           // 検索結果があれば、最初の画像を表示
@@ -371,13 +377,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     }
     
     // ガイドタイトルを設定
-    const guideTitle = flowData.id.replace(/_/g, ' ');
+    const guideTitle = flowData.title || flowData.id.replace(/_/g, ' ');
     
     // 現在表示中の手順のみを送信するようにコンテンツを作成
     let guideContent = `**${guideTitle} - 現在の手順**\n\n`;
     
     // 現在のステップの内容を追加
-    guideContent += `${currentStep.message}\n\n`;
+    const message = currentStep.message || '';
+    guideContent += `${message}\n\n`;
     
     // チェックリストがある場合は追加
     if (currentStep.checklist && currentStep.checklist.length > 0) {
@@ -424,7 +431,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     
     // ガイドを表示後、トラブルシューティング画面を閉じる
     onExit?.();
-  }, [flowData, currentStep, sendEmergencyGuide, onExit, user, toast, searchResults]);
+  }, [flowData, currentStep, sendEmergencyGuide, onExit, user, toast, searchResults, checklistItems]);
 
   // トラブルシューティングを終了して戻る
   // 終了時に応急処置ガイドの内容をチャットに自動的に送信
