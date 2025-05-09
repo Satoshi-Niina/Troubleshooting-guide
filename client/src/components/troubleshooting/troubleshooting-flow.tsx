@@ -799,79 +799,33 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   flowData.steps.find(step => step.id === stepId)
                 ).filter(Boolean) as TroubleshootingStep[];
                 
-                // 選択フローの情報を追跡
-                let lastDecisionPath = '';
+                // 現在表示中のステップ情報のみをシンプルに送信
+                const currentStepTitle = currentStep.title || '現在のステップ';
+                const currentStepContent = currentStep.message || currentStep.content || '';
                 
-                // 表示された各ステップの内容を箇条書き形式で追加
-                guideContent += "## 実施した手順（選択フロー）：\n\n";
-                displayedSteps.forEach((step, index) => {
-                  const stepNum = index + 1;
-                  const stepTitle = step.title || `ステップ ${stepNum}`;
-                  const message = step.message || step.content || '';
-                  
-                  // ステップ番号と箇条書きのタイトル
-                  guideContent += `- **${stepTitle}**`;
-                  
-                  // 前のステップが選択肢ステップで、このステップに遷移した場合、選択した内容を記録
-                  if (index > 0) {
-                    const prevStep = displayedSteps[index - 1];
-                    if (prevStep.options && prevStep.options.length > 0) {
-                      const selectedOption = prevStep.options.find(opt => 
-                        (opt.next === step.id) || (opt.nextStep === step.id)
-                      );
-                      
-                      if (selectedOption) {
-                        guideContent += ` （選択: ${selectedOption.text || selectedOption.label}）`;
-                        lastDecisionPath = selectedOption.text || selectedOption.label || '';
-                      }
-                    }
-                  }
-                  
-                  guideContent += '\n';
-                  
-                  // メッセージ内容があれば追加（短く要約）
-                  if (message) {
-                    // メッセージが長い場合は要約（最初の2文まで）
-                    const sentences = message.split(/(?<=[.。！？])\s+/);
-                    const shortMessage = sentences.length > 2 
-                      ? sentences.slice(0, 2).join(' ') + '...' 
-                      : message;
-                    
-                    guideContent += `  ${shortMessage}\n`;
-                  }
-                  
-                  // チェックリストがある場合は追加（現在のステップの場合のみチェック状態を反映）
-                  if (step.checklist && step.checklist.length > 0) {
-                    guideContent += '  確認項目:\n';
-                    step.checklist.forEach((item) => {
-                      // 現在のステップの場合はチェック状態を反映、それ以外は単純に箇条書き
-                      if (step.id === currentStep.id) {
-                        const index = step.checklist?.indexOf(item);
-                        const isChecked = index !== undefined && checklistItems[`${index}`] === true;
-                        const checkMark = isChecked ? '✓' : '□';
-                        guideContent += `  - [${checkMark}] ${item}\n`;
-                      } else {
-                        guideContent += `  - ${item}\n`;
-                      }
-                    });
-                  }
-                  
-                  // ステップ間の区切り
-                  guideContent += '\n';
-                });
+                // シンプルな形式でチャットに送信するメッセージを作成
+                guideContent = `**${guideTitle}**\n\n`;
+                guideContent += `**${currentStepTitle}**\n`;
                 
-                // 選択フローのパスをまとめる
-                guideContent += `## 現在の状態\n`;
-                guideContent += `- **最終ステップ**: ${currentStep.title || '手順完了'}\n`;
-                
-                // 最後の選択内容があれば追加
-                if (lastDecisionPath) {
-                  guideContent += `- **最後の選択**: ${lastDecisionPath}\n`;
+                // ステップの内容があれば追加
+                if (currentStepContent) {
+                  guideContent += `${currentStepContent}\n\n`;
                 }
                 
-                // 関連する次のアクションを追記
+                // 現在のステップの確認項目があれば追加
+                if (currentStep.checklist && currentStep.checklist.length > 0) {
+                  guideContent += `**確認項目**:\n`;
+                  currentStep.checklist.forEach((item) => {
+                    const index = currentStep.checklist?.indexOf(item);
+                    const isChecked = index !== undefined && checklistItems[`${index}`] === true;
+                    const checkMark = isChecked ? '✓' : '□';
+                    guideContent += `- [${checkMark}] ${item}\n`;
+                  });
+                }
+                
+                // 現在の選択肢があれば追加
                 if (currentStep.options && currentStep.options.length > 0) {
-                  guideContent += `\n## 次の選択肢\n`;
+                  guideContent += `\n**選択肢**:\n`;
                   currentStep.options.forEach(option => {
                     guideContent += `- ${option.text || option.label || '次へ'}\n`;
                   });
