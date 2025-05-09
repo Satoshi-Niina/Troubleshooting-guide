@@ -101,6 +101,22 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
       }
     }
   };
+  
+  // プレビュー表示用の共通イベント発火関数
+  const handleImagePreview = (mediaUrl: string) => {
+    // 全スライドデータをメディア配列から作成
+    const allMediaUrls = message.media?.map(m => m.url) || [];
+    
+    // イベントを発火して画像プレビューモーダルを表示
+    window.dispatchEvent(new CustomEvent('preview-image', { 
+      detail: { 
+        url: mediaUrl,
+        all_slides: allMediaUrls.length > 1 ? allMediaUrls : undefined,
+        title: '応急処置ガイド',
+        content: message.content
+      } 
+    }));
+  };
 
   return (
     <div 
@@ -158,16 +174,11 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                         src={media.url} 
                         alt="添付画像" 
                         className="rounded-lg w-full max-w-xs cursor-pointer border border-blue-200 shadow-md" 
-                        onClick={() => {
-                          // Open image preview modal
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
+                        onClick={() => handleImagePreview(media.url)}
                       />
                       <div 
                         className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
+                        onClick={() => handleImagePreview(media.url)}
                       >
                         <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,9 +201,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                       />
                       <div 
                         className="absolute top-2 right-2 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('preview-image', { detail: { url: media.url } }));
-                        }}
+                        onClick={() => handleImagePreview(media.url)}
                       >
                         <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
