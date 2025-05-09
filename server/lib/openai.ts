@@ -14,19 +14,29 @@ console.log("[DEBUG] OpenAI API KEY exists:", process.env.OPENAI_API_KEY ? "YES"
 /**
  * OpenAI APIにリクエストを送信して応答を取得する関数
  * @param prompt プロンプト文字列
+ * @param useKnowledgeBase ナレッジベースを使用するかどうか
  * @returns OpenAI APIからの応答テキスト
  */
-export async function processOpenAIRequest(prompt: string): Promise<string> {
+export async function processOpenAIRequest(prompt: string, useKnowledgeBase: boolean = true): Promise<string> {
   try {
+    // システムプロンプトを設定
+    let systemPrompt = "あなたは保守用車支援システムの一部として機能するAIアシスタントです。ユーザーの質問に対して、正確で実用的な回答を提供してください。";
+    
+    // ナレッジベースから関連情報を取得して含める
+    if (useKnowledgeBase) {
+      const { generateSystemPromptWithKnowledge } = await import('./knowledge-base');
+      systemPrompt = await generateSystemPromptWithKnowledge(prompt);
+    }
+    
     // OpenAI API呼び出し
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
-        { role: "system", content: "あなたは応急処置フローを生成する専門家です。与えられた指示に従って、質問なしに直接JSONデータを返してください。" },
+        { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
       temperature: 0.2,
-      response_format: { type: "json_object" }, // 強制的にJSONオブジェクトとして返す
+      // JSON形式の強制は解除
     });
 
     // レスポンスからテキストを抽出

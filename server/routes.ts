@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Text is required" });
       }
       
-      const response = await processOpenAIRequest(text);
+      const response = await processOpenAIRequest(text, true);
       return res.json({ response });
     } catch (error) {
       console.error("Error in /api/chatgpt-test:", error);
