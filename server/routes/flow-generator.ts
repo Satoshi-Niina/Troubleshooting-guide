@@ -202,12 +202,13 @@ ${relatedKnowledgeText}
         flowData
       });
       
-    } catch (parseError) {
-      console.error('生成されたフローの解析エラー:', parseError);
+    } catch (parseError: unknown) {
+      const error = parseError as Error;
+      console.error('生成されたフローの解析エラー:', error);
       console.error('生成されたテキスト:', generatedFlow);
       
       // JSON解析エラーの詳細を確認
-      const errorPosition = parseError.message.match(/position\s+(\d+)/i);
+      const errorPosition = error.message?.match(/position\s+(\d+)/i);
       if (errorPosition && errorPosition[1]) {
         const position = parseInt(errorPosition[1], 10);
         const contextStart = Math.max(0, position - 20);
