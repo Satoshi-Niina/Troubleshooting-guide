@@ -936,30 +936,50 @@ router.post('/system-message', async (req, res) => {
     // ユーザーIDの取得（認証済みでない場合のフォールバック）
     const senderId = req.session?.userId || 1;
     
-    // ストレージの取得
-    const storage = req.app.locals.storage;
-    if (!storage) {
-      console.error('ストレージが初期化されていません');
-      return res.status(500).json({ 
-        success: false,
-        message: "サーバー内部エラー: ストレージが初期化されていません" 
+    // DBストレージが直接使用可能か確認
+    try {
+      const { storage } = require('../storage');
+      
+      // メッセージを作成
+      const message = await storage.createMessage({
+        chatId: Number(chatId),
+        content,
+        senderId: senderId,
+        isUserMessage: isUserMessage,
+        timestamp: new Date()
       });
+      
+      console.log('システムメッセージを作成しました:', message.id);
+      
+      return res.json({
+        success: true,
+        message
+      });
+    } catch (storageError) {
+      console.error('ストレージエラー:', storageError);
+      
+      // 代替手段: アプリケーション変数からストレージを取得
+      const appStorage = req.app.locals.storage;
+      if (appStorage) {
+        // メッセージを作成
+        const message = await appStorage.createMessage({
+          chatId: Number(chatId),
+          content,
+          senderId: senderId,
+          isUserMessage: isUserMessage,
+          timestamp: new Date()
+        });
+        
+        console.log('代替ストレージでシステムメッセージを作成しました:', message.id);
+        
+        return res.json({
+          success: true,
+          message
+        });
+      } else {
+        throw new Error('有効なストレージが見つかりません');
+      }
     }
-    
-    // メッセージを作成
-    const message = await storage.createMessage({
-      chatId: Number(chatId),
-      content,
-      isAiResponse: !isUserMessage,
-      senderId
-    });
-    
-    console.log('システムメッセージを作成しました:', message.id);
-    
-    return res.json({
-      success: true,
-      message
-    });
   } catch (error) {
     console.error("システムメッセージ送信エラー:", error);
     return res.status(500).json({ 

@@ -789,67 +789,115 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           onClick={() => {
             // これまでに表示したすべてのステップ（履歴を含めて）をチャットに送信
             if (currentStep && flowData) {
-              const guideTitle = flowData.title || flowData.id.replace(/_/g, ' ');
-              let guideContent = `**${guideTitle} - 処理履歴**\n\n`;
-              
-              // 履歴ステップを取得
-              const displayedStepIds = [...stepHistory, currentStep.id].filter(Boolean) as string[];
-              const displayedSteps = displayedStepIds.map(stepId => 
-                flowData.steps.find(step => step.id === stepId)
-              ).filter(Boolean) as TroubleshootingStep[];
-              
-              // 表示された各ステップの内容を追加
-              displayedSteps.forEach((step, index) => {
-                const stepNum = index + 1;
-                const stepTitle = step.title || `ステップ ${stepNum}`;
-                const message = step.message || step.content || '';
-                
-                // ステップ番号とタイトルを表示
-                guideContent += `**${stepNum}. ${stepTitle}**\n`;
-                guideContent += `${message}\n\n`;
-                
-                // チェックリストがある場合は追加（現在のステップの場合のみチェック状態を反映）
-                if (step.checklist && step.checklist.length > 0) {
-                  guideContent += '確認項目：\n';
-                  step.checklist.forEach((item) => {
-                    // 現在のステップの場合はチェック状態を反映、それ以外は単純に箇条書き
-                    if (step.id === currentStep.id) {
-                      const index = step.checklist?.indexOf(item);
-                      const isChecked = index !== undefined && checklistItems[`${index}`] === true;
-                      const checkMark = isChecked ? '✓ ' : '• ';
-                      guideContent += `${checkMark}${item}\n`;
-                    } else {
-                      guideContent += `• ${item}\n`;
-                    }
-                  });
-                  guideContent += '\n';
-                }
-              });
-              
-              // 最後に現在の状態をまとめる
-              guideContent += `**現在の状態：${currentStep.title || '手順完了'}**\n`;
-              
-              // チャットへガイドを送信
-              console.log('表示履歴を含めたステップをチャットに送信します');
               try {
+                const guideTitle = flowData.title || flowData.id.replace(/_/g, ' ');
+                let guideContent = `**${guideTitle} - 処理履歴**\n\n`;
+                
+                // 履歴ステップを取得
+                const displayedStepIds = [...stepHistory, currentStep.id].filter(Boolean) as string[];
+                const displayedSteps = displayedStepIds.map(stepId => 
+                  flowData.steps.find(step => step.id === stepId)
+                ).filter(Boolean) as TroubleshootingStep[];
+                
+                // 表示された各ステップの内容を追加
+                displayedSteps.forEach((step, index) => {
+                  const stepNum = index + 1;
+                  const stepTitle = step.title || `ステップ ${stepNum}`;
+                  const message = step.message || step.content || '';
+                  
+                  // ステップ番号とタイトルを表示
+                  guideContent += `**${stepNum}. ${stepTitle}**\n`;
+                  guideContent += `${message}\n\n`;
+                  
+                  // チェックリストがある場合は追加（現在のステップの場合のみチェック状態を反映）
+                  if (step.checklist && step.checklist.length > 0) {
+                    guideContent += '確認項目：\n';
+                    step.checklist.forEach((item) => {
+                      // 現在のステップの場合はチェック状態を反映、それ以外は単純に箇条書き
+                      if (step.id === currentStep.id) {
+                        const index = step.checklist?.indexOf(item);
+                        const isChecked = index !== undefined && checklistItems[`${index}`] === true;
+                        const checkMark = isChecked ? '✓ ' : '• ';
+                        guideContent += `${checkMark}${item}\n`;
+                      } else {
+                        guideContent += `• ${item}\n`;
+                      }
+                    });
+                    guideContent += '\n';
+                  }
+                });
+                
+                // 最後に現在の状態をまとめる
+                guideContent += `**現在の状態：${currentStep.title || '手順完了'}**\n`;
+                
+                // チャットへガイドを送信
+                console.log('表示履歴を含めたステップをチャットに送信します');
+                
                 // 現在のチャットIDを取得（通常は1）
                 const chatId = localStorage.getItem('currentChatId') || '1';
                 console.log('応急処置ガイド: チャットID', chatId, 'にデータを送信します');
                 
-                // チャットコンテキストからの送信メソッドを使用
-                sendEmergencyGuide({ 
-                  title: guideTitle, 
-                  content: guideContent,
-                  id: flowData.id
-                }).then((result) => {
-                  console.log('チャット送信結果:', result);
+                // 送信前にメッセージを表示
+                toast({
+                  title: '送信中',
+                  description: 'チャットに送信しています...',
+                  duration: 2000,
+                });
+                
+                // チャットのシステムメッセージAPIを呼び出してユーザーメッセージを送信
+                fetch(`/api/chats/${chatId}/messages/system`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    content: guideContent,
+                    isUserMessage: true
+                  }),
+                })
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error(`エラーが発生しました (${response.status})`);
+                  }
+                  return response.json();
+                })
+                .then(result => {
+                  console.log('ユーザーメッセージ送信結果:', result);
+                  
+                  // AI応答を送信
+                  return fetch(`/api/chats/${chatId}/messages/system`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      content: `応急処置ガイド「${guideTitle}」を受け取りました。手順に従って作業を続けてください。`,
+                      isUserMessage: false
+                    }),
+                  });
+                })
+                .then(aiResponse => {
+                  if (!aiResponse.ok) {
+                    throw new Error(`AI応答エラー (${aiResponse.status})`);
+                  }
+                  return aiResponse.json();
+                })
+                .then(aiResult => {
+                  console.log('AI応答結果:', aiResult);
+                  
                   // 送信完了メッセージ
                   toast({
                     title: '送信完了',
                     description: '表示した手順の履歴をチャットに送信しました',
                     duration: 3000,
                   });
-                }).catch((error) => {
+                  
+                  // チャット画面に自動リダイレクト
+                  setTimeout(() => {
+                    window.location.href = '/chat';
+                  }, 1500);
+                })
+                .catch(error => {
                   console.error('チャット送信エラー:', error);
                   toast({
                     title: 'エラー',
