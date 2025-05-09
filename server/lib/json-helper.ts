@@ -20,8 +20,8 @@ export function cleanJsonResponse(response: string): string {
     .trim();
 
   // 先頭と末尾の余分な文字列を削除（例: "JSONデータは以下の通りです："などの説明文）
-  cleanedResponse = cleanedResponse.replace(/^[^{[]*([{[])/s, '$1');
-  cleanedResponse = cleanedResponse.replace(/([}\]])[^}\]]*$/s, '$1');
+  cleanedResponse = cleanedResponse.replace(/^[^{[]*([{[])/, '$1');
+  cleanedResponse = cleanedResponse.replace(/([}\]])[^}\]]*$/, '$1');
 
   console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
 
@@ -30,7 +30,7 @@ export function cleanJsonResponse(response: string): string {
     // 試しにパースして検証
     JSON.parse(cleanedResponse);
     console.log("JSONフォーマットの検証: 有効");
-  } catch (error) {
+  } catch (error: any) {
     console.error("JSONフォーマットの検証: 失敗", error.message);
     
     // JavaScriptの修復を試みる
@@ -60,7 +60,7 @@ export function cleanJsonResponse(response: string): string {
       // 修復されたJSONを検証
       JSON.parse(cleanedResponse);
       console.log("JSONフォーマットの修復: 成功");
-    } catch (repairError) {
+    } catch (repairError: any) {
       console.error("JSONフォーマットの修復: 失敗", repairError.message);
     }
   }

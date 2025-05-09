@@ -106,7 +106,7 @@ ${relatedKnowledgeText}
       const cleanedResponse = cleanJsonResponse(generatedFlow);
       
       // JSONとして解析
-      flowData = JSON.parse(cleanedResponse);
+      try { flowData = JSON.parse(generatedFlow); console.log("直接JSON解析に成功"); } catch (directParseError) { flowData = JSON.parse(cleanedResponse); console.log("クリーニング後のJSON解析に成功"); }
       
       // IDが設定されていない場合はキーワードから生成
       if (!flowData.id) {
@@ -297,7 +297,7 @@ ${relatedKnowledgeText}
       const cleanedResponse = cleanJsonResponse(generatedFlow);
       
       // JSONとして解析
-      flowData = JSON.parse(cleanedResponse);
+      try { flowData = JSON.parse(generatedFlow); console.log("直接JSON解析に成功"); } catch (directParseError) { flowData = JSON.parse(cleanedResponse); console.log("クリーニング後のJSON解析に成功"); }
       
       // IDが設定されていない場合はファイル名から生成
       if (!flowData.id) {
@@ -478,7 +478,7 @@ ${relatedKnowledgeText}
       const cleanedResponse = cleanJsonResponse(generatedFlow);
       
       // JSONとして解析
-      flowData = JSON.parse(cleanedResponse);
+      try { flowData = JSON.parse(generatedFlow); console.log("直接JSON解析に成功"); } catch (directParseError) { flowData = JSON.parse(cleanedResponse); console.log("クリーニング後のJSON解析に成功"); }
       
       // IDが設定されていない場合はファイル名から生成
       if (!flowData.id) {
