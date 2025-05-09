@@ -608,16 +608,10 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                     parent.appendChild(errorDiv);
                   }
                 }}
-                // クリックでもプレビューを表示
+                // クリックでのプレビュー表示も無効化（チャットへの表示はしない）
                 onClick={() => {
-                  const imageTitle = flowData?.id || "応急処置ガイド";
-                  window.dispatchEvent(new CustomEvent('preview-image', { 
-                    detail: { 
-                      url: currentStep.image || currentStep.imageUrl,
-                      title: imageTitle,
-                      content: currentStep.message || "トラブルシューティング画像"
-                    } 
-                  }));
+                  console.log('応急処置ガイド: 画像クリック - チャットへの転送をスキップします');
+                  // チャットへの転送は行わない
                 }}
               />
             </div>
@@ -646,14 +640,8 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   alt={searchResults[0].title || "関連画像"}
                   className="max-h-80 object-contain rounded-md cursor-pointer border border-blue-100 shadow-sm"
                   onClick={() => {
-                    // Chat UIに通知
-                    window.dispatchEvent(new CustomEvent('preview-image', { 
-                      detail: { 
-                        url: handleImagePath(searchResults[0].file || searchResults[0].url),
-                        title: searchResults[0].title || '関連画像',
-                        content: searchResults[0].description || currentStep.message
-                      } 
-                    }));
+                    // Chat UIへの通知は行わない（ユーザーの要求により無効化）
+                    console.log('応急処置ガイド: 検索結果画像クリック - チャットへの転送をスキップします');
                   }}
                 />
               </div>
