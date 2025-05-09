@@ -831,14 +831,42 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
               
               // チャットへガイドを送信
               console.log('表示履歴を含めたステップをチャットに送信します');
-              sendEmergencyGuide({ title: guideTitle, content: guideContent });
-              
-              // 送信完了メッセージ
-              toast({
-                title: '送信完了',
-                description: '表示した手順の履歴をチャットに送信しました',
-                duration: 3000,
-              });
+              try {
+                // 現在のチャットIDを取得（通常は1）
+                const chatId = localStorage.getItem('currentChatId') || '1';
+                console.log('応急処置ガイド: チャットID', chatId, 'にデータを送信します');
+                
+                // チャットコンテキストからの送信メソッドを使用
+                sendEmergencyGuide({ 
+                  title: guideTitle, 
+                  content: guideContent,
+                  id: flowData.id
+                }).then((result) => {
+                  console.log('チャット送信結果:', result);
+                  // 送信完了メッセージ
+                  toast({
+                    title: '送信完了',
+                    description: '表示した手順の履歴をチャットに送信しました',
+                    duration: 3000,
+                  });
+                }).catch((error) => {
+                  console.error('チャット送信エラー:', error);
+                  toast({
+                    title: 'エラー',
+                    description: 'チャットへの送信中にエラーが発生しました',
+                    variant: 'destructive',
+                    duration: 5000,
+                  });
+                });
+              } catch (error) {
+                console.error('緊急ガイド送信エラー:', error);
+                toast({
+                  title: 'エラー',
+                  description: 'チャットへの送信中にエラーが発生しました',
+                  variant: 'destructive',
+                  duration: 5000,
+                });
+              }
             }
           }}
         >

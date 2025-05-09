@@ -30,7 +30,7 @@ interface ChatContextValue {
   lastExportTimestamp: Date | null;
   isExporting: boolean;
   hasUnexportedMessages: boolean;
-  sendEmergencyGuide: (guideData: any) => Promise<void>;
+  sendEmergencyGuide: (guideData: any) => Promise<any>; // 戻り値の型を変更
   draftMessage: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null;
   setDraftMessage: (message: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null) => void;
   clearChatHistory: () => Promise<void>;
@@ -886,42 +886,82 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const currentChatId = chatId || 1;
       console.log('応急処置ガイド: チャットID', currentChatId, 'にデータを送信します');
       
-      const response = await apiRequest('POST', `/api/emergency-guide/send`, {
+      // ログ出力を追加（デバッグ用）
+      console.log('送信データ:', {
         chatId: currentChatId,
-        guideData,
+        guideData: {
+          ...guideData,
+          content: guideData.content ? guideData.content.substring(0, 100) + '...' : null
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('緊急ガイドの送信に失敗しました');
-      }
-      
-      const data = await response.json();
-      console.log('応急処置ガイド: 送信成功', data);
-      
-      // メッセージリストに追加
-      setMessages(prev => [
-        ...prev,
-        { 
-          ...data.userMessage, 
-          timestamp: new Date(data.userMessage.timestamp)
-        },
-        {
-          ...data.aiMessage,
-          timestamp: new Date(data.aiMessage.timestamp)
+      try {
+        // まず、メッセージの保存のみを実行するシステムメッセージAPI呼び出し
+        const systemMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, {
+          content: guideData.content || `応急処置ガイド「${guideData.title || "無題"}」`,
+          isUserMessage: true
+        });
+        
+        if (!systemMessageResponse.ok) {
+          throw new Error('システムメッセージAPIの呼び出しに失敗しました');
         }
-      ]);
-      
-      // 関連する画像検索も実行
-      if (guideData.title) {
-        searchBySelectedText(guideData.title);
+        
+        const systemMessageData = await systemMessageResponse.json();
+        console.log('システムメッセージ送信成功:', systemMessageData);
+        
+        // AIの応答メッセージも追加
+        const aiMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, {
+          content: `応急処置ガイド「${guideData.title || "無題"}」を受け取りました。手順に従って作業を続けてください。`,
+          isUserMessage: false
+        });
+        
+        if (!aiMessageResponse.ok) {
+          throw new Error('AIメッセージの送信に失敗しました');
+        }
+        
+        const aiMessageData = await aiMessageResponse.json();
+        
+        // 結果をマージ
+        const data = {
+          success: true,
+          userMessage: systemMessageData,
+          aiMessage: aiMessageData
+        };
+        
+        console.log('応急処置ガイド: 送信成功', data);
+        // メッセージリストに追加
+        setMessages(prev => [
+          ...prev,
+          { 
+            ...data.userMessage, 
+            timestamp: new Date(data.userMessage.timestamp)
+          },
+          {
+            ...data.aiMessage,
+            timestamp: new Date(data.aiMessage.timestamp)
+          }
+        ]);
+        
+        // 関連する画像検索も実行
+        if (guideData.title) {
+          searchBySelectedText(guideData.title);
+        }
+        
+        return data;
+      } catch (apiError) {
+        console.error('APIリクエストエラー:', apiError);
+        toast({
+          title: 'API通信エラー',
+          description: 'サーバーとの通信中にエラーが発生しました',
+          variant: 'destructive',
+        });
+        throw apiError; // 上位のエラーハンドラーに再スロー
       }
-      
-      return data;
     } catch (error) {
       console.error('緊急ガイド送信エラー:', error);
       toast({
         title: '緊急ガイド送信エラー',
-        description: '緊急ガイドの送信に失敗しました。',
+        description: '応急処置ガイドの送信に失敗しました。ログインしているか確認してください。',
         variant: 'destructive',
       });
       return null;
