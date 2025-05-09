@@ -53,30 +53,23 @@ router.post('/generate-from-keywords', async (req, res) => {
 必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
 レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
 JSONの形式は次のようにしてください：
-
-{
-  "id": "ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)",
-  "title": "フローのタイトル",
-  "description": "フローの説明",
-  "triggerKeywords": ["関連するキーワード1", "関連するキーワード2", "専門用語", "部品名", "症状"],
-  "steps": [
-    {
-      "id": "ステップの一意の識別子",
-      "title": "ステップのタイトル",
-      "description": "ステップの詳細説明(具体的かつ技術的に正確であること)",
-      "imageUrl": "画像URL(もしあれば)または空文字列",
-      "type": "step | decision | start | end",
-      "options": [
-        {
-          "text": "選択肢のテキスト",
-          "nextStepId": "次のステップID",
-          "isTerminal": false,
-          "conditionType": "yes | no | other"
-        }
-      ]
-    }
-  ]
-}
+必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
+JSONの形式は次のようにしてください：
+- id: ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)
+- title: フローのタイトル
+- description: フローの説明
+- triggerKeywords: 関連するキーワードの配列(重要な専門用語、部品名、症状を必ず含める)
+- steps: フローのステップ配列(各ステップには以下を含む)
+  - id: ステップの一意の識別子
+  - title: ステップのタイトル
+  - description: ステップの詳細説明(具体的かつ技術的に正確であること)
+  - imageUrl: 画像URL(もしあれば)または空文字列
+  - type: ステップのタイプ("step", "decision", "start", "end"のいずれか)
+  - options: 次のステップへの選択肢の配列(各選択肢には以下を含む)
+    - text: 選択肢のテキスト
+    - nextStepId: 次のステップID
+    - isTerminal: 終端フラグ(これが最終ステップなら true)
+    - conditionType: 選択肢の条件タイプ("yes", "no", "other"など)- 特に判断ノード(decision)の場合に重要
 
 【キーワード】: ${keywords}
 ${relatedKnowledgeText}
@@ -102,19 +95,11 @@ ${relatedKnowledgeText}
     let flowData;
     try {
       // 応答から```jsonや```などのマークダウンコードブロックを削除
-      console.log('生のレスポンス (一部):', generatedFlow.substring(0, 100) + '...');
-      
       let cleanedResponse = generatedFlow
-        .replace(/```json\s*/g, '') // すべての```json
-        .replace(/```\s*/g, '')     // すべての```
-        .replace(/```/g, '')        // すべての```（閉じる用）
+        .replace(/^```json\s*/, '') // 先頭の```json
+        .replace(/^```\s*/, '')     // 先頭の```
+        .replace(/\s*```$/, '')     // 末尾の```
         .trim();
-      
-      // 先頭と末尾の余分な文字列を削除（例: "JSONデータは以下の通りです："などの説明文）
-      cleanedResponse = cleanedResponse.replace(/^[^{]*({)/s, '$1');
-      cleanedResponse = cleanedResponse.replace(/}[^}]*$/s, '}');
-      
-      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
       // 不完全なJSONを検出して修復を試みる
       try {
@@ -146,6 +131,8 @@ ${relatedKnowledgeText}
         console.error('JSON修復中にエラーが発生しました:', repairError);
         // 修復に失敗してもそのまま続行
       }
+      
+      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
       // JSONとして解析
       flowData = JSON.parse(cleanedResponse);
@@ -274,37 +261,29 @@ router.post('/generate-from-guide/:id', async (req, res) => {
       for (const chunk of chunksToInclude) {
         relatedKnowledgeText += `---\n出典: ${chunk.metadata.source || '不明'}\n\n${chunk.text}\n---\n\n`;
       }
-    }
+    const prompt = `以下の応急処置ガイドからトラブルシューティングフローを生成してください。
+必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
+レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法(```)は使用しないでください。
+JSONの形式は次のようにしてください：
     
     // GPTに渡す強化されたプロンプト
     const prompt = `以下の応急処置ガイドからトラブルシューティングフローを生成してください。
-必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
-レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
-JSONの形式は次のようにしてください：
-
-{
-  "id": "ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)",
-  "title": "フローのタイトル",
-  "description": "フローの説明",
-  "triggerKeywords": ["関連するキーワード1", "関連するキーワード2", "専門用語", "部品名", "症状"],
-  "steps": [
-    {
-      "id": "ステップの一意の識別子",
-      "title": "ステップのタイトル",
-      "description": "ステップの詳細説明(具体的かつ技術的に正確であること)",
-      "imageUrl": "画像URL(もしあれば)または空文字列",
-      "type": "step | decision | start | end",
-      "options": [
-        {
-          "text": "選択肢のテキスト",
-          "nextStepId": "次のステップID",
-          "isTerminal": false,
-          "conditionType": "yes | no | other"
-        }
-      ]
-    }
-  ]
-}
+JSON形式で、以下のフィールドを含むようにしてください：
+- id: ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)
+- title: フローのタイトル
+- description: フローの説明
+- triggerKeywords: 関連するキーワードの配列(重要な専門用語、部品名、症状を必ず含める)
+- steps: フローのステップ配列(各ステップには以下を含む)
+  - id: ステップの一意の識別子
+  - title: ステップのタイトル
+  - description: ステップの詳細説明(具体的かつ技術的に正確であること)
+  - imageUrl: 画像URL(もしあれば)または空文字列
+  - type: ステップのタイプ("step", "decision", "start", "end"のいずれか)
+  - options: 次のステップへの選択肢の配列(各選択肢には以下を含む)
+    - text: 選択肢のテキスト
+    - nextStepId: 次のステップID
+    - isTerminal: 終端フラグ(これが最終ステップなら true)
+    - conditionType: 選択肢の条件タイプ("yes", "no", "other"など)- 特に判断ノード(decision)の場合に重要
 
 以下が応急処置ガイドのコンテンツです：
 
@@ -336,19 +315,11 @@ ${relatedKnowledgeText}
     let flowData;
     try {
       // 応答から```jsonや```などのマークダウンコードブロックを削除
-      console.log('生のレスポンス (一部):', generatedFlow.substring(0, 100) + '...');
-      
       let cleanedResponse = generatedFlow
-        .replace(/```json\s*/g, '') // すべての```json
-        .replace(/```\s*/g, '')     // すべての```
-        .replace(/```/g, '')        // すべての```（閉じる用）
+        .replace(/^```json\s*/, '') // 先頭の```json
+        .replace(/^```\s*/, '')     // 先頭の```
+        .replace(/\s*```$/, '')     // 末尾の```
         .trim();
-      
-      // 先頭と末尾の余分な文字列を削除（例: "JSONデータは以下の通りです："などの説明文）
-      cleanedResponse = cleanedResponse.replace(/^[^{]*({)/s, '$1');
-      cleanedResponse = cleanedResponse.replace(/}[^}]*$/s, '}');
-      
-      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
       // 不完全なJSONを検出して修復を試みる
       try {
@@ -380,6 +351,8 @@ ${relatedKnowledgeText}
         console.error('JSON修復中にエラーが発生しました:', repairError);
         // 修復に失敗してもそのまま続行
       }
+      
+      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
       // JSONとして解析
       flowData = JSON.parse(cleanedResponse);
@@ -496,40 +469,32 @@ router.post('/generate-from-uploaded-file/:documentId', async (req, res) => {
       // 最大5チャンクまで追加(多すぎるとトークン数制限に達する可能性がある)
       const chunksToInclude = relevantChunks.slice(0, 5);
       
-      for (const chunk of chunksToInclude) {
+    const prompt = `以下の応急処置ガイドからトラブルシューティングフローを生成してください。
+必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
+レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法(```)は使用しないでください。
+JSONの形式は次のようにしてください：
         relatedKnowledgeText += `---\n出典: ${chunk.metadata.source || '不明'}\n\n${chunk.text}\n---\n\n`;
       }
     }
     
     // GPTに渡す強化されたプロンプト
     const prompt = `以下の応急処置ガイドからトラブルシューティングフローを生成してください。
-必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
-レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
-JSONの形式は次のようにしてください：
-
-{
-  "id": "ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)",
-  "title": "フローのタイトル",
-  "description": "フローの説明",
-  "triggerKeywords": ["関連するキーワード1", "関連するキーワード2", "専門用語", "部品名", "症状"],
-  "steps": [
-    {
-      "id": "ステップの一意の識別子",
-      "title": "ステップのタイトル",
-      "description": "ステップの詳細説明(具体的かつ技術的に正確であること)",
-      "imageUrl": "画像URL(もしあれば)または空文字列",
-      "type": "step | decision | start | end",
-      "options": [
-        {
-          "text": "選択肢のテキスト",
-          "nextStepId": "次のステップID",
-          "isTerminal": false,
-          "conditionType": "yes | no | other"
-        }
-      ]
-    }
-  ]
-}
+JSON形式で、以下のフィールドを含むようにしてください：
+- id: ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)
+- title: フローのタイトル
+- description: フローの説明
+- triggerKeywords: 関連するキーワードの配列(重要な専門用語、部品名、症状を必ず含める)
+- steps: フローのステップ配列(各ステップには以下を含む)
+  - id: ステップの一意の識別子
+  - title: ステップのタイトル
+  - description: ステップの詳細説明(具体的かつ技術的に正確であること)
+  - imageUrl: 画像URL(もしあれば)または空文字列
+  - type: ステップのタイプ("step", "decision", "start", "end"のいずれか)
+  - options: 次のステップへの選択肢の配列(各選択肢には以下を含む)
+    - text: 選択肢のテキスト
+    - nextStepId: 次のステップID
+    - isTerminal: 終端フラグ(これが最終ステップなら true)
+    - conditionType: 選択肢の条件タイプ("yes", "no", "other"など)- 特に判断ノード(decision)の場合に重要
 
 以下が応急処置ガイドのコンテンツです：
 
@@ -552,105 +517,96 @@ ${relatedKnowledgeText}
    - 各分岐が適切なシナリオや状況に対応するようにしてください
 8. 判断や処置の内容に応じた条件分岐を含み、各分岐先で適切な処置手順を提供してください。
 9. 複数の条件や症状に対応できるよう、フローは柔軟かつ包括的な構造にしてください。`;
-
-    // OpenAIでフローを生成
-    console.log('OpenAIにフロー生成をリクエスト中...');
-    const generatedFlow = await processOpenAIRequest(prompt);
     
-    let flowData;
-    try {
-      // 応答から```jsonや```などのマークダウンコードブロックを削除
-      console.log('生のレスポンス (一部):', generatedFlow.substring(0, 100) + '...');
-      
-      let cleanedResponse = generatedFlow
-        .replace(/```json\s*/g, '') // すべての```json
-        .replace(/```\s*/g, '')     // すべての```
-        .replace(/```/g, '')        // すべての```（閉じる用）
-        .trim();
-      
-      // 先頭と末尾の余分な文字列を削除（例: "JSONデータは以下の通りです："などの説明文）
-      cleanedResponse = cleanedResponse.replace(/^[^{]*({)/s, '$1');
-      cleanedResponse = cleanedResponse.replace(/}[^}]*$/s, '}');
-      
-      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
-      
-      // 不完全なJSONを検出して修復を試みる
+    // 処理を開始したことをクライアントに通知
+    res.json({
+      success: true,
+      message: 'フロー生成を開始しました',
+      status: 'processing'
+    });
+    
+    // 非同期でフローを生成
+    (async () => {
       try {
-        // 簡易検出: 最後のステップが途中で切れていないか確認
-        const lastBraceIndex = cleanedResponse.lastIndexOf('}');
-        const lastStepEndIndex = cleanedResponse.lastIndexOf('    }');
+        console.log('OpenAIにフロー生成をリクエスト中...');
+        const generatedFlow = await processOpenAIRequest(prompt);
         
-        // ステップが途中で切れている可能性がある場合
-        if (lastBraceIndex < cleanedResponse.length - 2 || 
-            (cleanedResponse.includes('"steps": [') && !cleanedResponse.includes('"options": []'))) {
-          console.log('不完全なJSONが検出されました。修復を試みます...');
+        try {
+          // 応答から```jsonや```などのマークダウンコードブロックを削除
+          let cleanedResponse = generatedFlow
+            .replace(/^```json\s*/, '') // 先頭の```json
+            .replace(/^```\s*/, '')     // 先頭の```
+            .replace(/\s*```$/, '')     // 末尾の```
+            .trim();
           
-          // steps配列を検出
-          const stepsStart = cleanedResponse.indexOf('"steps": [');
-          if (stepsStart > 0) {
-            // 最後の完全なステップを見つける
-            const steps = cleanedResponse.substring(stepsStart);
-            const completeSteps = steps.split('},\n    {');
+          // 不完全なJSONを検出して修復を試みる
+          try {
+            // 簡易検出: 最後のステップが途中で切れていないか確認
+            const lastBraceIndex = cleanedResponse.lastIndexOf('}');
+            const lastStepEndIndex = cleanedResponse.lastIndexOf('    }');
             
-            // 最後のステップが不完全かもしれないので除外し、閉じ括弧を追加
-            cleanedResponse = cleanedResponse.substring(0, stepsStart) + 
-                           '"steps": [' + 
-                           completeSteps.slice(0, -1).join('},\n    {') + 
-                           '}' +
-                           '\n  ]\n}';
+            // ステップが途中で切れている可能性がある場合
+            if (lastBraceIndex < cleanedResponse.length - 2 || 
+                (cleanedResponse.includes('"steps": [') && !cleanedResponse.includes('"options": []'))) {
+              console.log('不完全なJSONが検出されました。修復を試みます...');
+              
+              // steps配列を検出
+              const stepsStart = cleanedResponse.indexOf('"steps": [');
+              if (stepsStart > 0) {
+                // 最後の完全なステップを見つける
+                const steps = cleanedResponse.substring(stepsStart);
+                const completeSteps = steps.split('},\n    {');
+                
+                // 最後のステップが不完全かもしれないので除外し、閉じ括弧を追加
+                cleanedResponse = cleanedResponse.substring(0, stepsStart) + 
+                               '"steps": [' + 
+                               completeSteps.slice(0, -1).join('},\n    {') + 
+                               '}' +
+                               '\n  ]\n}';
+              }
+            }
+          } catch (repairError) {
+            console.error('JSON修復中にエラーが発生しました:', repairError);
+            // 修復に失敗してもそのまま続行
           }
+          
+          console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
+          
+          // JSONとして解析
+          const flowData = JSON.parse(cleanedResponse);
+          
+          // IDが設定されていない場合はタイトルから生成
+          let flowId = flowData.id || title.toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .replace(/_+/g, '_')
+            .substring(0, 50);
+          
+          // 既存のファイル名と競合しないように確認
+          let finalId = flowId;
+          let counter = 1;
+          
+          while (fs.existsSync(path.join(troubleshootingDir, `${finalId}.json`))) {
+            finalId = `${flowId}_${counter}`;
+            counter++;
+          }
+          
+          flowData.id = finalId;
+          
+          // フローをファイルに保存
+          fs.writeFileSync(
+            path.join(troubleshootingDir, `${flowData.id}.json`),
+            JSON.stringify(flowData, null, 2)
+          );
+          
+          console.log(`フローが正常に生成されました: ${flowData.title}`);
+        } catch (parseError) {
+          console.error('生成されたフローの解析エラー:', parseError);
+          console.error('生成されたテキスト:', generatedFlow);
         }
-      } catch (repairError) {
-        console.error('JSON修復中にエラーが発生しました:', repairError);
-        // 修復に失敗してもそのまま続行
+      } catch (error) {
+        console.error('フロー生成エラー:', error);
       }
-      
-      // JSONとして解析
-      flowData = JSON.parse(cleanedResponse);
-      
-      // IDが設定されていない場合はファイル名から生成
-      if (!flowData.id) {
-        // ドキュメントIDからIDを生成
-        flowData.id = `flow_from_doc_${documentId}_${Date.now()}`;
-      }
-      
-      // フローのファイルパス
-      const flowFilePath = path.join(troubleshootingDir, `${flowData.id}.json`);
-      
-      // 既存のファイル名と競合しないように確認
-      let finalId = flowData.id;
-      let counter = 1;
-      
-      while (fs.existsSync(path.join(troubleshootingDir, `${finalId}.json`))) {
-        finalId = `${flowData.id}_${counter}`;
-        counter++;
-      }
-      
-      flowData.id = finalId;
-      
-      // フローをファイルに保存
-      fs.writeFileSync(
-        path.join(troubleshootingDir, `${flowData.id}.json`),
-        JSON.stringify(flowData, null, 2)
-      );
-      
-      // 成功レスポンス
-      res.json({
-        success: true,
-        message: `フローが正常に生成されました: ${flowData.title}`,
-        flowData
-      });
-      
-    } catch (parseError) {
-      console.error('生成されたフローの解析エラー:', parseError);
-      console.error('生成されたテキスト:', generatedFlow);
-      
-      res.status(500).json({
-        success: false,
-        error: 'フローデータの解析に失敗しました',
-        rawResponse: generatedFlow
-      });
-    }
+    })();
   } catch (error) {
     console.error('フロー生成エラー:', error);
     res.status(500).json({

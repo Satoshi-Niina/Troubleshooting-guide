@@ -61,7 +61,9 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
     
     // JSONパターンを検出
     const isJsonRequest = prompt.includes('JSON形式で') || prompt.includes('JSONフォーマット') || 
-                         prompt.includes('以下のフィールドを含む') || prompt.includes('JSON形式の');
+                         prompt.includes('以下のフィールドを含む') || prompt.includes('JSON形式の') ||
+                         prompt.includes('JSONの形式') || prompt.includes('トラブルシューティングフロー') ||
+                         prompt.includes('フローを生成');
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
