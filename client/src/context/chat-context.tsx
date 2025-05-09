@@ -883,7 +883,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       setIsLoading(true);
       
+      // 現在のチャットIDを取得し、localStorageにも保存（他のコンポーネントからアクセスできるように）
       const currentChatId = chatId || 1;
+      localStorage.setItem('currentChatId', String(currentChatId));
       console.log('応急処置ガイド: チャットID', currentChatId, 'にデータを送信します');
       
       // ログ出力を追加（デバッグ用）
@@ -896,38 +898,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       try {
-        // まず、メッセージの保存のみを実行するシステムメッセージAPI呼び出し
-        const systemMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, {
-          content: guideData.content || `応急処置ガイド「${guideData.title || "無題"}」`,
-          isUserMessage: true
+        // 緊急ガイド専用のエンドポイントを使用
+        const response = await apiRequest('POST', `/api/emergency-guide/send`, {
+          chatId: currentChatId,
+          guideData
         });
         
-        if (!systemMessageResponse.ok) {
-          throw new Error('システムメッセージAPIの呼び出しに失敗しました');
+        // レスポンスをチェック
+        if (!response.ok) {
+          // エラーの詳細情報を取得
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'ガイドの送信に失敗しました');
+          } catch (parseError) {
+            throw new Error(`ガイドの送信に失敗しました (${response.status})`);
+          }
         }
         
-        const systemMessageData = await systemMessageResponse.json();
-        console.log('システムメッセージ送信成功:', systemMessageData);
-        
-        // AIの応答メッセージも追加
-        const aiMessageResponse = await apiRequest('POST', `/api/chats/${currentChatId}/messages/system`, {
-          content: `応急処置ガイド「${guideData.title || "無題"}」を受け取りました。手順に従って作業を続けてください。`,
-          isUserMessage: false
-        });
-        
-        if (!aiMessageResponse.ok) {
-          throw new Error('AIメッセージの送信に失敗しました');
-        }
-        
-        const aiMessageData = await aiMessageResponse.json();
-        
-        // 結果をマージ
-        const data = {
-          success: true,
-          userMessage: systemMessageData,
-          aiMessage: aiMessageData
-        };
-        
+        // レスポンスデータを取得
+        const data = await response.json();
         console.log('応急処置ガイド: 送信成功', data);
         // メッセージリストに追加
         setMessages(prev => [

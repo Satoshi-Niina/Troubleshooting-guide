@@ -873,7 +873,7 @@ router.post('/send', async (req, res) => {
     try {
       // 1. ユーザーのガイド内容メッセージを作成
       const userMessage = await storage.createMessage({
-        chatId,
+        chatId: Number(chatId),
         content: guideData.content || guideData.title || "応急処置ガイド",
         isAiResponse: false,
         senderId
@@ -881,7 +881,7 @@ router.post('/send', async (req, res) => {
       
       // 2. AIの応答メッセージを作成（確認応答）
       const aiMessage = await storage.createMessage({
-        chatId,
+        chatId: Number(chatId),
         content: `応急処置ガイド「${guideData.title || ""}」を受け取りました。手順に従って作業を続けてください。`,
         isAiResponse: true,
         senderId
@@ -907,6 +907,64 @@ router.post('/send', async (req, res) => {
     return res.status(500).json({ 
       success: false,
       message: "緊急ガイドの送信中にエラーが発生しました",
+      error: error instanceof Error ? error.message : "不明なエラー"
+    });
+  }
+});
+
+// システムメッセージをチャットに送信するエンドポイント（フォールバック用）
+router.post('/system-message', async (req, res) => {
+  try {
+    const { chatId, content, isUserMessage = false } = req.body;
+    
+    if (!chatId || !content) {
+      return res.status(400).json({ 
+        success: false,
+        message: "チャットIDとメッセージ内容が必要です" 
+      });
+    }
+    
+    // ログ出力
+    console.log('------------------------------------');
+    console.log('システムメッセージをチャットに送信:');
+    console.log(`chatId: ${chatId}`);
+    console.log(`content: ${content.substring(0, 100)}...`);
+    console.log(`isUserMessage: ${isUserMessage}`);
+    console.log(`sessionUserId: ${req?.session?.userId || 'unknown'}`);
+    console.log('------------------------------------');
+    
+    // ユーザーIDの取得（認証済みでない場合のフォールバック）
+    const senderId = req.session?.userId || 1;
+    
+    // ストレージの取得
+    const storage = req.app.locals.storage;
+    if (!storage) {
+      console.error('ストレージが初期化されていません');
+      return res.status(500).json({ 
+        success: false,
+        message: "サーバー内部エラー: ストレージが初期化されていません" 
+      });
+    }
+    
+    // メッセージを作成
+    const message = await storage.createMessage({
+      chatId: Number(chatId),
+      content,
+      isAiResponse: !isUserMessage,
+      senderId
+    });
+    
+    console.log('システムメッセージを作成しました:', message.id);
+    
+    return res.json({
+      success: true,
+      message
+    });
+  } catch (error) {
+    console.error("システムメッセージ送信エラー:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "メッセージの送信中にエラーが発生しました",
       error: error instanceof Error ? error.message : "不明なエラー"
     });
   }
