@@ -799,35 +799,56 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   flowData.steps.find(step => step.id === stepId)
                 ).filter(Boolean) as TroubleshootingStep[];
                 
-                // 現在表示中のステップ情報のみをシンプルに送信
-                const currentStepTitle = currentStep.title || '現在のステップ';
-                const currentStepContent = currentStep.message || currentStep.content || '';
+                // 表示・処理してきた各ステップの経路を簡潔な形で作成
+                let pathContent = '';
+                let currentPath = '';
                 
-                // シンプルな形式でチャットに送信するメッセージを作成
-                guideContent = `**${guideTitle}**\n\n`;
-                guideContent += `**${currentStepTitle}**\n`;
+                // 処理フローの履歴を順に追跡
+                displayedSteps.forEach((step, index) => {
+                  // ステップタイトルを取得
+                  const stepTitle = step.title || `ステップ ${index + 1}`;
+                  
+                  // 最初のステップ
+                  if (index === 0) {
+                    currentPath = stepTitle;
+                  }
+                  // 2つ目以降のステップ
+                  else {
+                    // 前のステップから選択した選択肢を確認
+                    const prevStep = displayedSteps[index - 1];
+                    if (prevStep.options && prevStep.options.length > 0) {
+                      // 選択肢を探す
+                      const selectedOption = prevStep.options.find(opt => 
+                        (opt.next === step.id) || (opt.nextStep === step.id)
+                      );
+                      
+                      if (selectedOption) {
+                        // 選択内容を追加
+                        const optionText = selectedOption.text || selectedOption.label || '次へ';
+                        currentPath += ` → ${optionText} → ${stepTitle}`;
+                      } else {
+                        // 選択肢が見つからない場合は単純に接続
+                        currentPath += ` → ${stepTitle}`;
+                      }
+                    } else {
+                      // 選択肢がない場合は単純に接続
+                      currentPath += ` → ${stepTitle}`;
+                    }
+                  }
+                });
                 
-                // ステップの内容があれば追加
-                if (currentStepContent) {
-                  guideContent += `${currentStepContent}\n\n`;
-                }
+                // メッセージを組み立て
+                guideContent = `**${guideTitle} - 処理フロー**\n\n`;
+                guideContent += currentPath + '\n';
                 
-                // 現在のステップの確認項目があれば追加
+                // 現在のステップの確認項目があれば追加（現在のステップのみ）
                 if (currentStep.checklist && currentStep.checklist.length > 0) {
-                  guideContent += `**確認項目**:\n`;
+                  guideContent += `\n**確認項目**:\n`;
                   currentStep.checklist.forEach((item) => {
                     const index = currentStep.checklist?.indexOf(item);
                     const isChecked = index !== undefined && checklistItems[`${index}`] === true;
                     const checkMark = isChecked ? '✓' : '□';
                     guideContent += `- [${checkMark}] ${item}\n`;
-                  });
-                }
-                
-                // 現在の選択肢があれば追加
-                if (currentStep.options && currentStep.options.length > 0) {
-                  guideContent += `\n**選択肢**:\n`;
-                  currentStep.options.forEach(option => {
-                    guideContent += `- ${option.text || option.label || '次へ'}\n`;
                   });
                 }
                 
