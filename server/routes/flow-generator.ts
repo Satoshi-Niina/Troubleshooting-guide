@@ -91,11 +91,42 @@ ${relatedKnowledgeText}
     let flowData;
     try {
       // 応答から```jsonや```などのマークダウンコードブロックを削除
-      const cleanedResponse = generatedFlow
+      let cleanedResponse = generatedFlow
         .replace(/^```json\s*/, '') // 先頭の```json
         .replace(/^```\s*/, '')     // 先頭の```
         .replace(/\s*```$/, '')     // 末尾の```
         .trim();
+      
+      // 不完全なJSONを検出して修復を試みる
+      try {
+        // 簡易検出: 最後のステップが途中で切れていないか確認
+        const lastBraceIndex = cleanedResponse.lastIndexOf('}');
+        const lastStepEndIndex = cleanedResponse.lastIndexOf('    }');
+        
+        // ステップが途中で切れている可能性がある場合
+        if (lastBraceIndex < cleanedResponse.length - 2 || 
+            (cleanedResponse.includes('"steps": [') && !cleanedResponse.includes('"options": []'))) {
+          console.log('不完全なJSONが検出されました。修復を試みます...');
+          
+          // steps配列を検出
+          const stepsStart = cleanedResponse.indexOf('"steps": [');
+          if (stepsStart > 0) {
+            // 最後の完全なステップを見つける
+            const steps = cleanedResponse.substring(stepsStart);
+            const completeSteps = steps.split('},\n    {');
+            
+            // 最後のステップが不完全かもしれないので除外し、閉じ括弧を追加
+            cleanedResponse = cleanedResponse.substring(0, stepsStart) + 
+                           '"steps": [' + 
+                           completeSteps.slice(0, -1).join('},\n    {') + 
+                           '}' +
+                           '\n  ]\n}';
+          }
+        }
+      } catch (repairError) {
+        console.error('JSON修復中にエラーが発生しました:', repairError);
+        // 修復に失敗してもそのまま続行
+      }
       
       console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
@@ -277,11 +308,42 @@ ${relatedKnowledgeText}
     let flowData;
     try {
       // 応答から```jsonや```などのマークダウンコードブロックを削除
-      const cleanedResponse = generatedFlow
+      let cleanedResponse = generatedFlow
         .replace(/^```json\s*/, '') // 先頭の```json
         .replace(/^```\s*/, '')     // 先頭の```
         .replace(/\s*```$/, '')     // 末尾の```
         .trim();
+      
+      // 不完全なJSONを検出して修復を試みる
+      try {
+        // 簡易検出: 最後のステップが途中で切れていないか確認
+        const lastBraceIndex = cleanedResponse.lastIndexOf('}');
+        const lastStepEndIndex = cleanedResponse.lastIndexOf('    }');
+        
+        // ステップが途中で切れている可能性がある場合
+        if (lastBraceIndex < cleanedResponse.length - 2 || 
+            (cleanedResponse.includes('"steps": [') && !cleanedResponse.includes('"options": []'))) {
+          console.log('不完全なJSONが検出されました。修復を試みます...');
+          
+          // steps配列を検出
+          const stepsStart = cleanedResponse.indexOf('"steps": [');
+          if (stepsStart > 0) {
+            // 最後の完全なステップを見つける
+            const steps = cleanedResponse.substring(stepsStart);
+            const completeSteps = steps.split('},\n    {');
+            
+            // 最後のステップが不完全かもしれないので除外し、閉じ括弧を追加
+            cleanedResponse = cleanedResponse.substring(0, stepsStart) + 
+                           '"steps": [' + 
+                           completeSteps.slice(0, -1).join('},\n    {') + 
+                           '}' +
+                           '\n  ]\n}';
+          }
+        }
+      } catch (repairError) {
+        console.error('JSON修復中にエラーが発生しました:', repairError);
+        // 修復に失敗してもそのまま続行
+      }
       
       console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
       
@@ -461,11 +523,42 @@ ${relatedKnowledgeText}
         
         try {
           // 応答から```jsonや```などのマークダウンコードブロックを削除
-          const cleanedResponse = generatedFlow
+          let cleanedResponse = generatedFlow
             .replace(/^```json\s*/, '') // 先頭の```json
             .replace(/^```\s*/, '')     // 先頭の```
             .replace(/\s*```$/, '')     // 末尾の```
             .trim();
+          
+          // 不完全なJSONを検出して修復を試みる
+          try {
+            // 簡易検出: 最後のステップが途中で切れていないか確認
+            const lastBraceIndex = cleanedResponse.lastIndexOf('}');
+            const lastStepEndIndex = cleanedResponse.lastIndexOf('    }');
+            
+            // ステップが途中で切れている可能性がある場合
+            if (lastBraceIndex < cleanedResponse.length - 2 || 
+                (cleanedResponse.includes('"steps": [') && !cleanedResponse.includes('"options": []'))) {
+              console.log('不完全なJSONが検出されました。修復を試みます...');
+              
+              // steps配列を検出
+              const stepsStart = cleanedResponse.indexOf('"steps": [');
+              if (stepsStart > 0) {
+                // 最後の完全なステップを見つける
+                const steps = cleanedResponse.substring(stepsStart);
+                const completeSteps = steps.split('},\n    {');
+                
+                // 最後のステップが不完全かもしれないので除外し、閉じ括弧を追加
+                cleanedResponse = cleanedResponse.substring(0, stepsStart) + 
+                               '"steps": [' + 
+                               completeSteps.slice(0, -1).join('},\n    {') + 
+                               '}' +
+                               '\n  ]\n}';
+              }
+            }
+          } catch (repairError) {
+            console.error('JSON修復中にエラーが発生しました:', repairError);
+            // 修復に失敗してもそのまま続行
+          }
           
           console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
           
