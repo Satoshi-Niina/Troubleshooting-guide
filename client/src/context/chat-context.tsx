@@ -873,12 +873,21 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // 緊急ガイドデータを送信する関数
   const sendEmergencyGuide = useCallback(async (guideData: any) => {
     try {
-      if (!chatId) return;
+      // チャットIDがない場合は初期化を試みる
+      if (!chatId) {
+        const newChatId = await initializeChat();
+        if (!newChatId) {
+          throw new Error('チャットの初期化に失敗しました');
+        }
+      }
       
       setIsLoading(true);
       
+      const currentChatId = chatId || 1;
+      console.log('応急処置ガイド: チャットID', currentChatId, 'にデータを送信します');
+      
       const response = await apiRequest('POST', `/api/emergency-guide/send`, {
-        chatId,
+        chatId: currentChatId,
         guideData,
       });
       
@@ -887,6 +896,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       const data = await response.json();
+      console.log('応急処置ガイド: 送信成功', data);
       
       // メッセージリストに追加
       setMessages(prev => [

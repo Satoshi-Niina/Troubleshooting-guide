@@ -5,6 +5,7 @@ import path from "path";
 import { initializeKnowledgeBase } from "./lib/knowledge-base";
 import fs from "fs";
 import axios from "axios";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -71,6 +72,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // ストレージをアプリケーションのローカル変数として保存
+    app.locals.storage = storage;
+    console.log('ストレージをアプリケーション変数として設定しました');
+    
     // サーバー起動時に知識ベースを初期化
     console.log('知識ベースの初期化を開始...');
     initializeKnowledgeBase();

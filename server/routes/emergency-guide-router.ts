@@ -836,6 +836,55 @@ router.delete('/delete/:id', async (req, res) => {
 });
 
 // チャットに応急処置ガイドを送信するエンドポイント
+// 緊急ガイドデータをチャットに直接送信するエンドポイント
+router.post('/send', async (req, res) => {
+  try {
+    const { chatId, guideData } = req.body;
+    
+    if (!chatId || !guideData) {
+      return res.status(400).json({ 
+        success: false,
+        message: "チャットIDとガイドデータが必要です" 
+      });
+    }
+    
+    console.log(`応急処置ガイドデータをチャットに送信: chatId=${chatId}, title=${guideData.title || "無題"}`);
+    
+    // データベースからchatを取得する代わりに、直接ストレージ層を使用
+    const storage = req.app.locals.storage;
+    
+    // 1. ユーザーのガイド内容メッセージを作成
+    const userMessage = await storage.createMessage({
+      chatId,
+      content: guideData.content || guideData.title || "応急処置ガイド",
+      isAiResponse: false,
+      senderId: req.session.userId
+    });
+    
+    // 2. AIの応答メッセージを作成（確認応答）
+    const aiMessage = await storage.createMessage({
+      chatId,
+      content: `応急処置ガイド「${guideData.title || ""}」を受け取りました。手順に従って作業を続けてください。`,
+      isAiResponse: true,
+      senderId: req.session.userId
+    });
+    
+    return res.json({
+      success: true,
+      userMessage,
+      aiMessage
+    });
+  } catch (error) {
+    console.error("緊急ガイド送信エラー:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "緊急ガイドの送信中にエラーが発生しました",
+      error: error instanceof Error ? error.message : "不明なエラー"
+    });
+  }
+});
+
+// 古い実装 - 特定のガイドをチャットに送信するエンドポイント
 router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   try {
     const { guideId, chatId } = req.params;
