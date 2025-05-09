@@ -420,7 +420,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     }
     
     // チャットへガイドを送信
-    sendEmergencyGuide(guideTitle, guideContent);
+    sendEmergencyGuide({ title: guideTitle, content: guideContent });
     
     // 送信完了メッセージ
     toast({
@@ -448,7 +448,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       });
     }
     onExit?.();
-  }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast, searchResults]);
+  }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast]);
 
   // ローディング中の表示
   if (loading) {
