@@ -1,0 +1,144 @@
+{
+  "id": "engine_failure_on_mainline",
+  "title": "軌道モータカーエンジン停止時の応急処置",
+  "description": "軌道モータカーで本線を走行中にエンジンが突然停止した場合の応急処置フロー。",
+  "triggerKeywords": [
+    "軌道モータカー",
+    "エンジン停止",
+    "本線走行中"
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "title": "開始",
+      "description": "エンジンが停止したことを確認し、車両を安全な位置に移動させる。",
+      "imageUrl": "",
+      "type": "start",
+      "options": [
+        {
+          "text": "次へ",
+          "nextStepId": "step1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step1",
+      "title": "ステップ1",
+      "description": "エンジン停止の原因を特定するために、燃料ゲージを確認する。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "次へ",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "判断1",
+      "description": "燃料は十分か？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "ステップ2A",
+      "description": "燃料は十分。次に電気系統を確認する。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "次へ",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "ステップ2B",
+      "description": "燃料不足。燃料を補給し、エンジンを再始動する。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision2",
+      "title": "判断2",
+      "description": "電気系統に異常はあるか？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい",
+          "nextStepId": "step3a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ",
+          "nextStepId": "step3b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step3a",
+      "title": "ステップ3A",
+      "description": "電気系統に異常あり。配線やヒューズを確認し、必要に応じて修理する。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step3b",
+      "title": "ステップ3B",
+      "description": "電気系統に異常なし。エンジンの他の要因を専門家に相談する。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    }
+  ]
+}
