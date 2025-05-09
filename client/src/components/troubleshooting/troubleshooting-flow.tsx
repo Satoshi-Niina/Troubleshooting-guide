@@ -34,6 +34,7 @@ interface TroubleshootingStep {
   id?: string;
   message?: string;
   content?: string; // contentフィールド追加
+  description?: string; // descriptionフィールド追加
   title?: string;   // タイトルフィールド追加
   image?: string;
   imageUrl?: string;
@@ -59,7 +60,8 @@ interface TroubleshootingFlowProps {
 export default function TroubleshootingFlow({ id, onComplete, onExit }: TroubleshootingFlowProps) {
   // トラブルシューティングステップでメッセージまたはコンテンツを取得するヘルパー関数
   const getStepText = (step: TroubleshootingStep) => {
-    return step.message || step.content || "";
+    // 優先順位：message → content → description → 空文字列
+    return step.message || step.content || step.description || "";
   };
   const { toast } = useToast();
   const { sendEmergencyGuide } = useChat(); // ChatContextからsendEmergencyGuideを取得
