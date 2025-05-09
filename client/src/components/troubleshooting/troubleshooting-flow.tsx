@@ -782,50 +782,68 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           </div>
         </div>
         
-        {/* チャットに送信ボタン - 条件分岐で選択された内容のみを送信 */}
+        {/* チャットに送信ボタン - 条件分岐ですべての表示したフローを送信 */}
         <Button 
           variant="secondary" 
           className="w-full" 
           onClick={() => {
-            // 現在表示中のフローのみをチャットに送信（履歴ではなく表示中のステップのみ）
+            // これまでに表示したすべてのステップ（履歴を含めて）をチャットに送信
             if (currentStep && flowData) {
-              // 現在表示中の手順のみを送信するようにコンテンツを作成
               const guideTitle = flowData.title || flowData.id.replace(/_/g, ' ');
-              let guideContent = `**${guideTitle} - 選択された手順**\n\n`;
+              let guideContent = `**${guideTitle} - 処理履歴**\n\n`;
               
-              // 現在のステップの内容を追加
-              const message = currentStep.message || currentStep.content || '';
-              guideContent += `${message}\n\n`;
+              // 履歴ステップを取得
+              const displayedStepIds = [...stepHistory, currentStep.id].filter(Boolean) as string[];
+              const displayedSteps = displayedStepIds.map(stepId => 
+                flowData.steps.find(step => step.id === stepId)
+              ).filter(Boolean) as TroubleshootingStep[];
               
-              // チェックリストがある場合は追加
-              if (currentStep.checklist && currentStep.checklist.length > 0) {
-                guideContent += '**確認項目**：\n';
-                currentStep.checklist.forEach((item) => {
-                  // チェックボックスの状態に基づいてチェック済みかどうかを示す
-                  const index = currentStep.checklist?.indexOf(item);
-                  const isChecked = index !== undefined && checklistItems[`${index}`] === true;
-                  const checkMark = isChecked ? '✓ ' : '• ';
-                  guideContent += `${checkMark}${item}\n`;
-                });
-              }
+              // 表示された各ステップの内容を追加
+              displayedSteps.forEach((step, index) => {
+                const stepNum = index + 1;
+                const stepTitle = step.title || `ステップ ${stepNum}`;
+                const message = step.message || step.content || '';
+                
+                // ステップ番号とタイトルを表示
+                guideContent += `**${stepNum}. ${stepTitle}**\n`;
+                guideContent += `${message}\n\n`;
+                
+                // チェックリストがある場合は追加（現在のステップの場合のみチェック状態を反映）
+                if (step.checklist && step.checklist.length > 0) {
+                  guideContent += '確認項目：\n';
+                  step.checklist.forEach((item) => {
+                    // 現在のステップの場合はチェック状態を反映、それ以外は単純に箇条書き
+                    if (step.id === currentStep.id) {
+                      const index = step.checklist?.indexOf(item);
+                      const isChecked = index !== undefined && checklistItems[`${index}`] === true;
+                      const checkMark = isChecked ? '✓ ' : '• ';
+                      guideContent += `${checkMark}${item}\n`;
+                    } else {
+                      guideContent += `• ${item}\n`;
+                    }
+                  });
+                  guideContent += '\n';
+                }
+              });
               
-              // 画像は現在のステップに関連するもののみ送信（全体は送信しない）
-              console.log('現在表示中のステップのみをチャットに送信します');
+              // 最後に現在の状態をまとめる
+              guideContent += `**現在の状態：${currentStep.title || '手順完了'}**\n`;
               
               // チャットへガイドを送信
+              console.log('表示履歴を含めたステップをチャットに送信します');
               sendEmergencyGuide({ title: guideTitle, content: guideContent });
               
               // 送信完了メッセージ
               toast({
                 title: '送信完了',
-                description: '現在表示中の手順をチャットに送信しました',
+                description: '表示した手順の履歴をチャットに送信しました',
                 duration: 3000,
               });
             }
           }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          現在の手順をチャットに送信
+          表示した手順をチャットに送信
         </Button>
       </CardFooter>
     </Card>
