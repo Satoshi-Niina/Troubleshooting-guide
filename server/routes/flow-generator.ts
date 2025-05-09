@@ -54,28 +54,105 @@ router.post('/generate-from-keywords', async (req, res) => {
     const prompt = `以下のキーワードに関連する応急処置フローを生成してください。
 必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
 レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
-JSONの形式は次のようにしてください：
+生成するJSONは完全な有効なJSONである必要があり、途中で切れたり不完全な構造であってはなりません。
+特に、各配列やオブジェクトが適切に閉じられていることを確認してください。
+
+以下の形式に厳密に従ってください:
 
 {
-  "id": "ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)",
+  "id": "機械的なID（英数字とアンダースコアのみ）",
   "title": "フローのタイトル",
-  "description": "フローの説明",
-  "triggerKeywords": ["関連するキーワード1", "関連するキーワード2", "専門用語", "部品名", "症状"],
+  "description": "簡潔な説明",
+  "triggerKeywords": ["キーワード1", "キーワード2"],
   "steps": [
     {
-      "id": "ステップの一意の識別子",
-      "title": "ステップのタイトル",
-      "description": "ステップの詳細説明(具体的かつ技術的に正確であること)",
-      "imageUrl": "画像URL(もしあれば)または空文字列",
-      "type": "step | decision | start | end",
+      "id": "start",
+      "title": "開始",
+      "description": "初期状態の説明",
+      "imageUrl": "",
+      "type": "start",
       "options": [
         {
-          "text": "選択肢のテキスト",
-          "nextStepId": "次のステップID",
+          "text": "次へ",
+          "nextStepId": "step1",
           "isTerminal": false,
-          "conditionType": "yes | no | other"
+          "conditionType": "other"
         }
       ]
+    },
+    {
+      "id": "step1",
+      "title": "ステップ1",
+      "description": "ステップ1の説明",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "次へ",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "判断1",
+      "description": "判断の説明",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "ステップ2A",
+      "description": "はいの場合の処理",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "ステップ2B",
+      "description": "いいえの場合の処理",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "description": "フローの終了",
+      "imageUrl": "",
+      "type": "end",
+      "options": []
     }
   ]
 }
@@ -236,28 +313,105 @@ router.post('/generate-from-guide/:id', async (req, res) => {
     const prompt = `以下の応急処置ガイドからトラブルシューティングフローを生成してください。
 必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
 レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
-JSONの形式は次のようにしてください：
+生成するJSONは完全な有効なJSONである必要があり、途中で切れたり不完全な構造であってはなりません。
+特に、各配列やオブジェクトが適切に閉じられていることを確認してください。
+
+以下の形式に厳密に従ってください:
 
 {
-  "id": "ファイル名として使用される一意の識別子(アルファベット小文字とアンダースコアのみ)",
+  "id": "機械的なID（英数字とアンダースコアのみ）",
   "title": "フローのタイトル",
-  "description": "フローの説明",
-  "triggerKeywords": ["関連するキーワード1", "関連するキーワード2", "専門用語", "部品名", "症状"],
+  "description": "簡潔な説明",
+  "triggerKeywords": ["キーワード1", "キーワード2"],
   "steps": [
     {
-      "id": "ステップの一意の識別子",
-      "title": "ステップのタイトル",
-      "description": "ステップの詳細説明(具体的かつ技術的に正確であること)",
-      "imageUrl": "画像URL(もしあれば)または空文字列",
-      "type": "step | decision | start | end",
+      "id": "start",
+      "title": "開始",
+      "description": "初期状態の説明",
+      "imageUrl": "",
+      "type": "start",
       "options": [
         {
-          "text": "選択肢のテキスト",
-          "nextStepId": "次のステップID",
+          "text": "次へ",
+          "nextStepId": "step1",
           "isTerminal": false,
-          "conditionType": "yes | no | other"
+          "conditionType": "other"
         }
       ]
+    },
+    {
+      "id": "step1",
+      "title": "ステップ1",
+      "description": "ステップ1の説明",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "次へ",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "判断1",
+      "description": "判断の説明",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "ステップ2A",
+      "description": "はいの場合の処理",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "ステップ2B",
+      "description": "いいえの場合の処理",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "title": "終了",
+      "description": "フローの終了",
+      "imageUrl": "",
+      "type": "end",
+      "options": []
     }
   ]
 }
