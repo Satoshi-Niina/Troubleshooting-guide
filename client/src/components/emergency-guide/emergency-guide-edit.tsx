@@ -274,13 +274,13 @@ const EmergencyGuideEdit: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error('応急復旧フローデータの更新に失敗しました');
+        throw new Error('応急処置ガイドデータの更新に失敗しました');
       }
       
       // 更新成功
       toast({
         title: '更新完了',
-        description: '応急復旧フローデータを更新しました',
+        description: '応急処置ガイドデータを更新しました',
       });
       
       // 最新データを再取得
@@ -294,7 +294,7 @@ const EmergencyGuideEdit: React.FC = () => {
       console.error('ガイド更新エラー:', error);
       toast({
         title: 'エラー',
-        description: '応急復旧フローデータの更新に失敗しました',
+        description: '応急処置ガイドデータの更新に失敗しました',
         variant: 'destructive',
       });
     } finally {
@@ -836,7 +836,7 @@ const EmergencyGuideEdit: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
-                <CardTitle>応急復旧データ編集</CardTitle>
+                <CardTitle>応急処置ガイド編集</CardTitle>
                 <CardDescription>
                   {guideData?.data.metadata.タイトル} ({formatDate(guideData?.data.metadata.作成日 || "")})
                 </CardDescription>
