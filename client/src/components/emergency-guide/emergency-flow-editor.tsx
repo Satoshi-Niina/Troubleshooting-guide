@@ -623,10 +623,9 @@ const EmergencyFlowEditor: React.FC<EmergencyFlowEditorProps> = ({ onSave, onCan
                   </div>
                   
                   <div className="my-4">
-                    <h3 className="text-sm font-medium mb-2">ファイル情報</h3>
+                    <h3 className="text-sm font-medium mb-2">フロー情報</h3>
                     <div className="bg-gray-100 p-2 rounded text-sm">
                       <p><span className="font-medium">ID:</span> {flowId}</p>
-                      <p><span className="font-medium">ファイル:</span> {fileName || '未設定'}</p>
                     </div>
                   </div>
                   
