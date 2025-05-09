@@ -542,7 +542,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
             {/* フローのタイトルを表示 */}
             {flowData.title || '応急処置ガイド'}
           </CardTitle>
-          <Badge variant="outline">{flowData.id}</Badge>
+          {/* ファイル名（ID）を非表示にする */}
         </div>
         {/* ステップのタイトルがあれば表示 */}
         {currentStep.title && (
