@@ -57,6 +57,10 @@ interface TroubleshootingFlowProps {
 }
 
 export default function TroubleshootingFlow({ id, onComplete, onExit }: TroubleshootingFlowProps) {
+  // トラブルシューティングステップでメッセージまたはコンテンツを取得するヘルパー関数
+  const getStepText = (step: TroubleshootingStep) => {
+    return step.message || step.content || "";
+  };
   const { toast } = useToast();
   const { sendEmergencyGuide } = useChat(); // ChatContextからsendEmergencyGuideを取得
   const { user } = useAuth(); // 認証状態を取得
@@ -383,7 +387,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     let guideContent = `**${guideTitle} - 現在の手順**\n\n`;
     
     // 現在のステップの内容を追加
-    const message = currentStep.message || '';
+    const message = currentStep.message || currentStep.content || '';
     guideContent += `${message}\n\n`;
     
     // チェックリストがある場合は追加
