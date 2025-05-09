@@ -695,8 +695,20 @@ const EmergencyGuideEdit: React.FC = () => {
         
         if (matchingGuides.length > 0) {
           console.log(`検索結果: ${matchingGuides.length}件のガイドが見つかりました`);
+          
           // 最初の一致するガイドを選択
-          setSelectedGuideId(matchingGuides[0].id);
+          const selectedGuide = matchingGuides[0];
+          setSelectedGuideId(selectedGuide.id);
+          
+          // フロータブに切り替えるためのイベントを発行
+          // トラブルシューティングフローを表示するために ts_ プレフィックスを追加
+          const guideId = `ts_${selectedGuide.id}`;
+          console.log(`フロー表示に切り替え: ${guideId}`);
+          
+          // フロータブに切り替えるイベントを発行
+          window.dispatchEvent(new CustomEvent('switch-to-flow-tab', { 
+            detail: { guideId }
+          }));
           
           toast({
             title: "検索結果",
