@@ -90,8 +90,17 @@ ${relatedKnowledgeText}
     
     let flowData;
     try {
+      // 応答から```jsonや```などのマークダウンコードブロックを削除
+      const cleanedResponse = generatedFlow
+        .replace(/^```json\s*/, '') // 先頭の```json
+        .replace(/^```\s*/, '')     // 先頭の```
+        .replace(/\s*```$/, '')     // 末尾の```
+        .trim();
+      
+      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
+      
       // JSONとして解析
-      flowData = JSON.parse(generatedFlow.trim());
+      flowData = JSON.parse(cleanedResponse);
       
       // IDが設定されていない場合はキーワードから生成
       if (!flowData.id) {
@@ -267,8 +276,17 @@ ${relatedKnowledgeText}
     
     let flowData;
     try {
+      // 応答から```jsonや```などのマークダウンコードブロックを削除
+      const cleanedResponse = generatedFlow
+        .replace(/^```json\s*/, '') // 先頭の```json
+        .replace(/^```\s*/, '')     // 先頭の```
+        .replace(/\s*```$/, '')     // 末尾の```
+        .trim();
+      
+      console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
+      
       // JSONとして解析
-      flowData = JSON.parse(generatedFlow.trim());
+      flowData = JSON.parse(cleanedResponse);
       
       // IDが設定されていない場合はファイル名から生成
       if (!flowData.id) {
@@ -442,8 +460,17 @@ ${relatedKnowledgeText}
         const generatedFlow = await processOpenAIRequest(prompt);
         
         try {
+          // 応答から```jsonや```などのマークダウンコードブロックを削除
+          const cleanedResponse = generatedFlow
+            .replace(/^```json\s*/, '') // 先頭の```json
+            .replace(/^```\s*/, '')     // 先頭の```
+            .replace(/\s*```$/, '')     // 末尾の```
+            .trim();
+          
+          console.log('クリーニング後のレスポンス (一部):', cleanedResponse.substring(0, 100) + '...');
+          
           // JSONとして解析
-          const flowData = JSON.parse(generatedFlow.trim());
+          const flowData = JSON.parse(cleanedResponse);
           
           // IDが設定されていない場合はタイトルから生成
           let flowId = flowData.id || title.toLowerCase()

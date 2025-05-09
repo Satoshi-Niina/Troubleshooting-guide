@@ -59,6 +59,10 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
     console.log("ユーザープロンプト:", prompt);
     console.log("ナレッジベースのみを使用:", useOnlyKnowledgeBase);
     
+    // JSONパターンを検出
+    const isJsonRequest = prompt.includes('JSON形式で') || prompt.includes('JSONフォーマット') || 
+                         prompt.includes('以下のフィールドを含む') || prompt.includes('JSON形式の');
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -73,6 +77,7 @@ export async function processOpenAIRequest(prompt: string, useOnlyKnowledgeBase:
       ],
       temperature: 0.05, // さらに低い温度設定で専門的で確定的な回答を得る
       max_tokens: 1000, // 回答の長さを少し増やして詳細な情報を含められるようにする
+      ...(isJsonRequest && { response_format: { type: "json_object" } }), // JSON形式を要求するプロンプトの場合
     });
     
     // 応答内容をデバッグ出力
