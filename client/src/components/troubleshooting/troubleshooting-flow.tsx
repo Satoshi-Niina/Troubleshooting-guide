@@ -799,22 +799,35 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   flowData.steps.find(step => step.id === stepId)
                 ).filter(Boolean) as TroubleshootingStep[];
                 
-                // 表示・処理してきた各ステップの経路を簡潔な形で作成
-                let pathContent = '';
-                let currentPath = '';
+                // シンプルな日本語テキストでステップの流れを構築
+                let flowSummary = '';
                 
-                // 処理フローの履歴を順に追跡
+                // 処理フローの履歴を人間が読みやすい形で追跡
                 displayedSteps.forEach((step, index) => {
                   // ステップタイトルを取得
                   const stepTitle = step.title || `ステップ ${index + 1}`;
+                  const stepDescription = step.message || step.content || '';
+                  
+                  // ステップごとに行を作成
+                  let stepLine = '';
                   
                   // 最初のステップ
                   if (index === 0) {
-                    currentPath = stepTitle;
-                  }
+                    // 最初のステップには矢印なし
+                    stepLine = `${stepTitle}`;
+                    // 説明があれば追加
+                    if (stepDescription) {
+                      // 説明が長い場合は短くする
+                      const shortDesc = stepDescription.length > 50 
+                        ? stepDescription.substring(0, 50) + '...' 
+                        : stepDescription;
+                      stepLine += `（${shortDesc}）`;
+                    }
+                    flowSummary += stepLine;
+                  } 
                   // 2つ目以降のステップ
                   else {
-                    // 前のステップから選択した選択肢を確認
+                    // 前のステップから選択した選択肢があれば追加
                     const prevStep = displayedSteps[index - 1];
                     if (prevStep.options && prevStep.options.length > 0) {
                       // 選択肢を探す
@@ -825,25 +838,38 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                       if (selectedOption) {
                         // 選択内容を追加
                         const optionText = selectedOption.text || selectedOption.label || '次へ';
-                        currentPath += ` → ${optionText} → ${stepTitle}`;
+                        flowSummary += ` → 「${optionText}」 → ${stepTitle}`;
                       } else {
                         // 選択肢が見つからない場合は単純に接続
-                        currentPath += ` → ${stepTitle}`;
+                        flowSummary += ` → ${stepTitle}`;
                       }
                     } else {
                       // 選択肢がない場合は単純に接続
-                      currentPath += ` → ${stepTitle}`;
+                      flowSummary += ` → ${stepTitle}`;
                     }
                   }
                 });
                 
-                // メッセージを組み立て
-                guideContent = `**${guideTitle} - 処理フロー**\n\n`;
-                guideContent += currentPath + '\n';
+                // 現在の状態を確認
+                const currentStepDescription = currentStep.message || currentStep.content || '';
+                
+                // メッセージを組み立て（シンプルなテキスト形式）
+                guideContent = `■ ${guideTitle}\n\n`;
+                guideContent += `【実施した手順】\n${flowSummary}\n\n`;
+                
+                // 現在の状態を追加（短く）
+                guideContent += `【現在の状態】\n${currentStep.title || '手順完了'}`;
+                if (currentStepDescription) {
+                  // 100文字以内に制限
+                  const shortCurrentDesc = currentStepDescription.length > 100 
+                    ? currentStepDescription.substring(0, 100) + '...' 
+                    : currentStepDescription;
+                  guideContent += `\n${shortCurrentDesc}`;
+                }
                 
                 // 現在のステップの確認項目があれば追加（現在のステップのみ）
                 if (currentStep.checklist && currentStep.checklist.length > 0) {
-                  guideContent += `\n**確認項目**:\n`;
+                  guideContent += `\n\n【確認項目】\n`;
                   currentStep.checklist.forEach((item) => {
                     const index = currentStep.checklist?.indexOf(item);
                     const isChecked = index !== undefined && checklistItems[`${index}`] === true;
@@ -886,31 +912,10 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 .then(result => {
                   console.log('ユーザーメッセージ送信結果:', result);
                   
-                  // AI応答を送信 - 標準メッセージAPIを使用
-                  return fetch(`/api/chats/${chatId}/messages`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      content: `応急処置ガイド「${guideTitle}」を受け取りました。手順に従って作業を続けてください。`,
-                      isUserMessage: false
-                    }),
-                  });
-                })
-                .then(aiResponse => {
-                  if (!aiResponse.ok) {
-                    throw new Error(`AI応答エラー (${aiResponse.status})`);
-                  }
-                  return aiResponse.json();
-                })
-                .then(aiResult => {
-                  console.log('AI応答結果:', aiResult);
-                  
                   // 送信完了メッセージ
                   toast({
                     title: '送信完了',
-                    description: '表示した手順の履歴をチャットに送信しました',
+                    description: '表示した手順をチャットに送信しました',
                     duration: 3000,
                   });
                   
