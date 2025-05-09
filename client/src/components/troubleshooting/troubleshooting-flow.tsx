@@ -488,21 +488,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   }, [flowData, currentStep, sendEmergencyGuide, onExit, user, toast, searchResults, checklistItems]);
 
   // トラブルシューティングを終了して戻る
-  // 終了時に応急処置ガイドの内容をチャットに自動的に送信
+  // ユーザーの要求により、チャットへの自動送信は行わない
   const handleExit = useCallback(() => {
-    // データがある場合かつユーザーがログインしている場合のみチャットに送信
-    if (flowData && currentStep && user) {
-      sendTroubleshootingToChat();
-    } else if (flowData && currentStep && !user) {
-      // ユーザーがログインしていない場合はガイド送信をスキップして通知
-      toast({
-        title: '通知',
-        description: 'ログインしていないため、ガイド内容をチャットに送信できません',
-        duration: 3000,
-      });
-    }
+    // 処理済み内容は自動的にチャットに送信しない
+    console.log('応急処置ガイド処理を終了します。チャットへの自動送信はスキップします。');
+    
+    // 単純に終了処理を呼び出す
     onExit?.();
-  }, [flowData, currentStep, sendTroubleshootingToChat, onExit, user, toast]);
+  }, [onExit]);
 
   // ローディング中の表示
   if (loading) {
@@ -585,15 +578,9 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                     });
                   }
                   
-                  // 関係画像エリアにこの画像を表示するためのイベントを発火
-                  const imageTitle = flowData?.id || "応急処置ガイド";
-                  window.dispatchEvent(new CustomEvent('preview-image', { 
-                    detail: { 
-                      url: currentStep.image || currentStep.imageUrl,
-                      title: imageTitle,
-                      content: currentStep.message || "トラブルシューティング画像"
-                    } 
-                  }));
+                  // 関係画像エリアにこの画像を表示するためのイベントは発火しない
+                  // ユーザーの要求により、チャットへの転送処理を無効化
+                  console.log('応急処置ガイド: 画像表示 - チャットへの転送をスキップします');
                 }}
                 onError={(e) => {
                   setImageLoading(false);
@@ -756,15 +743,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           </div>
         </div>
         
-        {/* チャットに送信ボタン */}
-        <Button 
-          variant="secondary" 
-          className="w-full" 
-          onClick={sendTroubleshootingToChat}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          チャットに送信
-        </Button>
+        {/* チャットに送信ボタン - ユーザーの要求により非表示に変更 */}
       </CardFooter>
     </Card>
   );
