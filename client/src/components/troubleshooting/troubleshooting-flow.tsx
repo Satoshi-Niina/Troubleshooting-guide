@@ -192,6 +192,22 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
   useEffect(() => {
     if (!currentStep) return;
     
+    // ステップの内容から関連キーワードを抽出して画像検索する
+    const extractKeywordsFromText = (text: string) => {
+      // 日本語の重要なキーワードを抽出（名詞を中心に）
+      // 簡易的な実装として、2文字以上の単語を抽出
+      const words = text.match(/[一-龠]+|[ぁ-ん]+|[ァ-ヴー]+|[a-zA-Z0-9]+/g) || [];
+      
+      // 助詞や助動詞などの一般的な語を除外
+      const stopWords = ['した', 'します', 'ます', 'です', 'ない', 'する', 'なる', 'いる', 'ある', 'れる', 'られる', 
+        'ので', 'から', 'より', 'また', 'および', 'または', 'など', 'して', 'として', 'について', 'により'];
+      
+      return words
+        .filter(word => word.length >= 2) // 2文字以上の単語のみ
+        .filter(word => !stopWords.includes(word)) // ストップワードを除外
+        .slice(0, 5); // 最大5単語まで
+    };
+    
     // 画像検索を実行
     const performImageSearch = async () => {
       // 1. ステップに直接画像URLが指定されている場合は検索しない
@@ -211,14 +227,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           console.log('検索結果:', results);
           setSearchResults(results);
           
-          // 検索結果があれば、最初の画像を表示（Chat UIとの連携）
+          // 検索結果があれば、最初の画像を表示
           if (results && results.length > 0) {
             const firstResult = results[0];
             // パスを正しく解決
             const imageUrl = handleImagePath(firstResult.file || firstResult.url);
             console.log('画像表示: キーワード検索結果の画像を表示', imageUrl);
             
-            // ブラウザのイベントディスパッチを使用してChat UIに通知
+            // ブラウザのイベントディスパッチを使用してプレビュー表示のみ実行
             window.dispatchEvent(new CustomEvent('preview-image', { 
               detail: { 
                 url: imageUrl,
@@ -234,9 +250,23 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
         // キーワードがない場合は現在のステップの内容を使って検索
         console.log('キーワードがないため、ステップのメッセージから検索を実行');
         try {
-          // undefinedの場合は空文字列を使用
-          const message = currentStep.message || '';
-          const results = await searchByText(message);
+          // ステップからメッセージを取得し、キーワードを抽出
+          const message = currentStep.message || currentStep.content || '';
+          // メッセージからキーワードを抽出
+          const keywords = extractKeywordsFromText(message);
+          console.log('テキストから抽出したキーワード:', keywords);
+          
+          // 抽出したキーワードで検索
+          const searchText = keywords.join(' ');
+          console.log('検索キーワード:', searchText);
+          console.log('キーワードタイプ:', typeof searchText, searchText.length, Array.isArray(searchText));
+          
+          if (!searchText.trim()) {
+            console.log('検索テキストが空のため検索をスキップします');
+            return;
+          }
+          
+          const results = await searchByText(searchText);
           setSearchResults(results);
           
           // 検索結果があれば、最初の画像を表示
@@ -246,6 +276,7 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
             const imageUrl = handleImagePath(firstResult.file || firstResult.url);
             console.log('画像表示: メッセージからの検索結果の画像を表示', imageUrl);
             
+            // プレビュー表示のみ実行
             window.dispatchEvent(new CustomEvent('preview-image', { 
               detail: { 
                 url: imageUrl,
@@ -578,9 +609,16 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                     });
                   }
                   
-                  // 関係画像エリアにこの画像を表示するためのイベントは発火しない
-                  // ユーザーの要求により、チャットへの転送処理を無効化
-                  console.log('応急処置ガイド: 画像表示 - チャットへの転送をスキップします');
+                  // 関係画像エリアにこの画像を表示するためのイベントを発火
+                  // プレビューのみ表示し、チャットへの送信は行わない
+                  const imageTitle = flowData?.id || "応急処置ガイド";
+                  window.dispatchEvent(new CustomEvent('preview-image', { 
+                    detail: { 
+                      url: currentStep.image || currentStep.imageUrl,
+                      title: imageTitle,
+                      content: currentStep.message || "トラブルシューティング画像"
+                    } 
+                  }));
                 }}
                 onError={(e) => {
                   setImageLoading(false);
@@ -608,10 +646,17 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                     parent.appendChild(errorDiv);
                   }
                 }}
-                // クリックでのプレビュー表示も無効化（チャットへの表示はしない）
+                // クリックでプレビュー表示する（チャットには送信しない）
                 onClick={() => {
-                  console.log('応急処置ガイド: 画像クリック - チャットへの転送をスキップします');
-                  // チャットへの転送は行わない
+                  // プレビューのみ表示する
+                  const imageTitle = flowData?.id || "応急処置ガイド";
+                  window.dispatchEvent(new CustomEvent('preview-image', { 
+                    detail: { 
+                      url: currentStep.image || currentStep.imageUrl,
+                      title: imageTitle,
+                      content: currentStep.message || "トラブルシューティング画像"
+                    } 
+                  }));
                 }}
               />
             </div>
@@ -640,8 +685,14 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                   alt={searchResults[0].title || "関連画像"}
                   className="max-h-80 object-contain rounded-md cursor-pointer border border-blue-100 shadow-sm"
                   onClick={() => {
-                    // Chat UIへの通知は行わない（ユーザーの要求により無効化）
-                    console.log('応急処置ガイド: 検索結果画像クリック - チャットへの転送をスキップします');
+                    // プレビューのみ表示する
+                    window.dispatchEvent(new CustomEvent('preview-image', { 
+                      detail: { 
+                        url: handleImagePath(searchResults[0].file || searchResults[0].url),
+                        title: searchResults[0].title || '関連画像',
+                        content: searchResults[0].description || currentStep.message
+                      } 
+                    }));
                   }}
                 />
               </div>
@@ -731,7 +782,51 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           </div>
         </div>
         
-        {/* チャットに送信ボタン - ユーザーの要求により非表示に変更 */}
+        {/* チャットに送信ボタン - 条件分岐で選択された内容のみを送信 */}
+        <Button 
+          variant="secondary" 
+          className="w-full" 
+          onClick={() => {
+            // 現在表示中のフローのみをチャットに送信（履歴ではなく表示中のステップのみ）
+            if (currentStep && flowData) {
+              // 現在表示中の手順のみを送信するようにコンテンツを作成
+              const guideTitle = flowData.title || flowData.id.replace(/_/g, ' ');
+              let guideContent = `**${guideTitle} - 選択された手順**\n\n`;
+              
+              // 現在のステップの内容を追加
+              const message = currentStep.message || currentStep.content || '';
+              guideContent += `${message}\n\n`;
+              
+              // チェックリストがある場合は追加
+              if (currentStep.checklist && currentStep.checklist.length > 0) {
+                guideContent += '**確認項目**：\n';
+                currentStep.checklist.forEach((item) => {
+                  // チェックボックスの状態に基づいてチェック済みかどうかを示す
+                  const index = currentStep.checklist?.indexOf(item);
+                  const isChecked = index !== undefined && checklistItems[`${index}`] === true;
+                  const checkMark = isChecked ? '✓ ' : '• ';
+                  guideContent += `${checkMark}${item}\n`;
+                });
+              }
+              
+              // 画像は現在のステップに関連するもののみ送信（全体は送信しない）
+              console.log('現在表示中のステップのみをチャットに送信します');
+              
+              // チャットへガイドを送信
+              sendEmergencyGuide({ title: guideTitle, content: guideContent });
+              
+              // 送信完了メッセージ
+              toast({
+                title: '送信完了',
+                description: '現在表示中の手順をチャットに送信しました',
+                duration: 3000,
+              });
+            }
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          現在の手順をチャットに送信
+        </Button>
       </CardFooter>
     </Card>
   );
