@@ -286,6 +286,8 @@ const EmergencyGuideEdit: React.FC = () => {
       // 最新データを再取得
       fetchGuideData(selectedGuideId);
       setIsEditing(false);
+      // 編集画面を閉じる
+      setShowEditCard(false);
       // 確認ダイアログを閉じる
       setShowSaveConfirmDialog(false);
     } catch (error) {
@@ -847,6 +849,7 @@ const EmergencyGuideEdit: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         setIsEditing(false);
+                        setShowEditCard(false); // 編集カードを閉じる
                         if (guideData) {
                           setEditedGuideData(JSON.parse(JSON.stringify(guideData.data)));
                         }
