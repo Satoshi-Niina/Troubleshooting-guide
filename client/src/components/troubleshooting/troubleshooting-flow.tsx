@@ -32,10 +32,12 @@ function handleImagePath(imagePath: string): string {
 
 interface TroubleshootingStep {
   id?: string;
-  message: string;
+  message?: string;
+  content?: string; // contentフィールド追加
+  title?: string;   // タイトルフィールド追加
   image?: string;
-  imageUrl?: string; // imageUrlも追加
-  imageKeywords?: string[]; // 検索キーワードの配列を追加
+  imageUrl?: string;
+  imageKeywords?: string[];
   options?: {
     text?: string;
     label?: string;
@@ -83,11 +85,29 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
       }
       
       const data = await response.json();
-      setFlowData(data);
+      console.log('取得したトラブルシューティングデータ:', data);
+      
+      // データ形式を確認し、必要に応じて変換
+      let formattedData = { ...data };
       
       // 最初のステップを設定
       if (data && data.steps && data.steps.length > 0) {
-        setCurrentStep(data.steps[0]);
+        // ステップデータの形式を標準化 (content → message への変換)
+        const formattedSteps = data.steps.map((step: any) => {
+          // 既に message がある場合はそのまま、無ければ content を message として使用
+          return {
+            ...step,
+            message: step.message || step.content || '',
+          };
+        });
+        
+        formattedData.steps = formattedSteps;
+        
+        // 標準化されたデータを設定
+        setFlowData(formattedData);
+        setCurrentStep(formattedData.steps[0]);
+      } else {
+        setFlowData(data);
       }
     } catch (error) {
       console.error('トラブルシューティングデータの取得に失敗しました:', error);
@@ -457,9 +477,19 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">応急処置ガイド</CardTitle>
+          <CardTitle className="text-xl">
+            {/* フローのタイトルを表示 */}
+            {flowData.title || '応急処置ガイド'}
+          </CardTitle>
           <Badge variant="outline">{flowData.id}</Badge>
         </div>
+        {/* ステップのタイトルがあれば表示 */}
+        {currentStep.title && (
+          <div className="mt-2">
+            <span className="text-sm font-medium text-gray-500">手順: </span>
+            <span className="font-semibold">{currentStep.title}</span>
+          </div>
+        )}
       </CardHeader>
       
       <CardContent>
