@@ -177,14 +177,6 @@ const TroubleshootingViewer: React.FC<TroubleshootingViewerProps> = ({ data, onS
               />
             ))}
           </div>
-          <Button
-            variant="outline"
-            onClick={goToNext}
-            disabled={currentStep === data.steps.length - 1}
-          >
-            次へ
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
         </CardFooter>
       </Card>
 

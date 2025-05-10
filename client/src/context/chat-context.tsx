@@ -103,10 +103,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [lastSentText, setLastSentText] = useState<string>('');
   // 音声認識による送信を防止するタイマー
   const [sendTimeoutId, setSendTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  // 十分な文とみなす最小文字数
-  const MIN_TEXT_LENGTH = 5;
-  // 最大文字数（これを超えたら自動的に送信）
-  const MAX_TEXT_LENGTH = 50;
   // 音声認識テキストの完了度を追跡するための変数
   const [recognitionPhrases, setRecognitionPhrases] = useState<string[]>([]);
   // 音声認識テキストの送信をブロックするフラグ
@@ -115,6 +111,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [lastRecognitionTime, setLastRecognitionTime] = useState<number>(0);
   // 沈黙が検出されたかどうか
   const [silenceDetected, setSilenceDetected] = useState<boolean>(false);
+  const [lastRecognizedText, setLastRecognizedText] = useState('');
   
   // チャットの初期化
   const initializeChat = useCallback(async () => {
@@ -493,19 +490,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // まずAzure Speech APIを試す（精度が高い）
       startSpeechRecognition(
         async (text: string) => {
-          // 認識されたテキストをセット（内部状態のみ）
-          setRecordedText(text);
-          
+          // 直前と同じテキストならスキップ
+          if (lastRecognizedText === text) return;
+          setLastRecognizedText(text);
           // テキストが一定の条件を満たす場合には直接送信
           // 1. 文末の句読点で終わる（完全な文とみなす）
           // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
           const isCompleteSentence = /[。！？!?]$/.test(text.trim());
           const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
-          
+
           if (isCompleteSentence || isLongEnough) {
-            // 完成した文章は直接メッセージとして送信
-            console.log('完成した文章なので、メッセージとして送信:', text);
-            
+            // 完成した文章のみUIに表示・送信
+            if (recordedText !== text) {
+              setRecordedText(text);
+              setDraftMessage({
+                content: text,
+                media: draftMessage?.media || []
+              });
+            }
             // ブロックフラグが立っていなければ送信
             if (!blockSending) {
               sendMessage(text);
@@ -516,27 +518,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               console.log('ブロック中のため送信をスキップ:', text);
             }
           } else {
-            // 未完成の文章もUIに表示するが送信はしない
-            console.log('未完成の文章を表示:', text);
-            // recordedTextに保存し、ドラフトメッセージにも表示する
-            setRecordedText(text);
-            
-            // ドラフトメッセージに表示するための設定
-            setDraftMessage({
-              content: text,
-              media: draftMessage?.media || []
-            });
-            console.log('録音中のテキストをチャット側のみに表示:', text);
+            // 未完成の文章はUIに表示しない
+            // 何もしない
           }
-          
+
           // 空のテキストは処理しない
           if (!text.trim()) return;
-          
+
           // 最後の認識時間を更新
           const currentTime = Date.now();
           setLastRecognitionTime(currentTime);
           setSilenceDetected(false); // 音声入力があったのでサイレンス状態をリセット
-          
+
           // 現在の認識フレーズを保存
           setRecognitionPhrases(prev => {
             // すでに類似したフレーズがあるかチェック
@@ -546,50 +539,56 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             return prev;
           });
-          
+
           // ブロックフラグが立っていたら送信しない
           if (blockSending) {
             console.log('送信ブロック中のため送信をスキップします:', text);
             return;
           }
-          
+
           // 既存のタイマーをクリア
           if (sendTimeoutId) {
             clearTimeout(sendTimeoutId);
           }
-          
+
           // 沈黙検出用のタイマー（2秒間隔でチェック）
           const silenceCheckId = setTimeout(() => {
             // 最後の音声認識から2秒経過したかチェック
             if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
               console.log('沈黙を検出しました - 現在の認識テキストを送信します');
               setSilenceDetected(true);
-              
+
               // 沈黙を検出したら、現在の認識結果を送信
               // 最長の認識フレーズを選択（通常は最も完全な文章）
               const bestPhrase = recognitionPhrases
                 .sort((a, b) => b.length - a.length)[0] || text;
-              
+
               console.log('沈黙検出時の送信フレーズ:', bestPhrase);
-              
+
               // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
               if (bestPhrase.trim().length <= 2) {
                 console.log('沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
                 return;
               }
-              
+
               // 前回の送信テキストとの重複チェック
               if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
                 // 送信をブロック
                 setBlockSending(true);
-                
+
                 // 最後に送信したテキストを更新
                 setLastSentText(bestPhrase);
-                
+
                 // メッセージを送信
                 sendMessage(bestPhrase).then(() => {
                   // 認識フレーズをリセット
                   setRecognitionPhrases([]);
+                  // 完成した文章のみUIに表示
+                  setRecordedText(bestPhrase);
+                  setDraftMessage({
+                    content: bestPhrase,
+                    media: draftMessage?.media || []
+                  });
                   console.log('沈黙検出: メッセージを送信しました:', bestPhrase);
                 }).catch(error => {
                   console.error('沈黙検出: メッセージ送信エラー:', error);
@@ -604,7 +603,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               }
             }
           }, 2000); // 2秒の沈黙を検出するためのタイマー
-          
+
           // タイマーIDを保存
           setSendTimeoutId(silenceCheckId);
         },

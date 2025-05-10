@@ -6,6 +6,17 @@ import { initializeKnowledgeBase } from "./lib/knowledge-base";
 import fs from "fs";
 import axios from "axios";
 import { storage } from "./storage";
+import dotenv from 'dotenv';
+import { exec } from 'child_process';
+
+// .envファイルの読み込み
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+// 環境変数の確認
+console.log("[DEBUG] Environment variables loaded:", {
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ? "Set" : "Not set",
+  NODE_ENV: process.env.NODE_ENV
+});
 
 const app = express();
 app.use(express.json());
@@ -69,6 +80,12 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// ブラウザを開く関数
+function openBrowser(url: string) {
+  const start = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
+  exec(`${start} ${url}`);
+}
 
 (async () => {
   try {
@@ -138,13 +155,18 @@ app.use((req, res, next) => {
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  const port = 5001;
+  const url = `http://localhost:${port}`;
+  console.log(`サーバーを起動します: ${url}`);
+  
+  server.listen(port, '127.0.0.1', () => {
+    console.log(`サーバーが起動しました: ${url}`);
+    console.log('ブラウザを開いています...');
+    openBrowser(url);
+  }).on('error', (err: NodeJS.ErrnoException) => {
+    console.error('サーバー起動エラー:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`ポート ${port} は既に使用されています。別のポートを試してください。`);
+    }
   });
 })();

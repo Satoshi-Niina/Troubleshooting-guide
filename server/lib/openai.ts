@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import dotenv from 'dotenv';
+import path from 'path';
+
+// .envファイルの読み込み
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const OPENAI_MODEL = "gpt-4o";

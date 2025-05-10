@@ -418,33 +418,6 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     goToNextStep(nextStepId);
   };
 
-  // 次へボタンクリック時の処理
-  const handleNextStep = () => {
-    if (!currentStep || !flowData) return;
-    
-    // 終了フラグがある場合は完了処理
-    if (currentStep.end) {
-      handleComplete();
-      return;
-    }
-    
-    // 次のステップIDがある場合はそのステップへ（nextStepを優先）
-    const nextStepId = currentStep.nextStep || currentStep.next;
-    if (nextStepId) {
-      // 明示的に次のステップIDが指定されている場合
-      goToNextStep(nextStepId);
-    } else {
-      // 次のステップIDがない場合は、配列内の次のインデックスのステップに進む
-      const currentIndex = flowData.steps.findIndex(step => step.id === currentStep.id);
-      if (currentIndex !== -1 && currentIndex < flowData.steps.length - 1) {
-        // 配列内の次のステップへ
-        const nextStep = flowData.steps[currentIndex + 1];
-        const nextStepId = nextStep.id || `step_${currentIndex + 1}`;
-        goToNextStep(nextStepId);
-      }
-    }
-  };
-
   // トラブルシューティングを終了して戻る
   // トラブルシューティングの内容をチャットに送信
   const sendTroubleshootingToChat = useCallback(() => {
@@ -759,7 +732,6 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
           >
             閉じる
           </Button>
-          
           <div className="flex space-x-2">
             {stepHistory.length > 0 && (
               <Button
@@ -769,19 +741,8 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
                 戻る
               </Button>
             )}
-            
-            {(currentStep.next || currentStep.nextStep || currentStep.end || 
-              (flowData && flowData.steps.findIndex(step => step.id === currentStep.id) < flowData.steps.length - 1)) && (
-              <Button
-                onClick={handleNextStep}
-                disabled={currentStep.checklist && !isChecklistComplete()}
-              >
-                {currentStep.end ? '完了' : '次へ'}
-              </Button>
-            )}
           </div>
         </div>
-        
         {/* チャットに送信ボタン - 条件分岐ですべての表示したフローを送信 */}
         <Button 
           variant="secondary" 

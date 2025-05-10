@@ -143,218 +143,182 @@ export const startSpeechRecognition = (
   onError: (error: string) => void
 ) => {
   try {
-    // 最後に送信したテキストをリセット
-    lastSentText = '';
-    // 認識フレーズをリセット
-    recognitionPhrases = [];
-    // 無音検出フラグをリセット
-    silenceDetected = false;
-    // 送信ブロックフラグをリセット
-    blockSending = false;
-    // 最後の認識時間を現在時刻に設定
-    lastRecognitionTime = Date.now();
-    
-    const speechConfig = initAzureSpeechConfig();
-
-    if (!speechConfig) {
-      onError('Azure Speech認証情報が設定されていません。');
-      return;
+    // 既存の認識を停止
+    if (recognizer) {
+      stopSpeechRecognition();
     }
 
-    const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
-    recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
-
-    let currentSentence = ''; // 現在の文を保持
-    let lastRecognizedText = ''; // 前回の認識結果を保持
-    let lastText = ''; // 厳密な比較用の変数
-
-    // 文を送信してリセットする関数（一文完成時送信に強化）
-    const sendAndReset = () => {
-      if (blockSending) {
-        console.log('送信ブロック中: スキップします');
-        return;
-      }
-      
-      // 既存の文字列を保持
-      const trimmedText = currentSentence.trim();
-      
-      // 既存文字列または認識フレーズから最適な文を選ぶ
-      let bestText = '';
-      
-      // 最適なテキストを選択するロジック
-      if (trimmedText.length >= MIN_TEXT_LENGTH) {
-        // 現在の文が十分な長さならそれを使用
-        bestText = trimmedText;
-      } else if (recognitionPhrases.length > 0) {
-        // または最長の認識フレーズを使用（通常は最も完全な文章）
-        const sortedPhrases = [...recognitionPhrases].sort((a, b) => b.length - a.length);
-        bestText = sortedPhrases[0];
-      }
-      
-      // 有効な文章が見つかった場合のみ送信
-      if (bestText && bestText.length >= MIN_TEXT_LENGTH) {
-        // 重複チェック（前回送信したテキストとの類似性を確認）
-        if (isSimilarText(bestText, lastSentText)) {
-          console.log('類似テキストのため送信をスキップ:', bestText, 'vs', lastSentText);
-          return;
-        }
-        
-        console.log('完成した文章なので、メッセージとして送信:', bestText);
-        lastSentText = bestText; // 送信したテキストを記録
-        onResult(bestText);
+    // マイクのアクセス権限を確認
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        // ストリームを停止（後でAudioConfigで使用するため）
+        stream.getTracks().forEach(track => track.stop());
         
         // 状態をリセット
-        currentSentence = '';
+        lastSentText = '';
         recognitionPhrases = [];
+        silenceDetected = false;
+        blockSending = false;
+        lastRecognitionTime = Date.now();
         
-        // 送信後、送信ブロックを設定（連続送信を防止）- 3秒間
-        blockSending = true;
-        setTimeout(() => { blockSending = false; }, 3000);
-      } else {
-        console.log('有効な文章が見つからないため送信をスキップします');
-      }
-    };
+        const speechConfig = initAzureSpeechConfig();
 
-    // 無音タイマーを初期化（単一メッセージ送信に最適化）
-    resetSilenceTimer(() => {
-      console.log('無音タイマーでメッセージ送信を試行');
-      console.log('現在のフレーズ数:', recognitionPhrases.length);
-      
-      // 沈黙検出時は一度だけ送信する
-      silenceDetected = true;
-      
-      // 単一送信のみ実行
-      sendAndReset();
-      
-      // 即座に認識を停止
-      stopSpeechRecognition();
-    });
-
-    // 音声認識結果のイベントハンドラ
-    recognizer.recognized = (s, e) => {
-      // 最後の認識時間を更新
-      lastRecognitionTime = Date.now();
-      // 無音検出フラグをリセット
-      silenceDetected = false;
-      
-      if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
-        const newText = e.result.text.trim();
-        
-        // 短いテキストの場合はバッファに追加し、UIにも表示する
-        if (newText && newText.length < MIN_TEXT_LENGTH) {
-          if (!recognitionPhrases.includes(newText)) {
-            recognitionPhrases.push(newText);
-            console.log('短いテキストをバッファに追加:', newText);
-          }
-          
-          // currentSentenceに追加（連続性を確保）
-          let updatedSentence = currentSentence;
-          
-          if (currentSentence && !currentSentence.includes(newText) && !newText.includes(currentSentence)) {
-            if (!currentSentence.endsWith(' ') && !newText.startsWith(' ')) {
-              updatedSentence = currentSentence + ' ';
-            }
-            updatedSentence += newText;
-            console.log('現在の文に短いテキストを追加:', updatedSentence);
-            currentSentence = updatedSentence;
-          } else if (!currentSentence) {
-            updatedSentence = newText;
-            currentSentence = newText;
-          }
-          
-          // 常にUIに表示（文章を累積して表示）
-          onResult(currentSentence);
-          
-          // 無音タイマーをリセット
-          resetSilenceTimer(() => {
-            sendAndReset();
-            stopSpeechRecognition();
-          });
-          
+        if (!speechConfig) {
+          onError('Azure Speech認証情報が設定されていません。');
           return;
         }
-        
-        // すでに認識済みのテキストとの重複を避ける
-        if (newText && !isSimilarText(newText, lastRecognizedText) && !isSimilarText(newText, lastText)) {
-          // バッファに追加
-          if (!recognitionPhrases.includes(newText)) {
-            recognitionPhrases.push(newText);
+
+        const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
+        recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+
+        let currentSentence = '';
+        let lastRecognizedText = '';
+        let lastText = '';
+        let isProcessing = false; // 処理中フラグを追加
+
+        // 文を送信してリセットする関数
+        const sendAndReset = () => {
+          if (blockSending || isProcessing) {
+            console.log('送信ブロック中または処理中: スキップします');
+            return;
+          }
+
+          isProcessing = true; // 処理開始
+          
+          const trimmedText = currentSentence.trim();
+          let bestText = '';
+          
+          if (trimmedText.length >= MIN_TEXT_LENGTH) {
+            bestText = trimmedText;
+          } else if (recognitionPhrases.length > 0) {
+            const sortedPhrases = [...recognitionPhrases].sort((a, b) => b.length - a.length);
+            bestText = sortedPhrases[0];
           }
           
-          // 完全な新しい文章が認識された場合（前回の文章との重複がない場合）のみ更新
-          if (!currentSentence.includes(newText) && !newText.includes(currentSentence)) {
-            lastRecognizedText = newText;
-            lastText = newText; // 厳密な比較用に更新
-            
-            // 既存のテキストがあり、新しいテキストがそれを含まない場合のみ追加
-            if (currentSentence.length > 0) {
-              if (!currentSentence.endsWith(' ') && !newText.startsWith(' ')) {
-                currentSentence += ' '; // 適切にスペースを追加
-              }
-              currentSentence += newText;
+          if (bestText && bestText.length >= MIN_TEXT_LENGTH) {
+            if (!isSimilarText(bestText, lastSentText)) {
+              console.log('完成した文章なので、メッセージとして送信:', bestText);
+              lastSentText = bestText;
+              onResult(bestText);
+              
+              currentSentence = '';
+              recognitionPhrases = [];
+              
+              blockSending = true;
+              setTimeout(() => { 
+                blockSending = false;
+                isProcessing = false; // 処理完了
+              }, 3000);
             } else {
-              currentSentence = newText;
-            }
-            
-            console.log('認識テキスト追加:', newText);
-            console.log('現在の完全な文:', currentSentence);
-            
-            // 常に現在の文をUIに表示（累積表示を確実にする）
-            onResult(currentSentence);
-
-            // 文末判定（句読点が含まれている場合）または文字数制限の判定
-            if (/[。！？]$/.test(currentSentence) || currentSentence.length >= MAX_TEXT_LENGTH) {
-              // 句読点で終わる場合または最大文字数（50文字）に達した場合は文の区切りと判断して送信
-              if (currentSentence.length >= MAX_TEXT_LENGTH) {
-                console.log('最大文字数に達しました(50文字): 文を送信します');
-              } else {
-                console.log('文末記号を検出: 文を送信します');
-              }
-              sendAndReset();
+              console.log('類似テキストのため送信をスキップ:', bestText, 'vs', lastSentText);
+              isProcessing = false; // 処理完了
             }
           } else {
-            console.log('部分的に重複する認識をスキップ:', newText);
+            console.log('有効な文章が見つからないため送信をスキップします');
+            isProcessing = false; // 処理完了
           }
+        };
 
-          // 無音タイマーをリセット（これは常に行う）
-          resetSilenceTimer(() => {
+        // 無音タイマーを初期化
+        resetSilenceTimer(() => {
+          if (!isProcessing) {
+            console.log('無音タイマーでメッセージ送信を試行');
+            console.log('現在のフレーズ数:', recognitionPhrases.length);
+            
+            silenceDetected = true;
             sendAndReset();
-            stopSpeechRecognition();
-          });
-        } else if (newText) {
-          console.log('重複認識をスキップ:', newText);
-          // 無音タイマーはリセットする（音声入力は続いている）
-          resetSilenceTimer(() => {
-            sendAndReset();
-            stopSpeechRecognition();
-          });
-        }
-      }
-    };
+          }
+        });
 
-    // 音声認識キャンセル時のイベントハンドラ
-    recognizer.canceled = (s, e) => {
-      if (e.reason === sdk.CancellationReason.Error) {
-        onError(`音声認識エラー: ${e.errorDetails}`);
-      }
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        silenceTimer = null;
-      }
-    };
+        // 音声認識結果のイベントハンドラ
+        recognizer.recognized = (s, e) => {
+          if (isProcessing) return; // 処理中は新しい認識をスキップ
+          
+          lastRecognitionTime = Date.now();
+          silenceDetected = false;
+          
+          if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
+            const newText = e.result.text.trim();
+            
+            if (newText && !isSimilarText(newText, lastRecognizedText) && !isSimilarText(newText, lastText)) {
+              if (!recognitionPhrases.includes(newText)) {
+                recognitionPhrases.push(newText);
+              }
+              
+              if (!currentSentence.includes(newText) && !newText.includes(currentSentence)) {
+                lastRecognizedText = newText;
+                lastText = newText;
+                
+                if (currentSentence.length > 0) {
+                  if (!currentSentence.endsWith(' ') && !newText.startsWith(' ')) {
+                    currentSentence += ' ';
+                  }
+                  currentSentence += newText;
+                } else {
+                  currentSentence = newText;
+                }
+                
+                console.log('認識テキスト追加:', newText);
+                console.log('現在の完全な文:', currentSentence);
+                
+                onResult(currentSentence);
 
-    // 連続認識を開始
-    recognizer.startContinuousRecognitionAsync(
-      () => console.log('Azure Speech認識を開始しました'),
-      (error) => {
-        console.error('認識開始エラー:', error);
-        onError(`認識開始エラー: ${error}`);
-        if (silenceTimer) {
-          clearTimeout(silenceTimer);
-          silenceTimer = null;
-        }
-      }
-    );
+                if (/[。！？]$/.test(currentSentence) || currentSentence.length >= MAX_TEXT_LENGTH) {
+                  if (currentSentence.length >= MAX_TEXT_LENGTH) {
+                    console.log('最大文字数に達しました(50文字): 文を送信します');
+                  } else {
+                    console.log('文末記号を検出: 文を送信します');
+                  }
+                  sendAndReset();
+                }
+              } else {
+                console.log('部分的に重複する認識をスキップ:', newText);
+              }
+
+              resetSilenceTimer(() => {
+                if (!isProcessing) {
+                  sendAndReset();
+                }
+              });
+            } else if (newText) {
+              console.log('重複認識をスキップ:', newText);
+              resetSilenceTimer(() => {
+                if (!isProcessing) {
+                  sendAndReset();
+                }
+              });
+            }
+          }
+        };
+
+        // 音声認識キャンセル時のイベントハンドラ
+        recognizer.canceled = (s, e) => {
+          if (e.reason === sdk.CancellationReason.Error) {
+            onError(`音声認識エラー: ${e.errorDetails}`);
+          }
+          if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+          }
+        };
+
+        // 連続認識を開始
+        recognizer.startContinuousRecognitionAsync(
+          () => console.log('Azure Speech認識を開始しました'),
+          (error) => {
+            console.error('認識開始エラー:', error);
+            onError(`認識開始エラー: ${error}`);
+            if (silenceTimer) {
+              clearTimeout(silenceTimer);
+              silenceTimer = null;
+            }
+          }
+        );
+      })
+      .catch(err => {
+        console.error('マイクのアクセス権限エラー:', err);
+        onError('マイクへのアクセス権限がありません。ブラウザの設定でマイクの使用を許可してください。');
+      });
   } catch (error) {
     console.error('Azure Speech初期化エラー:', error);
     onError(`Azure Speech初期化エラー: ${error}`);
@@ -367,19 +331,27 @@ export const startSpeechRecognition = (
 
 // 音声認識を停止する関数
 export const stopSpeechRecognition = () => {
-  if (silenceTimer) {
-    clearTimeout(silenceTimer);
-    silenceTimer = null;
-  }
+  try {
+    if (silenceTimer) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
 
-  if (recognizer) {
-    recognizer.stopContinuousRecognitionAsync(
-      () => {
-        console.log('Azure Speech認識を停止しました');
-        recognizer = null;
-      },
-      (error) => console.error('認識停止エラー:', error)
-    );
+    if (recognizer) {
+      recognizer.stopContinuousRecognitionAsync(
+        () => {
+          console.log('Azure Speech認識を停止しました');
+          recognizer = null;
+        },
+        (error) => {
+          console.error('認識停止エラー:', error);
+          recognizer = null;
+        }
+      );
+    }
+  } catch (error) {
+    console.error('音声認識停止中にエラーが発生しました:', error);
+    recognizer = null;
   }
 };
 
