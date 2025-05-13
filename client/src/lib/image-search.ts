@@ -489,17 +489,20 @@ export const searchByText = async (text: string, autoStopAfterResults: boolean =
       
       // レスポンスの検証を追加
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        console.warn(`検索クエリ最適化APIが失敗しました: ${response.status}`);
+        return getFuseInstance().search(text); // 元のテキストで検索を続行
       }
       
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`Invalid content type: ${contentType}`);
+        console.warn(`無効なContent-Type: ${contentType}`);
+        return getFuseInstance().search(text); // 元のテキストで検索を続行
       }
       
       const data = await response.json();
       if (!data || typeof data.optimizedQuery !== 'string') {
-        throw new Error('Invalid response format');
+        console.warn('無効なレスポンス形式');
+        return getFuseInstance().search(text); // 元のテキストで検索を続行
       }
       
       const optimizedQuery = data.optimizedQuery || text;

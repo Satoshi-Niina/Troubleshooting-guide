@@ -112,6 +112,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // 沈黙が検出されたかどうか
   const [silenceDetected, setSilenceDetected] = useState<boolean>(false);
   const [lastRecognizedText, setLastRecognizedText] = useState('');
+  // 処理中フラグ
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [lastAudioInputTime, setLastAudioInputTime] = useState(Date.now());
+  const [micSilenceTimeoutId, setMicSilenceTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [recognitionBuffer, setRecognitionBuffer] = useState<string[]>([]);
+  const [bufferTimeoutId, setBufferTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const BUFFER_INTERVAL = 300; // バッファリング間隔を300ミリ秒に戻す
+  const SILENCE_THRESHOLD = 1000; // 無音検出時間は1秒のまま
   
   // チャットの初期化
   const initializeChat = useCallback(async () => {
@@ -227,91 +235,75 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // ドラフトメッセージ更新のイベントリスナー
   useEffect(() => {
+    let isUpdating = false; // 更新中フラグ
+    let updateTimeout: NodeJS.Timeout | null = null;
+
     // ドラフトメッセージ更新のイベントリスナーを設定
     const handleUpdateDraftMessage = (event: CustomEvent) => {
-      console.log('ドラフトメッセージ更新イベント受信:', event.detail);
-      
+      if (isUpdating) {
+        console.log('更新中のため、ドラフトメッセージの更新をスキップ');
+        return;
+      }
+
       if (event.detail && typeof event.detail.content === 'string') {
         const { content } = event.detail;
-        // 既存のメディアは保持する
-        const currentMedia = draftMessage?.media || [];
         
-        // ドラフトメッセージを更新（空でない場合のみ）
-        if (content.trim()) {
-          console.log('ドラフトメッセージを更新:', content);
-          setDraftMessage({
-            content,
-            media: currentMedia
-          });
-        } else {
-          // 空の場合はドラフトメッセージをクリア
+        // 空のコンテンツの場合はクリア
+        if (!content.trim()) {
           setDraftMessage(null);
+          return;
         }
-      }
-    };
 
-    // カメラで撮影した画像をドラフトメッセージに追加するイベントリスナー
-    const handleCameraCapture = (event: CustomEvent) => {
-      if (event.detail && event.detail.imageUrl) {
-        const currentContent = draftMessage?.content || '';
+        // 更新中フラグを設定
+        isUpdating = true;
+
+        // 既存のメディアは保持
         const currentMedia = draftMessage?.media || [];
-        
-        // 既存のメディア配列に新しい画像を追加
+
+        // ドラフトメッセージを更新
         setDraftMessage({
-          content: currentContent,
-          media: [
-            ...currentMedia, 
-            {
-              type: 'image',
-              url: event.detail.imageUrl,
-              thumbnail: event.detail.thumbnailUrl || event.detail.imageUrl
-            }
-          ]
+          content,
+          media: currentMedia
         });
+
+        // 更新中フラグをリセット（300ms後）
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+        }
+        updateTimeout = setTimeout(() => {
+          isUpdating = false;
+        }, 300);
       }
     };
 
-    // ドラフトメッセージ送信イベントのハンドラー
-    const handleSendDraftMessage = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail && customEvent.detail.content) {
-        console.log('ドラフトメッセージ送信イベント受信:', customEvent.detail);
-        const content = customEvent.detail.content;
-        
-        // メッセージを送信し、ドラフトメッセージをクリア
-        if (content.trim()) {
-          sendMessage(content);
-          setDraftMessage(null);
-        }
-      }
-    };
-    
-    // TypeScriptにカスタムイベントを認識させるための型アサーション
-    window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
-    window.addEventListener('camera-capture', handleCameraCapture as EventListener);
-    window.addEventListener('send-draft-message', handleSendDraftMessage as EventListener);
-    
     // ドラフトメッセージクリア用のイベントリスナー
     const handleClearDraftMessage = (event: Event) => {
       console.log('クリアドラフトメッセージイベント受信');
+      
+      // すべての状態をリセット
       setDraftMessage(null);
       setRecordedText('');
       setLastSentText('');
+      setRecognitionPhrases([]);
+      setBlockSending(false);
+      setIsProcessing(false);
+      
+      // 音声認識を停止
+      stopSpeechRecognition();
+      stopBrowserSpeechRecognition();
     };
     
-    // clear-draft-messageイベントリスナーを追加
+    // イベントリスナーを追加
+    window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
     window.addEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
-    
-    // カスタムイベント発火によるデバッグ
-    console.log('ドラフトメッセージイベントリスナーをセットアップしました');
     
     // クリーンアップ関数
     return () => {
-      // イベントリスナーの解除
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
       window.removeEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
-      window.removeEventListener('camera-capture', handleCameraCapture as EventListener);
       window.removeEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
-      window.removeEventListener('send-draft-message', handleSendDraftMessage as EventListener);
     };
   }, [draftMessage]);
   
@@ -402,7 +394,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const sendMessage = useCallback(async (content: string, mediaUrls?: { type: string, url: string, thumbnail?: string }[]) => {
     try {
       if (!chatId) {
-        // チャットが初期化されていない場合は初期化
         const newChatId = await initializeChat();
         if (!newChatId) {
           throw new Error('チャットの初期化に失敗しました');
@@ -410,36 +401,28 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       setIsLoading(true);
-      
-      // ドラフトメッセージをクリア
       setDraftMessage(null);
       
       const currentChatId = chatId || 1;
-      
-      // ユーザー設定からAIモードを取得
       const useOnlyKnowledgeBase = localStorage.getItem('useOnlyKnowledgeBase') !== 'false';
-      // Perplexity APIキーが設定されるまでは無効化
-      const usePerplexity = false; // localStorage.getItem('usePerplexity') === 'true';
-      console.log('送信時設定: ナレッジベースのみを使用=', useOnlyKnowledgeBase, ', Perplexity使用=', usePerplexity);
       
       const response = await apiRequest('POST', `/api/chats/${currentChatId}/messages`, { 
         content,
         useOnlyKnowledgeBase,
-        usePerplexity: false // Perplexity APIを一時的に無効化
+        usePerplexity: false
       });
+      
       if (!response.ok) {
         throw new Error('メッセージの送信に失敗しました');
       }
       
       const data = await response.json();
       
-      // 一時保存されたメディアとパラメータで渡されたメディアを結合
       const allMedia = [
         ...(tempMedia || []),
         ...(mediaUrls || [])
       ];
       
-      // ユーザーメッセージとAI応答を同時に追加（ユーザーメッセージが重複しないよう1回のみ追加）
       setMessages(prev => [
         ...prev, 
         { 
@@ -457,12 +440,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       ]);
       
-      // 一時メディアをクリア
       setTempMedia([]);
-      
       setRecordedText('');
-      
-      // メッセージ送信後に自動的に画像検索を実行
       searchBySelectedText(content);
     } catch (error) {
       toast({
@@ -475,275 +454,101 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [chatId, initializeChat, searchBySelectedText, tempMedia, toast]);
   
-  // 録音開始関数
-  const startRecording = useCallback(() => {
-    setIsRecording(true);
-    setRecordedText(''); // 録音開始時にテキストをクリア
-    setLastSentText(''); // 録音開始時に最後に送信したテキストもクリア
-    setRecognitionPhrases([]); // 認識フレーズをクリア
-    setBlockSending(false); // 送信ブロックを解除
-    
+  // 音声認識の初期化を最適化
+  const initializeSpeechRecognition = useCallback(() => {
     try {
-      // 現在のメディア状態を保持
       const currentMedia = draftMessage?.media || [];
       
-      // まずAzure Speech APIを試す（精度が高い）
       startSpeechRecognition(
         async (text: string) => {
-          // 直前と同じテキストならスキップ
-          if (lastRecognizedText === text) return;
-          setLastRecognizedText(text);
-          // テキストが一定の条件を満たす場合には直接送信
-          // 1. 文末の句読点で終わる（完全な文とみなす）
-          // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
-          const isCompleteSentence = /[。！？!?]$/.test(text.trim());
-          const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
-
-          if (isCompleteSentence || isLongEnough) {
-            // 完成した文章のみUIに表示・送信
-            if (recordedText !== text) {
-              setRecordedText(text);
-              setDraftMessage({
-                content: text,
-                media: draftMessage?.media || []
-              });
-            }
-            // ブロックフラグが立っていなければ送信
-            if (!blockSending) {
-              sendMessage(text);
-              setBlockSending(true); // 送信後はブロック
-              // 3秒後にブロックを解除
-              setTimeout(() => setBlockSending(false), 3000);
-            } else {
-              console.log('ブロック中のため送信をスキップ:', text);
-            }
-          } else {
-            // 未完成の文章はUIに表示しない
-            // 何もしない
-          }
-
-          // 空のテキストは処理しない
           if (!text.trim()) return;
-
-          // 最後の認識時間を更新
-          const currentTime = Date.now();
-          setLastRecognitionTime(currentTime);
-          setSilenceDetected(false); // 音声入力があったのでサイレンス状態をリセット
-
-          // 現在の認識フレーズを保存
-          setRecognitionPhrases(prev => {
-            // すでに類似したフレーズがあるかチェック
-            const similarExists = prev.some(phrase => isSubstringOrSimilar(phrase, text));
-            if (!similarExists) {
-              return [...prev, text];
+          
+          setLastAudioInputTime(Date.now());
+          
+          if (micSilenceTimeoutId) clearTimeout(micSilenceTimeoutId);
+          const silenceId = setTimeout(() => {
+            if (Date.now() - lastAudioInputTime >= SILENCE_THRESHOLD) {
+              stopSpeechRecognition();
+              stopBrowserSpeechRecognition();
+              setIsRecording(false);
+              setDraftMessage(null);
+              setRecognitionPhrases([]);
+              setRecognitionBuffer([]);
+              setLastSentText('');
+              setRecordedText('');
             }
-            return prev;
+          }, SILENCE_THRESHOLD);
+          setMicSilenceTimeoutId(silenceId);
+          
+          // 認識テキストをバッファに追加
+          setRecognitionBuffer(prev => {
+            const newBuffer = [...prev, text];
+            
+            // バッファリングタイマーをリセット
+            if (bufferTimeoutId) clearTimeout(bufferTimeoutId);
+            const timeoutId = setTimeout(() => {
+              const combinedText = newBuffer.join(' ');
+              sendMessage(combinedText);
+              setRecognitionBuffer([]);
+            }, BUFFER_INTERVAL);
+            setBufferTimeoutId(timeoutId);
+            
+            return newBuffer;
           });
-
-          // ブロックフラグが立っていたら送信しない
-          if (blockSending) {
-            console.log('送信ブロック中のため送信をスキップします:', text);
-            return;
-          }
-
-          // 既存のタイマーをクリア
-          if (sendTimeoutId) {
-            clearTimeout(sendTimeoutId);
-          }
-
-          // 沈黙検出用のタイマー（2秒間隔でチェック）
-          const silenceCheckId = setTimeout(() => {
-            // 最後の音声認識から2秒経過したかチェック
-            if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
-              console.log('沈黙を検出しました - 現在の認識テキストを送信します');
-              setSilenceDetected(true);
-
-              // 沈黙を検出したら、現在の認識結果を送信
-              // 最長の認識フレーズを選択（通常は最も完全な文章）
-              const bestPhrase = recognitionPhrases
-                .sort((a, b) => b.length - a.length)[0] || text;
-
-              console.log('沈黙検出時の送信フレーズ:', bestPhrase);
-
-              // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
-              if (bestPhrase.trim().length <= 2) {
-                console.log('沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
-                return;
-              }
-
-              // 前回の送信テキストとの重複チェック
-              if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
-                // 送信をブロック
-                setBlockSending(true);
-
-                // 最後に送信したテキストを更新
-                setLastSentText(bestPhrase);
-
-                // メッセージを送信
-                sendMessage(bestPhrase).then(() => {
-                  // 認識フレーズをリセット
-                  setRecognitionPhrases([]);
-                  // 完成した文章のみUIに表示
-                  setRecordedText(bestPhrase);
-                  setDraftMessage({
-                    content: bestPhrase,
-                    media: draftMessage?.media || []
-                  });
-                  console.log('沈黙検出: メッセージを送信しました:', bestPhrase);
-                }).catch(error => {
-                  console.error('沈黙検出: メッセージ送信エラー:', error);
-                }).finally(() => {
-                  // 3秒後にブロックを解除
-                  setTimeout(() => {
-                    setBlockSending(false);
-                  }, 3000);
-                });
-              } else {
-                console.log('沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
-              }
-            }
-          }, 2000); // 2秒の沈黙を検出するためのタイマー
-
-          // タイマーIDを保存
-          setSendTimeoutId(silenceCheckId);
         },
         (error: string) => {
           console.log('Azure音声認識エラー:', error);
           
-          // エラー時はブラウザの標準音声認識APIをフォールバックとして使用
           toast({
-            title: 'AzureからブラウザAPIに切り替えます',
-            description: 'ブラウザの音声認識を初期化中...',
-            duration: 3000,
+            title: 'ブラウザAPIに切り替えます',
+            duration: 1000,
           });
           
-          // Azure音声認識を完全に停止
           stopSpeechRecognition();
           
-          // 状態をリセット
           setRecordedText('');
           setLastSentText('');
           setRecognitionPhrases([]);
+          setRecognitionBuffer([]);
           setBlockSending(false);
           
-          // ブラウザの標準音声認識APIを使用
           startBrowserSpeechRecognition(
             async (text: string) => {
-              // 認識されたテキストをセット（内部状態のみ）
-              setRecordedText(text);
-              
-              // テキストが一定の条件を満たす場合には直接送信
-              // 1. 文末の句読点で終わる（完全な文とみなす）
-              // 2. あるいは10文字以上あり、かつMIN_TEXT_LENGTH(5文字)以上ある
-              const isCompleteSentence = /[。！？!?]$/.test(text.trim());
-              const isLongEnough = text.length >= 10 && text.length >= MIN_TEXT_LENGTH;
-              
-              if (isCompleteSentence || isLongEnough) {
-                // 完成した文章は直接メッセージとして送信
-                console.log('ブラウザ: 完成した文章なので、メッセージとして送信:', text);
-                
-                // ブロックフラグが立っていなければ送信
-                if (!blockSending) {
-                  sendMessage(text);
-                  setBlockSending(true); // 送信後はブロック
-                  // 3秒後にブロックを解除
-                  setTimeout(() => setBlockSending(false), 3000);
-                } else {
-                  console.log('ブラウザ: ブロック中のため送信をスキップ:', text);
-                }
-              } else {
-                // 未完成の文章もUIに表示するが送信はしない
-                console.log('ブラウザ: 未完成の文章を表示:', text);
-                // recordedTextに保存し、ドラフトメッセージにも表示する
-                setRecordedText(text);
-                
-                // ドラフトメッセージに表示するための設定
-                setDraftMessage({
-                  content: text,
-                  media: draftMessage?.media || []
-                });
-                console.log('ブラウザ: 録音中のテキストをチャット側のみに表示:', text);
-              }
-              
-              // 空のテキストは処理しない
               if (!text.trim()) return;
               
-              // 最後の認識時間を更新
-              const currentTime = Date.now();
-              setLastRecognitionTime(currentTime);
-              setSilenceDetected(false); // 音声入力があったのでサイレンス状態をリセット
+              setLastAudioInputTime(Date.now());
               
-              // 現在の認識フレーズを保存
-              setRecognitionPhrases(prev => {
-                // すでに類似したフレーズがあるかチェック
-                const similarExists = prev.some(phrase => isSubstringOrSimilar(phrase, text));
-                if (!similarExists) {
-                  return [...prev, text];
+              if (micSilenceTimeoutId) clearTimeout(micSilenceTimeoutId);
+              const silenceId = setTimeout(() => {
+                if (Date.now() - lastAudioInputTime >= SILENCE_THRESHOLD) {
+                  stopSpeechRecognition();
+                  stopBrowserSpeechRecognition();
+                  setIsRecording(false);
+                  setDraftMessage(null);
+                  setRecognitionPhrases([]);
+                  setRecognitionBuffer([]);
+                  setLastSentText('');
+                  setRecordedText('');
                 }
-                return prev;
+              }, SILENCE_THRESHOLD);
+              setMicSilenceTimeoutId(silenceId);
+              
+              // 認識テキストをバッファに追加
+              setRecognitionBuffer(prev => {
+                const newBuffer = [...prev, text];
+                
+                // バッファリングタイマーをリセット
+                if (bufferTimeoutId) clearTimeout(bufferTimeoutId);
+                const timeoutId = setTimeout(() => {
+                  const combinedText = newBuffer.join(' ');
+                  sendMessage(combinedText);
+                  setRecognitionBuffer([]);
+                }, BUFFER_INTERVAL);
+                setBufferTimeoutId(timeoutId);
+                
+                return newBuffer;
               });
-              
-              // ブロックフラグが立っていたら送信しない
-              if (blockSending) {
-                console.log('送信ブロック中のため送信をスキップします:', text);
-                return;
-              }
-              
-              // 既存のタイマーをクリア
-              if (sendTimeoutId) {
-                clearTimeout(sendTimeoutId);
-              }
-              
-              // 沈黙検出用のタイマー（2秒間隔でチェック）
-              const silenceCheckId = setTimeout(() => {
-                // 最後の音声認識から2秒経過したかチェック
-                if (Date.now() - lastRecognitionTime >= 2000 && !silenceDetected) {
-                  console.log('ブラウザ: 沈黙を検出しました - 現在の認識テキストを送信します');
-                  setSilenceDetected(true);
-                  
-                  // 沈黙を検出したら、現在の認識結果を送信
-                  // 最長の認識フレーズを選択（通常は最も完全な文章）
-                  const bestPhrase = recognitionPhrases
-                    .sort((a, b) => b.length - a.length)[0] || text;
-                  
-                  console.log('ブラウザ: 沈黙検出時の送信フレーズ:', bestPhrase);
-                  
-                  // 短すぎるフレーズを送信しないようにする（2文字以下はスキップ）
-                  if (bestPhrase.trim().length <= 2) {
-                    console.log('ブラウザ: 沈黙検出: フレーズが短すぎるため送信をスキップします:', bestPhrase);
-                    return;
-                  }
-                  
-                  // 前回の送信テキストとの重複チェック
-                  if (bestPhrase && !isSubstringOrSimilar(bestPhrase, lastSentText)) {
-                    // 送信をブロック
-                    setBlockSending(true);
-                    
-                    // 最後に送信したテキストを更新
-                    setLastSentText(bestPhrase);
-                    
-                    // メッセージを送信
-                    sendMessage(bestPhrase).then(() => {
-                      // 認識フレーズをリセット
-                      setRecognitionPhrases([]);
-                      console.log('ブラウザ: 沈黙検出: メッセージを送信しました:', bestPhrase);
-                    }).catch(error => {
-                      console.error('ブラウザ: 沈黙検出: メッセージ送信エラー:', error);
-                    }).finally(() => {
-                      // 3秒後にブロックを解除
-                      setTimeout(() => {
-                        setBlockSending(false);
-                      }, 3000);
-                    });
-                  } else {
-                    console.log('ブラウザ: 沈黙検出: 類似テキストが既に送信されているため送信をスキップします');
-                  }
-                }
-              }, 2000); // 2秒の沈黙を検出するためのタイマー
-              
-              // タイマーIDを保存
-              setSendTimeoutId(silenceCheckId);
-            }, 
+            },
             (error: string) => {
               toast({
                 title: '音声認識エラー',
@@ -755,13 +560,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           );
         }
       );
-      
-      // リアルタイムプレビュー用のイベント発火（完全に無効化）
-      // TypeScriptエラーを回避するために、型指定を完全に省略
-      window.addEventListener('update-draft-message', function(e: any) {
-        console.log('録音中のテキスト（イベントは無視）:', e.detail.content);
-        // ドラフトメッセージの更新はしない（重複送信を防止）
-      });
     } catch (error) {
       console.error('音声認識開始エラー:', error);
       setIsRecording(false);
@@ -771,47 +569,50 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         variant: 'destructive',
       });
     }
-  }, [blockSending, draftMessage?.media, isSubstringOrSimilar, lastRecognitionTime, lastSentText, recognitionPhrases, sendMessage, sendTimeoutId, silenceDetected, toast]);
+  }, [draftMessage?.media, lastAudioInputTime, micSilenceTimeoutId, bufferTimeoutId, sendMessage, toast]);
+  
+  const startRecording = useCallback(() => {
+    setIsRecording(true);
+    setRecordedText('');
+    setLastSentText('');
+    setRecognitionPhrases([]);
+    setRecognitionBuffer([]);
+    setBlockSending(false);
+    setLastAudioInputTime(Date.now());
+    
+    initializeSpeechRecognition();
+  }, [initializeSpeechRecognition]);
   
   // 録音停止関数
   const stopRecording = useCallback(() => {
     setIsRecording(false);
     
-    // 音声認識を停止する前に現在のtextを取得
-    const currentText = recordedText;
-    console.log('録音停止時のテキスト:', currentText);
-    
-    // 録音テキストが存在する場合はドラフトメッセージに表示
-    if (currentText && currentText.trim().length > 0) {
-      setDraftMessage({
-        content: currentText,
-        media: draftMessage?.media || []
-      });
-      console.log('録音停止時のテキストをチャット側のみに表示:', currentText);
-    } else {
-      // テキストがない場合はクリア
-      setDraftMessage(null);
-      console.log('録音停止時のテキストをチャット側のみに表示:', '');
+    // バッファ内の残りのテキストを送信
+    if (recognitionBuffer.length > 0) {
+      const finalText = recognitionBuffer.join(' ');
+      sendMessage(finalText);
     }
     
-    // 録音テキストをクリア
+    // 状態をリセット
     setRecordedText('');
-    
-    // 前回のメッセージとの類似チェック用の情報もリセット
     setLastSentText('');
+    setRecognitionPhrases([]);
+    setRecognitionBuffer([]);
     
     // 音声認識を停止
-    console.log('録音停止');
-    
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
     
-    // 沈黙検出用のタイマーをクリア
-    if (sendTimeoutId) {
-      clearTimeout(sendTimeoutId);
-      setSendTimeoutId(null);
+    // タイマーをクリア
+    if (micSilenceTimeoutId) {
+      clearTimeout(micSilenceTimeoutId);
+      setMicSilenceTimeoutId(null);
     }
-  }, [sendTimeoutId, draftMessage, recordedText]);
+    if (bufferTimeoutId) {
+      clearTimeout(bufferTimeoutId);
+      setBufferTimeoutId(null);
+    }
+  }, [micSilenceTimeoutId, bufferTimeoutId, recognitionBuffer, sendMessage]);
   
   // チャット履歴をエクスポートする関数
   const exportChatHistory = useCallback(async () => {
@@ -961,53 +762,62 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // チャット履歴を全て削除する関数
   const clearChatHistory = useCallback(async () => {
     try {
-      if (!chatId) return;
-      
-      setIsClearing(true);
-      
-      const response = await apiRequest('POST', `/api/chats/${chatId}/clear`);
-      
-      if (!response.ok) {
-        throw new Error('チャット履歴の削除に失敗しました');
-      }
-      
-      // メッセージリストをクリア
+      // まずローカルの状態をクリア
       setMessages([]);
       setSearchResults([]);
       setHasUnexportedMessages(false);
       setLastExportTimestamp(null);
-      
-      // ドラフトメッセージも確実にクリア（音声認識テキストなど）
       setDraftMessage(null);
       setRecordedText('');
-      // lastSentTextもクリア
       setLastSentText('');
-      
-      // カスタムイベントを発行してUIにも反映
+      setRecognitionPhrases([]);
+      setBlockSending(false);
+      setIsProcessing(false);
+
+      // 音声認識を停止
+      stopSpeechRecognition();
+      stopBrowserSpeechRecognition();
+
+      // カスタムイベントを発行
       if (typeof window !== 'undefined') {
-        // ドラフトクリアイベントを発行
-        window.dispatchEvent(new CustomEvent('clear-draft-message'));
-        // 記録済みの認識フレーズもクリア
-        window.dispatchEvent(new CustomEvent('reset-recognition-phrases'));
+        const clearEvent = new CustomEvent('clear-draft-message');
+        window.dispatchEvent(clearEvent);
+        
+        const resetEvent = new CustomEvent('reset-recognition-phrases');
+        window.dispatchEvent(resetEvent);
       }
-      
-      // クリア時のタイムスタンプをローカルストレージに保存（キャッシュクリア処理用）
+
+      // クリア時のタイムスタンプを保存
       const clearTimestamp = Date.now().toString();
       localStorage.setItem('chat_cleared_timestamp', clearTimestamp);
-      console.log('チャットクリアタイムスタンプを設定:', clearTimestamp);
-      
+
       // React Queryのキャッシュをクリア
       try {
-        // @ts-ignore - globalにqueryClientが定義されている場合
+        // @ts-ignore
         if (window.queryClient) {
           window.queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
           window.queryClient.setQueryData(['/api/chats/1/messages'], []);
-          console.log('React Queryキャッシュをクリア');
         }
       } catch (cacheError) {
         console.error('キャッシュクリアエラー:', cacheError);
       }
-      
+
+      // サーバーへのリクエストは最後に実行
+      if (chatId) {
+        setIsClearing(true);
+        try {
+          const response = await apiRequest('POST', `/api/chats/${chatId}/clear`);
+          if (!response.ok) {
+            console.warn(`サーバーでのチャット履歴削除に失敗しました (${response.status})`);
+          }
+        } catch (error) {
+          console.error('APIリクエストエラー:', error);
+          // エラーは無視（ローカルの状態は既にクリア済み）
+        } finally {
+          setIsClearing(false);
+        }
+      }
+
       toast({
         title: 'チャット履歴を削除しました',
         description: '全てのメッセージが削除されました。',
@@ -1016,11 +826,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('チャット履歴削除エラー:', error);
       toast({
         title: 'チャット履歴削除エラー',
-        description: 'チャット履歴の削除に失敗しました。',
+        description: 'チャット履歴の削除に失敗しました。ローカルの状態はクリアされました。',
         variant: 'destructive',
       });
-    } finally {
-      setIsClearing(false);
     }
   }, [chatId, toast]);
   
