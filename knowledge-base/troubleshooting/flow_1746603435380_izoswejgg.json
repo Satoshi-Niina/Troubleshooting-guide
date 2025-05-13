@@ -1,0 +1,75 @@
+{
+  "id": "flow_1746603435380_izoswejgg",
+  "title": "応急処理フロー: 走行中にエンジンがいきなり停止した",
+  "description": "電気系統の問題を疑う",
+  "content": "1. 車両を安全な場所に停止させる\n2. バッテリー接続を確認し、緩みや腐食がないかチェックする\n3. ヒューズボックスを確認し、切れたヒューズがないか確認する\n4. イグニッションシステムの配線を確認し、断線や損傷がないか確認する\n5. エンジンを再始動し、正常に動作するか確認する",
+  "type": "応急処置",
+  "images": [],
+  "savePath": "C:/Users/Satoshi Niina/OneDrive/Desktop/Troubleshooting-guide/knowledge-base/troubleshooting",
+  "nodes": [],
+  "edges": [],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "車両を安全な場所に停止させる",
+      "order": 1
+    },
+    {
+      "id": "step2",
+      "title": "バッテリー接続を確認し、緩みや腐食がないかチェックする",
+      "order": 2
+    },
+    {
+      "id": "step3",
+      "title": "ヒューズボックスを確認し、切れたヒューズがないか確認する",
+      "order": 3
+    },
+    {
+      "id": "step4",
+      "title": "イグニッションシステムの配線を確認し、断線や損傷がないか確認する",
+      "order": 4
+    },
+    {
+      "id": "step5",
+      "title": "エンジンを再始動し、正常に動作するか確認する",
+      "order": 5
+    }
+  ],
+  "metadata": {
+    "createdAt": "2025-05-07T07:37:15.380Z",
+    "lastUpdated": "2025-05-07T07:37:15.380Z",
+    "filePath": "flow_flow_1746603435380_izoswejgg.json",
+    "fileName": "flow_flow_1746603435380_izoswejgg.json",
+    "nodeCount": 0,
+    "edgeCount": 0,
+    "stepCount": 5,
+    "steps": [
+      {
+        "id": "step1",
+        "title": "車両を安全な場所に停止させる",
+        "order": 1
+      },
+      {
+        "id": "step2",
+        "title": "バッテリー接続を確認し、緩みや腐食がないかチェックする",
+        "order": 2
+      },
+      {
+        "id": "step3",
+        "title": "ヒューズボックスを確認し、切れたヒューズがないか確認する",
+        "order": 3
+      },
+      {
+        "id": "step4",
+        "title": "イグニッションシステムの配線を確認し、断線や損傷がないか確認する",
+        "order": 4
+      },
+      {
+        "id": "step5",
+        "title": "エンジンを再始動し、正常に動作するか確認する",
+        "order": 5
+      }
+    ]
+  },
+  "saveAsSingleFile": true
+}

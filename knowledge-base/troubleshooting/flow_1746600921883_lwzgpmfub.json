@@ -1,0 +1,75 @@
+{
+  "id": "flow_1746600921883_lwzgpmfub",
+  "title": "応急処理フロー: 本線を走行中、エンジン回転を上げようとしたら、徐々にエンジン回転が下がり、最終的に停止した。\n",
+  "description": "燃料供給系統の問題を疑う",
+  "content": "1. 車両を安全な場所に停止させる\n2. 燃料フィルターの詰まりを確認する\n3. 燃料フィルターを清掃または交換する\n4. 燃料タンクのベントが詰まっていないか確認する\n5. エンジンを再始動し、回転が安定するか確認する",
+  "type": "応急処置",
+  "images": [],
+  "savePath": "C:/Users/Satoshi Niina/OneDrive/Desktop/Troubleshooting-guide/knowledge-base/troubleshooting",
+  "nodes": [],
+  "edges": [],
+  "steps": [
+    {
+      "id": "step1",
+      "title": "車両を安全な場所に停止させる",
+      "order": 1
+    },
+    {
+      "id": "step2",
+      "title": "燃料フィルターの詰まりを確認する",
+      "order": 2
+    },
+    {
+      "id": "step3",
+      "title": "燃料フィルターを清掃または交換する",
+      "order": 3
+    },
+    {
+      "id": "step4",
+      "title": "燃料タンクのベントが詰まっていないか確認する",
+      "order": 4
+    },
+    {
+      "id": "step5",
+      "title": "エンジンを再始動し、回転が安定するか確認する",
+      "order": 5
+    }
+  ],
+  "metadata": {
+    "createdAt": "2025-05-07T06:55:21.883Z",
+    "lastUpdated": "2025-05-07T06:55:21.883Z",
+    "filePath": "flow_flow_1746600921883_lwzgpmfub.json",
+    "fileName": "flow_flow_1746600921883_lwzgpmfub.json",
+    "nodeCount": 0,
+    "edgeCount": 0,
+    "stepCount": 5,
+    "steps": [
+      {
+        "id": "step1",
+        "title": "車両を安全な場所に停止させる",
+        "order": 1
+      },
+      {
+        "id": "step2",
+        "title": "燃料フィルターの詰まりを確認する",
+        "order": 2
+      },
+      {
+        "id": "step3",
+        "title": "燃料フィルターを清掃または交換する",
+        "order": 3
+      },
+      {
+        "id": "step4",
+        "title": "燃料タンクのベントが詰まっていないか確認する",
+        "order": 4
+      },
+      {
+        "id": "step5",
+        "title": "エンジンを再始動し、回転が安定するか確認する",
+        "order": 5
+      }
+    ]
+  },
+  "saveAsSingleFile": true
+}

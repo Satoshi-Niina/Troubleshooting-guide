@@ -1,0 +1,20 @@
+{
+  "slides": [
+    {
+      "スライド番号": 1,
+      "タイトル": "サンプルスライド1",
+      "本文": ["これはサンプルスライドの本文です。"],
+      "画像テキスト": [
+        {
+          "画像パス": "/knowledge-base/media/images/sample1.png"
+        }
+      ]
+    }
+  ],
+  "embeddedImages": [
+    {
+      "抽出パス": "/knowledge-base/media/images/embedded1.png",
+      "説明": "埋め込み画像のサンプル"
+    }
+  ]
+} 
