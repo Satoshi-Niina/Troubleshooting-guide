@@ -155,8 +155,8 @@ function openBrowser(url: string) {
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
-  const port = 5001;
-  const url = `http://localhost:${port}`;
+  const port = 5000;
+  const url = `http://0.0.0.0:${port}`;
   console.log(`サーバーを起動します: ${url}`);
   
   server.listen(port, '127.0.0.1', () => {
