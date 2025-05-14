@@ -13,7 +13,11 @@ try {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URLが設定されていません");
   }
-  const sql = postgres(process.env.DATABASE_URL);
+  const sql = postgres(process.env.DATABASE_URL, {
+    ssl: {
+      mode: 'require'
+    }
+  });
   db = drizzle(sql, { schema });
 } catch (error) {
   console.error("データベース接続エラー:", error);
