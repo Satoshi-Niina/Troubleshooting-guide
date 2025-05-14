@@ -10,7 +10,10 @@ if (!process.env.DATABASE_URL) {
 // データベース接続を試みる
 let db;
 try {
-  const sql = postgres(process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/postgres");
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URLが設定されていません");
+  }
+  const sql = postgres(process.env.DATABASE_URL);
   db = drizzle(sql, { schema });
 } catch (error) {
   console.error("データベース接続エラー:", error);
