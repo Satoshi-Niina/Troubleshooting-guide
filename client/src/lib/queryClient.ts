@@ -18,9 +18,9 @@ export async function apiRequest(
   let url = '';
   let data: unknown = undefined;
   let headers: Record<string, string> = {};
-  
+
   const httpMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-  
+
   if (httpMethods.includes(methodOrUrl)) {
     // 新しい形式: apiRequest('GET', '/api/endpoint')
     method = methodOrUrl;
@@ -47,7 +47,7 @@ export async function apiRequest(
       url = `${methodOrUrl}${urlOrData}`;
     }
   }
-  
+
   // Content-Typeヘッダーを追加
   if (data) {
     headers = {
@@ -55,12 +55,12 @@ export async function apiRequest(
       ...headers
     };
   }
-  
+
   // ブラウザキャッシュ対策用のタイムスタンプパラメータを追加
   const urlWithCache = url.includes('?') 
     ? `${url}&_t=${Date.now()}` 
     : `${url}?_t=${Date.now()}`;
-  
+
   const res = await fetch(urlWithCache, {
     method,
     headers,
@@ -108,12 +108,12 @@ export const getQueryFn: <T>(options: {
         }
       }
     }
-    
+
     // クエリキーにキャッシュバスティングパラメータを追加
     let url = queryKey[0] as string;
     const timestamp = Date.now();
     url = url.includes('?') ? `${url}&_t=${timestamp}` : `${url}?_t=${timestamp}`;
-    
+
     const res = await fetch(url, {
       credentials: "include",
       cache: "no-cache", // ブラウザキャッシュを使用しない
@@ -127,7 +127,7 @@ export const getQueryFn: <T>(options: {
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
-    
+
     // キャッシュクリアヘッダーをチェック
     if (res.headers.get('X-Chat-Cleared') === 'true') {
       console.log('クエリ実行中にキャッシュクリア指示を受信: 空配列を返します');
@@ -154,3 +154,10 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+const setupWebSocket = (token: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  const wsUrl = `${protocol}//${host}/?token=${token}`;
+  return new WebSocket(wsUrl);
+};
