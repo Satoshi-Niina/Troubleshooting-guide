@@ -1,0 +1,165 @@
+{
+  "id": "headlight_dimming_issue",
+  "title": "前照灯点灯時の室内灯暗化問題の応急処置",
+  "description": "前照灯を点灯した際に室内灯や他の照明が暗くなる問題に対処するための手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+  "triggerKeywords": [
+    "前照灯",
+    "室内灯",
+    "照明暗化"
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "title": "開始",
+      "description": "この応急処置ガイドでは、前照灯を点灯した際に室内灯や他の照明が暗くなる問題に対処する手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+      "imageUrl": "",
+      "type": "start",
+      "options": [
+        {
+          "text": "状況を確認する",
+          "nextStepId": "step1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step1",
+      "title": "安全確保",
+      "description": "1. 二次災害を防ぐため、車両が安全な場所に停止していることを確認します。\n2. 接近する列車や障害物がないか周囲を確認します。\n3. 必要に応じて停止表示器や防護無線を使用します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "安全確認完了",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "電気系統の確認",
+      "description": "バッテリーや発電機に問題がありますか？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい、問題がある",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ、問題はない",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "電気系統の問題対応",
+      "description": "1. バッテリーの接続を確認し、緩みや腐食がないか点検します。\n2. 発電機のベルトが緩んでいないか確認します。\n3. 必要に応じてバッテリーを充電または交換します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "対処後に再試行",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "照明系統の確認",
+      "description": "1. 照明系統の配線を確認し、断線や接触不良がないか点検します。\n2. ヒューズボックスを確認し、ヒューズが切れていないか確認します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "問題を特定した",
+          "nextStepId": "step3a",
+          "isTerminal": false,
+          "conditionType": "other"
+        },
+        {
+          "text": "問題を特定できない",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step3a",
+      "title": "照明系統の問題対応",
+      "description": "1. 配線の断線や接触不良を修理します。\n2. 必要に応じてヒューズを交換します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "対処後に再試行",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision2",
+      "title": "問題解決確認",
+      "description": "対処後、照明は正常に動作していますか？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい、正常に動作している",
+          "nextStepId": "step_success",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ、まだ問題がある",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step_success",
+      "title": "運転再開手順",
+      "description": "1. 各計器の値が正常範囲内にあることを確認します。\n2. 異常な音、振動、臭いがないか確認します。\n3. 全て正常であれば、運転を再開します。\n4. しばらくの間、照明の状態に注意を払いながら走行してください。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step_failure",
+      "title": "専門的な支援要請",
+      "description": "1. 指令所または保守担当に連絡し、現在の状況と位置を報告します。\n2. これまでに実施した確認事項と対処内容を伝えます。\n3. 軌道モータカーの牽引または修理のための支援を要請します。\n4. 安全な場所で支援の到着を待ちます。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    }
+  ]
+}
