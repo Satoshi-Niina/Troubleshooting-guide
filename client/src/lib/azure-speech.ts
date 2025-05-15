@@ -83,7 +83,9 @@ const initAzureSpeechConfig = () => {
 
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechRecognitionLanguage = 'ja-JP';
-    speechConfig.endpointId = `wss://${speechRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1`;
+    // エンドポイントを標準のものに変更
+    speechConfig.speechRecognitionLanguage = 'ja-JP';
+    // カスタムエンドポイントの設定を削除（SDKのデフォルトを使用）
 
     // 自動句読点を有効化
     speechConfig.setProperty(
