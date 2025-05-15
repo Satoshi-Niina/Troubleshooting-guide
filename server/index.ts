@@ -54,7 +54,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   console.log(`[DEBUG] Request received: ${req.method} ${path}`);
-  
+
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -66,7 +66,7 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-    
+
     if (capturedJsonResponse) {
       logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
     }
@@ -92,12 +92,12 @@ function openBrowser(url: string) {
     // ストレージをアプリケーションのローカル変数として保存
     app.locals.storage = storage;
     console.log('ストレージをアプリケーション変数として設定しました');
-    
+
     // サーバー起動時に知識ベースを初期化
     console.log('知識ベースの初期化を開始...');
     initializeKnowledgeBase();
     console.log('知識ベースの初期化が完了しました');
-    
+
     // ディレクトリの確認と作成 - uploads不要
     const dirs = [
       'knowledge-base/images',
@@ -106,7 +106,7 @@ function openBrowser(url: string) {
       'knowledge-base/media',
       'knowledge-base/ppt'
     ];
-    
+
     for (const dir of dirs) {
       const dirPath = path.join(process.cwd(), dir);
       if (!fs.existsSync(dirPath)) {
@@ -114,7 +114,7 @@ function openBrowser(url: string) {
         fs.mkdirSync(dirPath, { recursive: true });
       }
     }
-    
+
     // サーバー起動時にuploadsのデータをknowledge-baseにコピー
     console.log('uploads -> knowledge-base への同期を開始...');
     try {
@@ -133,7 +133,7 @@ function openBrowser(url: string) {
   } catch (err) {
     console.error('知識ベースの初期化中にエラーが発生しました:', err);
   }
-  
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -158,11 +158,16 @@ function openBrowser(url: string) {
   const port = 5000;
   const url = `http://0.0.0.0:${port}`;
   console.log(`サーバーを起動します: ${url}`);
-  
+  const PORT = 5000;
+  // 定期クリーンアップの設定を読み込み
+  // Assuming the script is in the parent directory under a scripts folder
+  require('../scripts/scheduled-cleanup');
+
   server.listen(port, '127.0.0.1', () => {
     console.log(`サーバーが起動しました: ${url}`);
     console.log('ブラウザを開いています...');
     openBrowser(url);
+    console.log('定期クリーンアップがスケジュールされました (毎月1日 午前3時実行)');
   }).on('error', (err: NodeJS.ErrnoException) => {
     console.error('サーバー起動エラー:', err);
     if (err.code === 'EADDRINUSE') {

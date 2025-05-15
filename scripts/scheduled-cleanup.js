@@ -1,0 +1,45 @@
+
+const cron = require('node-cron');
+const { cleanupKnowledgeBase } = require('./cleanup-knowledge-base');
+const path = require('path');
+const fs = require('fs');
+
+// ログファイルのパス
+const LOG_FILE = path.join(__dirname, '../logs/cleanup.log');
+
+// ログディレクトリが存在しない場合は作成
+const logDir = path.dirname(LOG_FILE);
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+// ログ出力関数
+function logToFile(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `${timestamp}: ${message}\n`;
+  fs.appendFileSync(LOG_FILE, logMessage);
+  console.log(logMessage.trim());
+}
+
+// クリーンアップ実行関数
+async function runCleanup() {
+  try {
+    logToFile('定期クリーンアップを開始します');
+    const result = await cleanupKnowledgeBase();
+    logToFile(`クリーンアップ完了: ${result.removedCount}件の重複を削除しました`);
+  } catch (error) {
+    logToFile(`クリーンアップエラー: ${error.message}`);
+  }
+}
+
+// cronスケジュールの設定 (毎月1日の午前3時に実行)
+cron.schedule('0 3 1 * *', runCleanup);
+
+logToFile('定期クリーンアップスケジューラーを開始しました');
+
+// 初回実行のためのエントリーポイント
+if (require.main === module) {
+  runCleanup();
+}
+
+module.exports = { runCleanup };
