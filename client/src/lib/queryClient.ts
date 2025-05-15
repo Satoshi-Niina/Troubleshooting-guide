@@ -157,8 +157,8 @@ export const queryClient = new QueryClient({
 
 const setupWebSocket = (token: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = '0.0.0.0';
-  const port = '5000';
+  const host = window.location.hostname;
+  const port = window.location.port || '5000';
   const wsUrl = `${protocol}//${host}:${port}/ws?token=${token}`;
   
   console.log('WebSocket接続を開始:', wsUrl);

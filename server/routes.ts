@@ -939,10 +939,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
-  // Set up WebSocket server for real-time chat on a specific path to avoid conflict with Vite
+  // Set up WebSocket server for real-time chat
   const wss = new WebSocketServer({ 
-    server: httpServer,
-    path: '/ws'  // Use a specific path to avoid conflict with Vite's WebSocket
+    noServer: true
+  });
+
+  // Handle upgrade requests
+  httpServer.on('upgrade', (request, socket, head) => {
+    if (request.url?.startsWith('/ws')) {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    }
   });
   
   // Make sure to properly import WebSocket type
