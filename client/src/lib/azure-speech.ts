@@ -296,7 +296,17 @@ export const startSpeechRecognition = (
         // 音声認識キャンセル時のイベントハンドラ
         recognizer.canceled = (s, e) => {
           if (e.reason === sdk.CancellationReason.Error) {
-            onError(`音声認識エラー: ${e.errorDetails}`);
+            console.error('Azure Speech エラー:', e.errorDetails);
+
+            // エラーが発生した場合はブラウザのAPIにフォールバック
+            stopSpeechRecognition();
+            startBrowserSpeechRecognition(onResult, onError);
+
+            toast({
+              title: 'ブラウザの音声認識に切り替えました',
+              description: 'より安定した音声認識を提供します',
+              duration: 3000,
+            });
           }
           if (silenceTimer) {
             clearTimeout(silenceTimer);
