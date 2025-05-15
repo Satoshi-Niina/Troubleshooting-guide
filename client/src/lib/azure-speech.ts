@@ -377,22 +377,9 @@ interface Window {
 }
 
 const browserSupportsSpeechRecognition = () => {
-  // iOSデバイスの場合は常にfalseを返し、Azure SDKを使用するようにする
-  const isIOSDevice = () => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  };
-
-  // iOSの場合はfalseを返してAzure SDKを使用
-  if (isIOSDevice()) {
-    console.log('iOSデバイスを検出: Azure Speech SDKを使用します');
-    return false;
-  }
-
-  // その他のブラウザではWebSpeech APIの利用可否をチェック
-  const hasWebSpeechAPI = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-  console.log('WebSpeech API利用可能:', hasWebSpeechAPI);
-  return hasWebSpeechAPI;
+  // すべてのブラウザでAzure Speech SDKを使用する
+  console.log('Azure Speech SDKを使用します');
+  return false;
 };
 
 export const startBrowserSpeechRecognition = (
