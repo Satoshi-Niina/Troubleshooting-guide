@@ -129,26 +129,32 @@ export default function MessageInput() {
     window.dispatchEvent(new CustomEvent('open-camera'));
   };
 
-  const handleMicClick = () => {
-    // マイク録音機能の切り替え - ChatContextの関数を使用
-    if (!isRecording) {
-      // 録音開始
-      console.log('録音開始');
-      startRecording();
-    } else {
-      // 録音停止
-      console.log('録音停止');
-      stopRecording();
+  const handleMicClick = async () => {
+    try {
+      // マイク権限の確認
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // 確認後すぐに停止
       
-      // 録音停止時はチャット側にのみ反映し、入力欄には反映しない
-      if (recordedText.trim()) {
-        // 入力欄には反映しない (setMessage を呼び出さない)
+      // マイク録音機能の切り替え
+      if (!isRecording) {
+        console.log('録音開始');
+        startRecording();
+      } else {
+        console.log('録音停止');
+        stopRecording();
         
-        // 新しい関数を使用してドラフトメッセージを更新（イベント発火とコンテキスト更新を両方行う）
-        console.log('録音停止：関数から直接ドラフトメッセージを設定:', recordedText.trim());
-        updateDraftMessage(recordedText.trim());
-        
-        console.log('録音停止時のテキストをチャット側のみに表示:', recordedText.trim());
+        if (recordedText.trim()) {
+          console.log('録音停止：ドラフトメッセージを設定:', recordedText.trim());
+          updateDraftMessage(recordedText.trim());
+        }
+      }
+    } catch (error) {
+      console.error('マイクアクセスエラー:', error);
+      // エラーメッセージをユーザーに表示
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        alert('マイクの使用が許可されていません。ブラウザの設定でマイクの使用を許可してください。');
+      } else {
+        alert('マイクの初期化中にエラーが発生しました。');
       }
     }
   };
