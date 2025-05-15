@@ -139,6 +139,45 @@ export async function generateKeywords(text: string): Promise<string[]> {
  * @param text 元のテキスト
  * @returns 最適化された検索クエリ
  */
+/**
+ * キーワードからステップ形式のレスポンスを生成する
+ */
+export async function generateStepResponse(keyword: string): Promise<{
+  title: string;
+  steps: { description: string }[];
+}> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: "あなたは保守用車の専門家です。キーワードに基づいて、具体的な手順を説明してください。"
+        },
+        {
+          role: "user",
+          content: `以下のキーワードに関する対応手順を、3-5つのステップに分けて説明してください:\n${keyword}`
+        }
+      ],
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
+
+    const content = response.choices[0].message.content || '';
+    const result = JSON.parse(content);
+    return {
+      title: result.title || keyword,
+      steps: result.steps || []
+    };
+  } catch (error) {
+    console.error('ステップレスポンス生成エラー:', error);
+    return {
+      title: keyword,
+      steps: [{ description: "レスポンスの生成に失敗しました。" }]
+    };
+  }
+}
+
 export async function generateSearchQuery(text: string): Promise<string> {
   try {
     // 長すぎるテキストを切り詰める

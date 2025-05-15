@@ -167,3 +167,20 @@ const setupWebSocket = (token: string) => {
   console.log('WebSocket接続を開始:', wsUrl);
   return ws;
 };
+
+// Placeholder function, assuming this is where message processing happens
+export async function processMessage(text: string): Promise<string> {
+  // ステップ形式のレスポンスを取得
+  const response = await apiRequest('POST', '/api/chatgpt/steps', { text });
+  const data = await response.json();
+  if (data.steps) {
+    // ステップ形式のレスポンスを整形
+    let formattedResponse = `${data.title}\n\n`;
+    data.steps.forEach((step: { description: string }, index: number) => {
+      formattedResponse += `${index + 1}. ${step.description}\n`;
+    });
+    return formattedResponse;
+  } else {
+    return data.response;
+  }
+}
