@@ -158,6 +158,9 @@ export const queryClient = new QueryClient({
 const setupWebSocket = (token: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
-  const wsUrl = `${protocol}//${host}/?token=${token}`;
+  const port = import.meta.env.VITE_WS_PORT || window.location.port;
+  const wsUrl = `${protocol}//${host}${port ? ':' + port : ''}/ws?token=${token}`;
+  
+  console.log('WebSocket接続を開始:', wsUrl);
   return new WebSocket(wsUrl);
 };
