@@ -1,14 +1,15 @@
 
-const cron = require('node-cron');
-const { cleanupKnowledgeBase } = require('./cleanup-knowledge-base');
-const path = require('path');
-const fs = require('fs');
+import { scheduleJob } from 'node-cron';
+import { cleanupKnowledgeBase } from './cleanup-knowledge-base.js';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 
-// ログファイルのパス
-const LOG_FILE = path.join(__dirname, '../logs/cleanup.log');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const LOG_FILE = join(__dirname, '../logs/cleanup.log');
 
 // ログディレクトリが存在しない場合は作成
-const logDir = path.dirname(LOG_FILE);
+const logDir = dirname(LOG_FILE);
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
@@ -33,13 +34,13 @@ async function runCleanup() {
 }
 
 // cronスケジュールの設定 (毎月1日の午前3時に実行)
-cron.schedule('0 3 1 * *', runCleanup);
+scheduleJob('0 3 1 * *', runCleanup);
 
 logToFile('定期クリーンアップスケジューラーを開始しました');
 
 // 初回実行のためのエントリーポイント
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   runCleanup();
 }
 
-module.exports = { runCleanup };
+export { runCleanup };
