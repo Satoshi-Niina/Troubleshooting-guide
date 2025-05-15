@@ -8,6 +8,7 @@ import axios from "axios";
 import { storage } from "./storage";
 import dotenv from 'dotenv';
 import { exec } from 'child_process';
+import { runCleanup } from '../scripts/scheduled-cleanup.js';
 
 // .envファイルの読み込み
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -159,9 +160,7 @@ function openBrowser(url: string) {
   const url = `http://0.0.0.0:${port}`;
   console.log(`サーバーを起動します: ${url}`);
   const PORT = 5000;
-  // 定期クリーンアップの設定を読み込み
-  import { runCleanup } from '../scripts/scheduled-cleanup.js';
-
+  
   server.listen(port, '127.0.0.1', () => {
     console.log(`サーバーが起動しました: ${url}`);
     console.log('ブラウザを開いています...');
