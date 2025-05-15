@@ -158,9 +158,12 @@ export const queryClient = new QueryClient({
 const setupWebSocket = (token: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.hostname;
-  const port = window.location.port || '5000';
+  const port = '5000';
   const wsUrl = `${protocol}//${host}:${port}/ws?token=${token}`;
-  
+
+  const ws = new WebSocket(wsUrl);
+  ws.binaryType = 'arraybuffer';  // バイナリデータの高速処理
+
   console.log('WebSocket接続を開始:', wsUrl);
-  return new WebSocket(wsUrl);
+  return ws;
 };

@@ -6,9 +6,11 @@ let recognizer: sdk.SpeechRecognizer | null = null;
 // 無音タイマーのインスタンス
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 // 無音タイムアウトの時間（ミリ秒）
-const SILENCE_TIMEOUT = 10000; // 10秒の無音タイムアウト
+const SILENCE_TIMEOUT = 5000; // 5秒の無音タイムアウト
 // 最小文字数（これより短い認識結果は単独では送信しない）
-const MIN_TEXT_LENGTH = 5;
+const MIN_TEXT_LENGTH = 3;
+// 認識結果のキャッシュサイズ
+const MAX_CACHE_SIZE = 10;
 // 最大文字数（これを超えたら自動的に送信）
 const MAX_TEXT_LENGTH = 50;
 // 最後に送信したテキスト
