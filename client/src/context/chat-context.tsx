@@ -90,15 +90,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isInitializing, setIsInitializing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [tempMedia, setTempMedia] = useState<{ type: string, url: string, thumbnail?: string }[]>([]);
-  
+
   // プレビュー用一時メッセージ（まだ送信していないがユーザー入力前に表示するためのメッセージ）
   const [draftMessage, setDraftMessage] = useState<{
     content: string,
     media?: { type: string, url: string, thumbnail?: string }[]
   } | null>(null);
-  
+
   const { toast } = useToast();
-  
+
   // 最後に送信したテキストを保存する変数（重複送信防止用）
   const [lastSentText, setLastSentText] = useState<string>('');
   // 音声認識による送信を防止するタイマー
@@ -120,33 +120,41 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [bufferTimeoutId, setBufferTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const BUFFER_INTERVAL = 300; // バッファリング間隔を300ミリ秒に戻す
   const SILENCE_THRESHOLD = 1000; // 無音検出時間は1秒のまま
-  
+
   // チャットの初期化
   const initializeChat = useCallback(async () => {
     try {
       setIsInitializing(true);
-      
+
+      // 認証状態を確認
+      const authResponse = await apiRequest('GET', '/api/auth/me');
+      if (!authResponse.ok) {
+        // ログインページにリダイレクト
+        window.location.href = '/login';
+        return null;
+      }
+
       // 既存のチャットを取得する
       const chatsResponse = await apiRequest('GET', '/api/chats');
-      
+
       if (!chatsResponse.ok) {
         // 認証エラーなどの場合は処理を中断
         throw new Error('チャットの取得に失敗しました');
       }
-      
+
       const chats = await chatsResponse.json();
-      
+
       // チャットが存在する場合は最初のチャットを使用
       if (chats && chats.length > 0) {
         setChatId(chats[0].id);
         return chats[0].id;
       }
-      
+
       // チャットが存在しない場合は新しいチャットを作成
       const createResponse = await apiRequest('POST', '/api/chats', {
         title: '保守用車ナレッジチャット'
       });
-      
+
       const newChat = await createResponse.json();
       setChatId(newChat.id);
       return newChat.id;
@@ -165,17 +173,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsInitializing(false);
     }
   }, [toast]);
-  
+
   // コンポーネントマウント時にチャットを初期化
   useEffect(() => {
     initializeChat();
   }, [initializeChat]);
-  
+
   // チャットメッセージの初期読み込み
   useEffect(() => {
     const loadMessages = async () => {
       if (!chatId) return;
-      
+
       try {
         const response = await apiRequest('GET', `/api/chats/${chatId}/messages`);
         if (response.ok) {
@@ -189,23 +197,23 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Failed to load messages:', error);
       }
     };
-    
+
     if (chatId) {
       loadMessages();
     }
   }, [chatId]);
-  
+
   // 認識テキストの類似度を確認する関数（部分文字列か判定）
   const isSubstringOrSimilar = (text1: string, text2: string): boolean => {
     if (!text1 || !text2) return false;
     const lowerText1 = text1.toLowerCase().trim();
     const lowerText2 = text2.toLowerCase().trim();
-    
+
     // 完全一致または部分文字列かチェック
     if (lowerText1 === lowerText2 || lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1)) {
       return true;
     }
-    
+
     // より厳格な類似性判定 - 先頭部分が同じかチェック
     const minLength = Math.min(lowerText1.length, lowerText2.length);
     if (minLength > 3) {
@@ -215,24 +223,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
     }
-    
+
     // 80%以上の単語が一致するかチェック
     const words1 = lowerText1.split(/\s+/);
     const words2 = lowerText2.split(/\s+/);
-    
+
     // 単語数が少ない場合は直接比較
     if (words1.length <= 2 || words2.length <= 2) {
       return lowerText1.length > 0 && lowerText2.length > 0 && 
         (lowerText1.includes(lowerText2) || lowerText2.includes(lowerText1));
     }
-    
+
     // 共通する単語の数をカウント
     const commonWords = words1.filter(word => words2.includes(word));
     const similarityRatio = commonWords.length / Math.max(words1.length, words2.length);
-    
+
     return similarityRatio >= 0.7; // 70%以上一致に緩和
   };
-  
+
   // ドラフトメッセージ更新のイベントリスナー
   useEffect(() => {
     let isUpdating = false; // 更新中フラグ
@@ -247,7 +255,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (event.detail && typeof event.detail.content === 'string') {
         const { content } = event.detail;
-        
+
         // 空のコンテンツの場合はクリア
         if (!content.trim()) {
           setDraftMessage(null);
@@ -279,7 +287,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // ドラフトメッセージクリア用のイベントリスナー
     const handleClearDraftMessage = (event: Event) => {
       console.log('クリアドラフトメッセージイベント受信');
-      
+
       // すべての状態をリセット
       setDraftMessage(null);
       setRecordedText('');
@@ -287,16 +295,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setRecognitionPhrases([]);
       setBlockSending(false);
       setIsProcessing(false);
-      
+
       // 音声認識を停止
       stopSpeechRecognition();
       stopBrowserSpeechRecognition();
     };
-    
+
     // イベントリスナーを追加
     window.addEventListener('update-draft-message', handleUpdateDraftMessage as EventListener);
     window.addEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
-    
+
     // クリーンアップ関数
     return () => {
       if (updateTimeout) {
@@ -306,13 +314,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       window.removeEventListener('clear-draft-message', handleClearDraftMessage as EventListener);
     };
   }, [draftMessage]);
-  
+
   // 選択テキストで検索する関数
   const searchBySelectedText = useCallback(async (text: string) => {
     try {
       if (!text) return;
       console.log('検索キーワード:', text);
-      
+
       // カンマやスペースで区切られた複数のキーワード対応
       const keywords = text.split(/[,\s]+/).map(k => k.trim()).filter(Boolean);
       const keywordType = keywords.map(k => {
@@ -321,26 +329,26 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (/部品|装置|ユニット|モジュール/.test(k)) return 'component';
         return '';
       });
-      
+
       console.log('キーワードタイプ:', ...keywordType);
-      
+
       setSearching(true);
-      
+
       console.log('画像検索開始:', text);
-      
+
       // 画像検索APIを呼び出す
       const response = await apiRequest('POST', '/api/tech-support/image-search', { 
         query: text,
         count: 10
       });
-      
+
       if (!response.ok) {
         throw new Error('画像検索に失敗しました');
       }
-      
+
       const results = await response.json();
       console.log('検索結果数:', results.images?.length || 0);
-      
+
       if (!results.images || results.images.length === 0) {
         console.log(`「${text}」に関する検索結果はありませんでした`);
         setSearchResults([]);
@@ -365,19 +373,19 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSearching(false);
     }
   }, [toast]);
-  
+
   // 検索結果をクリアする関数
   const clearSearchResults = useCallback(() => {
     setSearchResults([]);
   }, []);
-  
+
   // カメラで画像を撮影する関数
   const captureImage = useCallback(async () => {
     try {
       // カスタムイベントでカメラモーダルを開く
       const cameraEvent = new Event('open-camera');
       window.dispatchEvent(cameraEvent);
-      
+
       return Promise.resolve();
     } catch (error) {
       console.error('カメラエラー:', error);
@@ -389,7 +397,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return Promise.resolve();
     }
   }, [toast]);
-  
+
   // メッセージ送信関数
   const sendMessage = useCallback(async (content: string, mediaUrls?: { type: string, url: string, thumbnail?: string }[]) => {
     try {
@@ -399,30 +407,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw new Error('チャットの初期化に失敗しました');
         }
       }
-      
+
       setIsLoading(true);
       setDraftMessage(null);
-      
+
       const currentChatId = chatId || 1;
       const useOnlyKnowledgeBase = localStorage.getItem('useOnlyKnowledgeBase') !== 'false';
-      
+
       const response = await apiRequest('POST', `/api/chats/${currentChatId}/messages`, { 
         content,
         useOnlyKnowledgeBase,
         usePerplexity: false
       });
-      
+
       if (!response.ok) {
         throw new Error('メッセージの送信に失敗しました');
       }
-      
+
       const data = await response.json();
-      
+
       const allMedia = [
         ...(tempMedia || []),
         ...(mediaUrls || [])
       ];
-      
+
       setMessages(prev => [
         ...prev, 
         { 
@@ -439,7 +447,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           timestamp: new Date(data.aiMessage.timestamp)
         }
       ]);
-      
+
       setTempMedia([]);
       setRecordedText('');
       searchBySelectedText(content);
@@ -453,18 +461,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
     }
   }, [chatId, initializeChat, searchBySelectedText, tempMedia, toast]);
-  
+
   // 音声認識の初期化を最適化
   const initializeSpeechRecognition = useCallback(() => {
     try {
       const currentMedia = draftMessage?.media || [];
-      
+
       startSpeechRecognition(
         async (text: string) => {
           if (!text.trim()) return;
-          
+
           setLastAudioInputTime(Date.now());
-          
+
           if (micSilenceTimeoutId) clearTimeout(micSilenceTimeoutId);
           const silenceId = setTimeout(() => {
             if (Date.now() - lastAudioInputTime >= SILENCE_THRESHOLD) {
@@ -479,11 +487,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
           }, SILENCE_THRESHOLD);
           setMicSilenceTimeoutId(silenceId);
-          
+
           // 認識テキストをバッファに追加
           setRecognitionBuffer(prev => {
             const newBuffer = [...prev, text];
-            
+
             // バッファリングタイマーをリセット
             if (bufferTimeoutId) clearTimeout(bufferTimeoutId);
             const timeoutId = setTimeout(() => {
@@ -492,32 +500,32 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               setRecognitionBuffer([]);
             }, BUFFER_INTERVAL);
             setBufferTimeoutId(timeoutId);
-            
+
             return newBuffer;
           });
         },
         (error: string) => {
           console.log('Azure音声認識エラー:', error);
-          
+
           toast({
             title: 'ブラウザAPIに切り替えます',
             duration: 1000,
           });
-          
+
           stopSpeechRecognition();
-          
+
           setRecordedText('');
           setLastSentText('');
           setRecognitionPhrases([]);
           setRecognitionBuffer([]);
           setBlockSending(false);
-          
+
           startBrowserSpeechRecognition(
             async (text: string) => {
               if (!text.trim()) return;
-              
+
               setLastAudioInputTime(Date.now());
-              
+
               if (micSilenceTimeoutId) clearTimeout(micSilenceTimeoutId);
               const silenceId = setTimeout(() => {
                 if (Date.now() - lastAudioInputTime >= SILENCE_THRESHOLD) {
@@ -532,11 +540,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
               }, SILENCE_THRESHOLD);
               setMicSilenceTimeoutId(silenceId);
-              
+
               // 認識テキストをバッファに追加
               setRecognitionBuffer(prev => {
                 const newBuffer = [...prev, text];
-                
+
                 // バッファリングタイマーをリセット
                 if (bufferTimeoutId) clearTimeout(bufferTimeoutId);
                 const timeoutId = setTimeout(() => {
@@ -545,7 +553,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   setRecognitionBuffer([]);
                 }, BUFFER_INTERVAL);
                 setBufferTimeoutId(timeoutId);
-                
+
                 return newBuffer;
               });
             },
@@ -570,7 +578,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
   }, [draftMessage?.media, lastAudioInputTime, micSilenceTimeoutId, bufferTimeoutId, sendMessage, toast]);
-  
+
   const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordedText('');
@@ -579,30 +587,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRecognitionBuffer([]);
     setBlockSending(false);
     setLastAudioInputTime(Date.now());
-    
+
     initializeSpeechRecognition();
   }, [initializeSpeechRecognition]);
-  
+
   // 録音停止関数
   const stopRecording = useCallback(() => {
     setIsRecording(false);
-    
+
     // バッファ内の残りのテキストを送信
     if (recognitionBuffer.length > 0) {
       const finalText = recognitionBuffer.join(' ');
       sendMessage(finalText);
     }
-    
+
     // 状態をリセット
     setRecordedText('');
     setLastSentText('');
     setRecognitionPhrases([]);
     setRecognitionBuffer([]);
-    
+
     // 音声認識を停止
     stopSpeechRecognition();
     stopBrowserSpeechRecognition();
-    
+
     // タイマーをクリア
     if (micSilenceTimeoutId) {
       clearTimeout(micSilenceTimeoutId);
@@ -613,31 +621,31 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setBufferTimeoutId(null);
     }
   }, [micSilenceTimeoutId, bufferTimeoutId, recognitionBuffer, sendMessage]);
-  
+
   // チャット履歴をエクスポートする関数
   const exportChatHistory = useCallback(async () => {
     try {
       if (!chatId) return;
-      
+
       setIsExporting(true);
-      
+
       const response = await apiRequest('POST', `/api/chats/${chatId}/export`);
-      
+
       if (!response.ok) {
         throw new Error('チャット履歴のエクスポートに失敗しました');
       }
-      
+
       const data = await response.json();
-      
+
       toast({
         title: 'エクスポート完了',
         description: 'チャット履歴が正常にエクスポートされました。',
       });
-      
+
       // 最後のエクスポート履歴を更新
       setLastExportTimestamp(new Date());
       setHasUnexportedMessages(false);
-      
+
       return data;
     } catch (error) {
       console.error('エクスポートエラー:', error);
@@ -651,25 +659,25 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsExporting(false);
     }
   }, [chatId, toast]);
-  
+
   // 外部システム連携用に形式化されたデータをエクスポートする
   const exportFormattedData = useCallback(async () => {
     try {
       if (!chatId) return {};
-      
+
       const response = await apiRequest('GET', `/api/chats/${chatId}/formatted-export`);
-      
+
       if (!response.ok) {
         throw new Error('フォーマット済みデータの取得に失敗しました');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('フォーマット済みデータの取得エラー:', error);
       return {};
     }
   }, [chatId]);
-  
+
   // 緊急ガイドデータを送信する関数
   const sendEmergencyGuide = useCallback(async (guideData: any) => {
     try {
@@ -680,14 +688,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw new Error('チャットの初期化に失敗しました');
         }
       }
-      
+
       setIsLoading(true);
-      
+
       // 現在のチャットIDを取得し、localStorageにも保存（他のコンポーネントからアクセスできるように）
       const currentChatId = chatId || 1;
       localStorage.setItem('currentChatId', String(currentChatId));
       console.log('応急処置ガイド: チャットID', currentChatId, 'にデータを送信します');
-      
+
       // ログ出力を追加（デバッグ用）
       console.log('送信データ:', {
         chatId: currentChatId,
@@ -696,14 +704,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           content: guideData.content ? guideData.content.substring(0, 100) + '...' : null
         }
       });
-      
+
       try {
         // 緊急ガイド専用のエンドポイントを使用
         const response = await apiRequest('POST', `/api/emergency-guide/send`, {
           chatId: currentChatId,
           guideData
         });
-        
+
         // レスポンスをチェック
         if (!response.ok) {
           // エラーの詳細情報を取得
@@ -714,7 +722,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             throw new Error(`ガイドの送信に失敗しました (${response.status})`);
           }
         }
-        
+
         // レスポンスデータを取得
         const data = await response.json();
         console.log('応急処置ガイド: 送信成功', data);
@@ -730,12 +738,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             timestamp: new Date(data.aiMessage.timestamp)
           }
         ]);
-        
+
         // 関連する画像検索も実行
         if (guideData.title) {
           searchBySelectedText(guideData.title);
         }
-        
+
         return data;
       } catch (apiError) {
         console.error('APIリクエストエラー:', apiError);
@@ -758,7 +766,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
     }
   }, [chatId, searchBySelectedText, toast]);
-  
+
   // チャット履歴を全て削除する関数
   const clearChatHistory = useCallback(async () => {
     try {
@@ -782,7 +790,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (typeof window !== 'undefined') {
         const clearEvent = new CustomEvent('clear-draft-message');
         window.dispatchEvent(clearEvent);
-        
+
         const resetEvent = new CustomEvent('reset-recognition-phrases');
         window.dispatchEvent(resetEvent);
       }
@@ -831,15 +839,15 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
   }, [chatId, toast]);
-  
+
   // 最後のエクスポート履歴を取得
   const fetchLastExport = useCallback(async () => {
     if (!chatId) return;
-    
+
     try {
       const response = await apiRequest('GET', `/api/chats/${chatId}/last-export`);
       const data = await response.json();
-      
+
       if (data.timestamp) {
         setLastExportTimestamp(new Date(data.timestamp));
       }
@@ -847,12 +855,12 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Failed to fetch last export:', error);
     }
   }, [chatId]);
-  
+
   // コンポーネントがマウントされたときに最後のエクスポート履歴を取得
   useEffect(() => {
     fetchLastExport();
   }, [fetchLastExport]);
-  
+
   // メッセージが追加されたときに、未エクスポートのメッセージがあることを示す
   useEffect(() => {
     if (messages.length > 0 && lastExportTimestamp) {
@@ -867,7 +875,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setHasUnexportedMessages(false);
     }
   }, [messages, lastExportTimestamp]);
-  
+
   // コンテキスト値を提供
   const contextValue: ChatContextValue = {
     messages,
@@ -895,7 +903,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearChatHistory,
     isClearing
   };
-  
+
   return (
     <ChatContext.Provider value={contextValue}>
       {children}
