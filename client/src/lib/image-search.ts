@@ -42,12 +42,13 @@ async function loadImageSearchData() {
     try {
       const response = await fetch(`/knowledge-base/json/${metadataFile}?t=${timestamp}`);
       if (!response.ok) {
-        throw new Error(`knowledge-baseからのメタデータJSONの読み込みに失敗: ${metadataFile}`);
+        console.warn(`メタデータファイルが見つかりません: ${metadataFile}`);
+        return []; // 空の配列を返す
       }
       metadata = await response.json();
     } catch (error) {
-      console.error("メタデータJSONの読み込みに失敗しました:", error);
-      throw error; // 上位のcatchで処理するためにエラーを再スロー
+      console.warn("メタデータJSONの読み込みに失敗しました:", error);
+      return []; // エラー時は空の配列を返す
     }
     
     // 既存データをクリア
