@@ -160,8 +160,7 @@ function openBrowser(url: string) {
   console.log(`サーバーを起動します: ${url}`);
   const PORT = 5000;
   // 定期クリーンアップの設定を読み込み
-  // Assuming the script is in the parent directory under a scripts folder
-  import '../scripts/scheduled-cleanup.js';
+  import { runCleanup } from '../scripts/scheduled-cleanup.js';
 
   server.listen(port, '127.0.0.1', () => {
     console.log(`サーバーが起動しました: ${url}`);
