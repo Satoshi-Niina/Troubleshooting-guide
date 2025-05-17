@@ -166,11 +166,8 @@ export default function CameraModal() {
 
   const handleSend = async () => {
     if (capturedImage) {
-      const mediaType = isVideoMode ? 'video' : 'image';
-      const mediaUrl = { type: mediaType, url: capturedImage };
-      await sendMessage("", [mediaUrl]);
+      await captureImage(capturedImage, isVideoMode ? 'video' : 'image');
       setIsOpen(false);
-      setCapturedImage(null);
     }
   };
 
