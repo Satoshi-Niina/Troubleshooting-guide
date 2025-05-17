@@ -230,15 +230,14 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                   {media.type === 'image' && (
                     <div className="relative">
                       <img 
-                        src={media.url && media.url !== 'data:,' ? media.url : '/placeholder-image.png'} 
+                        src={media.url} 
                         alt="添付画像" 
                         className="rounded-lg w-full max-w-xs cursor-pointer border border-blue-200 shadow-md" 
                         onClick={() => handleImagePreview(media.url)}
                         onError={(e) => {
+                          console.error('画像読み込みエラー:', media.url);
                           const img = e.target as HTMLImageElement;
-                          if (!img.src.includes('/placeholder-image.png')) {
-                            img.src = '/placeholder-image.png';
-                          }
+                          img.src = '/placeholder-image.png';
                         }}
                       />
                       <div 
