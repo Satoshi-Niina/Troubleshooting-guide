@@ -31,7 +31,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
   const [showCopyButton, setShowCopyButton] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { toast } = useToast();
-  
+
   const isUserMessage = !message.isAiResponse;
   const formattedTime = format(
     new Date(message.timestamp), 
@@ -51,7 +51,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
       setShowCopyButton(false);
     }
   };
-  
+
   // テキストをメッセージ入力欄にコピーする
   const copyToInput = () => {
     if (localSelectedText) {
@@ -63,7 +63,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
       setShowCopyButton(false);
     }
   };
-  
+
   // テキストを音声で読み上げる
   const handleTextToSpeech = async () => {
     if (isSpeaking) {
@@ -82,7 +82,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
           title: "音声読み上げを開始します",
           duration: 2000,
         });
-        
+
         try {
           await speakText(message.content, {
             rate: 1.0,
@@ -101,12 +101,12 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
       }
     }
   };
-  
+
   // プレビュー表示用の共通イベント発火関数
   const handleImagePreview = (mediaUrl: string) => {
     // 全スライドデータをメディア配列から作成
     const allMediaUrls = message.media?.map(m => m.url) || [];
-    
+
     // イベントを発火して画像プレビューモーダルを表示
     window.dispatchEvent(new CustomEvent('preview-image', { 
       detail: { 
@@ -116,6 +116,65 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
         content: message.content
       } 
     }));
+  };
+
+  const renderMedia = () => {
+    return (
+      <>
+        {message.media && message.media.length > 0 && (
+          <div className="mt-3">
+            {message.media.map((media, index) => (
+              <div key={index} className="mt-2">
+                {media.type === 'image' && (
+                  <div className="relative">
+                    <img
+                      src={media.url}
+                      alt="添付画像"
+                      className="rounded-lg w-full max-w-xs cursor-pointer border border-blue-200 shadow-md"
+                      onClick={() => handleImagePreview(media.url)}
+                    />
+                    <div
+                      className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                      onClick={() => handleImagePreview(media.url)}
+                    >
+                      <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {media.type === 'video' && (
+                  <div className="relative">
+                    <video
+                      src={media.url}
+                      controls
+                      className="rounded-lg w-full max-w-xs border border-blue-200 shadow-md"
+                      onClick={(e) => {
+                        // Stop propagation to prevent both video control and preview
+                        e.stopPropagation();
+                      }}
+                    />
+                    <div
+                      className="absolute top-2 right-2 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+                      onClick={() => handleImagePreview(media.url)}
+                    >
+                      <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -148,7 +207,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
         >
           <div className="relative">
             <p className={`${!isUserMessage ? "text-blue-600" : "text-black"}`}>{message.content}</p>
-            
+
             {/* テキスト選択時のコピーボタン */}
             {showCopyButton && (
               <button
@@ -159,10 +218,10 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                 <Copy size={14} />
               </button>
             )}
-            
+
             {/* ドラフトメッセージのヒントを削除し、直接入力として扱う */}
           </div>
-          
+
           {/* Display media attachments if any */}
           {message.media && message.media.length > 0 && (
             <div className="mt-3">
