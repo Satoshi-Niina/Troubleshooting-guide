@@ -48,19 +48,57 @@ export async function cleanupKnowledgeBase() {
     let removedCount = 0;
     
     // プレフィックスグループ内の重複を処理
+    const processedDirs = new Set();
+    
     for (const [prefix, files] of prefixGroups.entries()) {
-      if (files.length > 1) {
-        console.log(`Processing group ${prefix} with ${files.length} files`);
+      console.log(`Processing group ${prefix} with ${files.length} files`);
+      
+      // すべてのファイルをチェック
+      for (let i = 0; i < files.length; i++) {
+        if (processedDirs.has(files[i].dir)) continue;
         
-        // タイムスタンプで並べ替え（新しい順）
-        files.sort((a, b) => b.timestamp - a.timestamp);
+        console.log(`Checking file: ${files[i].dir}`);
+        const currentContent = files[i].content;
         
-        // 最新のファイルを基準にする
-        const newest = files[0];
-        console.log(`Newest file: ${newest.dir} (${newest.timestamp})`);
-        
-        // 最新以外のファイルをチェック
-        for (let i = 1; i < files.length; i++) {
+        // 他のすべてのファイルと比較
+        for (let j = 0; j < files.length; j++) {
+          if (i === j || processedDirs.has(files[j].dir)) continue;
+          
+          const otherContent = files[j].content;
+          
+          // チャンク内容の類似性を確認
+          let matchCount = 0;
+          const minChunks = Math.min(currentContent.length, otherContent.length);
+          
+          for (let k = 0; k < minChunks; k++) {
+            const currentChunk = JSON.stringify(currentContent[k]?.text || '');
+            const otherChunk = JSON.stringify(otherContent[k]?.text || '');
+            if (currentChunk === otherChunk && currentChunk !== '""') {
+              matchCount++;
+            }
+          }
+          
+          console.log(`Comparing ${files[i].dir} with ${files[j].dir}:`);
+          console.log(`- Match count: ${matchCount}/${minChunks} chunks`);
+          
+          // 50%以上のチャンクが一致する場合、古い方を削除
+          if (matchCount >= Math.ceil(minChunks * 0.5)) {
+            const [dirToKeep, dirToRemove] = files[i].timestamp > files[j].timestamp 
+              ? [files[i].dir, files[j].dir]
+              : [files[j].dir, files[i].dir];
+              
+            console.log(`Found duplicate: ${dirToRemove} will be removed (keeping ${dirToKeep})`);
+            
+            const pathToRemove = path.join(DOCUMENTS_DIR, dirToRemove);
+            if (fs.existsSync(pathToRemove)) {
+              fs.rmSync(pathToRemove, { recursive: true, force: true });
+              console.log(`Removed duplicate directory: ${dirToRemove}`);
+              removedCount++;
+              processedDirs.add(dirToRemove);
+            }
+          }
+        }
+      }
           const current = files[i];
           console.log(`Checking ${current.dir} (${current.timestamp})`);
           
