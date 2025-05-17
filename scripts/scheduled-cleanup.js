@@ -26,10 +26,29 @@ function logToFile(message) {
 async function runCleanup() {
   try {
     logToFile('定期クリーンアップを開始します');
+    
+    // オフラインキャッシュをチェック
+    const offlineCache = await caches.open('cleanup-cache');
+    const cachedResult = await offlineCache.match('/cleanup-result');
+    
+    if (!navigator.onLine && cachedResult) {
+      // オフライン時はキャッシュから実行
+      const lastResult = await cachedResult.json();
+      logToFile(`オフラインモード - 前回の結果を使用: ${lastResult.removedCount}件の重複を削除`);
+      return lastResult;
+    }
+    
+    // オンライン時は通常実行
     const result = await cleanupKnowledgeBase();
+    
+    // 結果をキャッシュに保存
+    await offlineCache.put('/cleanup-result', new Response(JSON.stringify(result)));
+    
     logToFile(`クリーンアップ完了: ${result.removedCount}件の重複を削除しました`);
+    return result;
   } catch (error) {
     logToFile(`クリーンアップエラー: ${error.message}`);
+    throw error;
   }
 }
 
