@@ -85,20 +85,34 @@ const initAzureSpeechConfig = () => {
 
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechRecognitionLanguage = 'ja-JP';
-    // エンドポイントを標準のものに変更
-    speechConfig.speechRecognitionLanguage = 'ja-JP';
-    // カスタムエンドポイントの設定を削除（SDKのデフォルトを使用）
+
+    // VADの設定を最適化
+    speechConfig.setProperty(
+      sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
+      '500'  // 初期無音タイムアウトを0.5秒に短縮
+    );
+    
+    speechConfig.setProperty(
+      sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs,
+      '500'  // セグメント間無音タイムアウトを0.5秒に短縮
+    );
+
+    // エンドポイント検出の設定（1秒の無音で検出）
+    speechConfig.setProperty(
+      sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
+      '1000'
+    );
+
+    // VAD感度を高めに設定
+    speechConfig.setProperty(
+      sdk.PropertyId.Speech_DetectionVoiceActivityTimeoutMs,
+      '300'
+    );
 
     // 自動句読点を有効化
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceResponse_PostProcessingOption,
       'TrueText'
-    );
-
-    // エンドポイント検出の設定（2秒の無音で検出）
-    speechConfig.setProperty(
-      sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '2000'
     );
 
     return speechConfig;
