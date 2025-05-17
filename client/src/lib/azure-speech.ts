@@ -86,27 +86,36 @@ const initAzureSpeechConfig = () => {
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechRecognitionLanguage = 'ja-JP';
 
+    // Single-shotモードの設定
+    speechConfig.recognitionMode = sdk.RecognitionMode.Interactive;
+    
     // VADの設定を最適化
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
-      '500'  // 初期無音タイムアウトを0.5秒に短縮
+      '200'  // 初期無音タイムアウトを0.2秒に短縮
     );
     
     speechConfig.setProperty(
       sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs,
-      '500'  // セグメント間無音タイムアウトを0.5秒に短縮
+      '300'  // セグメント間無音タイムアウトを0.3秒に短縮
     );
 
-    // エンドポイント検出の設定（1秒の無音で検出）
+    // エンドポイント検出の設定（0.8秒の無音で検出）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '1000'
+      '800'
     );
 
-    // VAD感度を高めに設定
+    // VAD感度を最高に設定
     speechConfig.setProperty(
       sdk.PropertyId.Speech_DetectionVoiceActivityTimeoutMs,
-      '300'
+      '100'
+    );
+
+    // 音声バッファリングの最適化
+    speechConfig.setProperty(
+      sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs,
+      '200'
     );
 
     // 自動句読点を有効化
