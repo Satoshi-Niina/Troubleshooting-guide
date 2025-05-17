@@ -64,18 +64,28 @@ export async function cleanupKnowledgeBase() {
           const current = files[i];
           console.log(`Checking ${current.dir} (${current.timestamp})`);
           
+          // ソースを確認（チャンクの最初のメタデータを使用）
+          const currentSource = current.content[0]?.metadata?.source;
+          const newestSource = newest.content[0]?.metadata?.source;
+          
+          console.log(`Comparing sources: ${currentSource} vs ${newestSource}`);
+          
           // ソースが同じ場合のみ削除
-          if (current.content.metadata?.source === newest.content.metadata?.source) {
+          if (currentSource && newestSource && currentSource === newestSource) {
             const dirToRemove = path.join(DOCUMENTS_DIR, current.dir);
             try {
-              fs.rmSync(dirToRemove, { recursive: true, force: true });
-              console.log(`Removed duplicate directory: ${current.dir}`);
-              removedCount++;
+              if (fs.existsSync(dirToRemove)) {
+                fs.rmSync(dirToRemove, { recursive: true, force: true });
+                console.log(`Removed duplicate directory: ${current.dir}`);
+                removedCount++;
+              } else {
+                console.log(`Directory does not exist: ${dirToRemove}`);
+              }
             } catch (error) {
               console.error(`Error removing ${dirToRemove}:`, error);
             }
           } else {
-            console.log(`Keeping ${current.dir} (different source)`);
+            console.log(`Keeping ${current.dir} (different source: ${currentSource})`);
           }
         }
       }
