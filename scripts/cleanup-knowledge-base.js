@@ -67,16 +67,26 @@ export async function cleanupKnowledgeBase() {
           // ソースとチャンク内容を確認
           const currentSource = current.content[0]?.metadata?.source;
           const newestSource = newest.content[0]?.metadata?.source;
-          const currentFirstChunk = JSON.stringify(current.content[0]?.text || '');
-          const newestFirstChunk = JSON.stringify(newest.content[0]?.text || '');
+          
+          // チャンクの内容を比較（先頭3チャンクまで）
+          const chunksToCompare = Math.min(3, current.content.length, newest.content.length);
+          let contentMatches = 0;
+          
+          for (let i = 0; i < chunksToCompare; i++) {
+            const currentChunk = JSON.stringify(current.content[i]?.text || '');
+            const newestChunk = JSON.stringify(newest.content[i]?.text || '');
+            if (currentChunk === newestChunk && currentChunk !== '""') {
+              contentMatches++;
+            }
+          }
           
           console.log(`Comparing directory ${current.dir}:`);
           console.log(`- Source: ${currentSource} vs ${newestSource}`);
-          console.log(`- Content match: ${currentFirstChunk === newestFirstChunk}`);
+          console.log(`- Content matches: ${contentMatches}/${chunksToCompare} chunks`);
           
-          // ソースまたは内容が一致する場合に削除
+          // ソースが一致するか、50%以上のチャンクが一致する場合に削除
           if ((currentSource && newestSource && currentSource === newestSource) ||
-              (currentFirstChunk === newestFirstChunk && currentFirstChunk !== '""')) {
+              (contentMatches >= Math.ceil(chunksToCompare / 2))) {
             const dirToRemove = path.join(DOCUMENTS_DIR, current.dir);
             try {
               if (fs.existsSync(dirToRemove)) {
