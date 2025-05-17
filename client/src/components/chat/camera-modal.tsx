@@ -30,7 +30,7 @@ export default function CameraModal() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<BlobPart[]>([]);
   
-  const { captureImage } = useChat();
+  const { captureImage, sendMessage } = useChat();
   const { toast } = useToast();
   const orientation = useOrientation();
 
