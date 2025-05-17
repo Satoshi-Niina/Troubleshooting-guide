@@ -186,7 +186,9 @@ export default function CameraModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className={`${orientation === 'landscape' ? 'max-w-3xl' : 'max-w-md'} p-0 overflow-hidden bg-blue-50 border border-blue-200 camera-modal`}>
+      <DialogContent className={`${orientation === 'landscape' ? 'max-w-3xl' : 'max-w-md'} p-0 overflow-hidden bg-blue-50 border border-blue-200 camera-modal`} aria-describedby="camera-modal-desc">
+        <DialogTitle className="sr-only">カメラ</DialogTitle>
+        <div id="camera-modal-desc" className="sr-only">写真や動画を撮影するためのカメラモーダル</div>
         <DialogHeader className="p-4 border-b border-blue-200 flex flex-row justify-between items-center bg-blue-100">
           <DialogTitle className="text-indigo-600 text-lg font-bold">カメラ起動</DialogTitle>
           <div className="flex items-center space-x-4">
