@@ -1,16 +1,16 @@
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
-const KNOWLEDGE_BASE_DIR = path.join(__dirname, '../knowledge-base');
+const KNOWLEDGE_BASE_DIR = path.join(process.cwd(), 'knowledge-base');
 const DOCUMENTS_DIR = path.join(KNOWLEDGE_BASE_DIR, 'documents');
 
 async function calculateHash(content) {
   return crypto.createHash('md5').update(JSON.stringify(content)).digest('hex');
 }
 
-async function cleanupKnowledgeBase() {
+export async function cleanupKnowledgeBase() {
   try {
     // ドキュメントディレクトリ内のすべてのサブディレクトリを取得
     const docDirs = fs.readdirSync(DOCUMENTS_DIR)
@@ -71,10 +71,8 @@ async function cleanupKnowledgeBase() {
 }
 
 // スクリプトが直接実行された場合
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   cleanupKnowledgeBase()
     .then(result => console.log(`Cleanup finished. Removed ${result.removedCount} duplicates.`))
     .catch(console.error);
 }
-
-module.exports = { cleanupKnowledgeBase };
