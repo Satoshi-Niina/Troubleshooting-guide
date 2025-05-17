@@ -64,14 +64,19 @@ export async function cleanupKnowledgeBase() {
           const current = files[i];
           console.log(`Checking ${current.dir} (${current.timestamp})`);
           
-          // ソースを確認（チャンクの最初のメタデータを使用）
+          // ソースとチャンク内容を確認
           const currentSource = current.content[0]?.metadata?.source;
           const newestSource = newest.content[0]?.metadata?.source;
+          const currentFirstChunk = JSON.stringify(current.content[0]?.text || '');
+          const newestFirstChunk = JSON.stringify(newest.content[0]?.text || '');
           
-          console.log(`Comparing sources: ${currentSource} vs ${newestSource}`);
+          console.log(`Comparing directory ${current.dir}:`);
+          console.log(`- Source: ${currentSource} vs ${newestSource}`);
+          console.log(`- Content match: ${currentFirstChunk === newestFirstChunk}`);
           
-          // ソースが同じ場合のみ削除
-          if (currentSource && newestSource && currentSource === newestSource) {
+          // ソースまたは内容が一致する場合に削除
+          if ((currentSource && newestSource && currentSource === newestSource) ||
+              (currentFirstChunk === newestFirstChunk && currentFirstChunk !== '""')) {
             const dirToRemove = path.join(DOCUMENTS_DIR, current.dir);
             try {
               if (fs.existsSync(dirToRemove)) {
