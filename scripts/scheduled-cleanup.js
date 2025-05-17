@@ -33,8 +33,8 @@ async function runCleanup() {
   }
 }
 
-// cronスケジュールの設定 (毎月1日の午前3時に実行)
-scheduleJob('0 3 1 * *', runCleanup);
+// cronスケジュールの設定 (毎週月曜の午前3時に実行)
+scheduleJob('0 3 * * 1', runCleanup);
 
 logToFile('定期クリーンアップスケジューラーを開始しました');
 
