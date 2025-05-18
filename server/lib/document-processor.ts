@@ -1,4 +1,4 @@
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 if (typeof window === 'undefined') {
   // Node環境での設定
   const pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.entry');
