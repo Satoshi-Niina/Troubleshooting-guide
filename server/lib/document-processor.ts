@@ -9,12 +9,9 @@ if (typeof window === 'undefined') {
   const __dirname = path.dirname(__filename);
   const canvas = createCanvas(800, 600);
   global.DOMMatrix = canvas.createDOMMatrix;
-  
-  // PDF.jsワーカーの初期化
-  pdfjs.GlobalWorkerOptions = pdfjs.GlobalWorkerOptions || {};
-  const pdfjsWorker = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.js');
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
+
+// PDF.jsワーカーの設定はextractPdfText関数内で行う
 
 import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
@@ -93,7 +90,8 @@ export interface DocumentChunk {
 export async function extractPdfText(filePath: string): Promise<{ text: string, pageCount: number }> {
   try {
     // PDF.js workerを設定
-    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+    const pdfjsWorker = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.js');
+    const worker = new pdfjs.PDFWorker();
 
     const data = new Uint8Array(fs.readFileSync(filePath));
     const loadingTask = pdfjs.getDocument({ data });
