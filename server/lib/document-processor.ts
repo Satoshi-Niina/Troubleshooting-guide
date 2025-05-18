@@ -11,10 +11,9 @@ if (typeof window === 'undefined') {
   global.DOMMatrix = canvas.createDOMMatrix;
   
   // PDF.jsワーカーの初期化
+  pdfjs.GlobalWorkerOptions = pdfjs.GlobalWorkerOptions || {};
   const pdfjsWorker = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.js');
-  pdfjs.GlobalWorkerOptions.workerSrc = {
-    get href() { return pdfjsWorker; }
-  };
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
 import * as mammoth from 'mammoth';
