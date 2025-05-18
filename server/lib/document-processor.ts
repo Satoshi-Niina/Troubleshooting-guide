@@ -1,5 +1,9 @@
-import * as pdfjs from 'pdfjs-dist';
-pdfjs.GlobalWorkerOptions.workerSrc = `node_modules/pdfjs-dist/build/pdf.worker.js`;
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
+if (typeof window === 'undefined') {
+  // Node環境での設定
+  const pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.entry');
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+}
 
 import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
