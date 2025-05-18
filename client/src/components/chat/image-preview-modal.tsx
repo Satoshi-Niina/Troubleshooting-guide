@@ -327,10 +327,16 @@ export default function ImagePreviewModal() {
                   if (!parent.querySelector('.error-message')) {
                     const errorDiv = document.createElement('div');
                     errorDiv.className = 'error-message absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 text-white p-4 rounded-lg z-20';
-                    errorDiv.innerHTML = `
-                      <p class="text-xl mb-2">画像を読み込めませんでした</p>
-                      <p class="text-sm">${originalSrc.split('/').pop() || ''}</p>
-                    `;
+                    const titleP = document.createElement('p');
+                    titleP.className = 'text-xl mb-2';
+                    titleP.textContent = '画像を読み込めませんでした';
+                    
+                    const fileNameP = document.createElement('p');
+                    fileNameP.className = 'text-sm';
+                    fileNameP.textContent = originalSrc.split('/').pop() || '';
+                    
+                    errorDiv.appendChild(titleP);
+                    errorDiv.appendChild(fileNameP);
                     parent.appendChild(errorDiv);
                   }
                 }

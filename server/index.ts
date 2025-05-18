@@ -85,7 +85,15 @@ app.use((req, res, next) => {
 // ブラウザを開く関数
 function openBrowser(url: string) {
   const start = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
-  exec(`${start} ${url}`);
+  // URLのバリデーション
+  const validUrl = new URL(url);
+  if (validUrl.protocol !== 'http:' && validUrl.protocol !== 'https:') {
+    throw new Error('Invalid URL protocol');
+  }
+  
+  // URLをエスケープして実行
+  const escapedUrl = validUrl.toString().replace(/[`'"]/g, '\\$&');
+  exec(`${start} "${escapedUrl}"`);
 }
 
 (async () => {
