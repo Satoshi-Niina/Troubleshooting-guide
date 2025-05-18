@@ -78,7 +78,7 @@
     "openai": "^4.98.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pdfjs-dist": "^5.2.133",
+    "pdfjs-dist": "^3.11.174",
     "postgres": "^3.4.5",
     "pptxgenjs": "^3.12.0",
     "pptxjs": "^0.0.0",
