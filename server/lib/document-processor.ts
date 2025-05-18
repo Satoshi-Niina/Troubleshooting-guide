@@ -1,4 +1,4 @@
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js';
 import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { parse } from 'node-html-parser';
