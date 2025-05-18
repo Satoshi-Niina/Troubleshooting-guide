@@ -1,4 +1,6 @@
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js';
+import * as pdfjs from 'pdfjs-dist';
+pdfjs.GlobalWorkerOptions.workerSrc = `node_modules/pdfjs-dist/build/pdf.worker.js`;
+
 import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import { parse } from 'node-html-parser';
