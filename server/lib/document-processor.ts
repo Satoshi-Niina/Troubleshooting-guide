@@ -1,13 +1,20 @@
 import { createCanvas } from 'canvas';
 import * as pdfjs from 'pdfjs-dist';
+import { fileURLToPath } from 'url';
 import path from 'path';
 
 // Node環境での設定
 if (typeof window === 'undefined') {
-  const pdfjsWorker = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.js');
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const canvas = createCanvas(800, 600);
   global.DOMMatrix = canvas.createDOMMatrix;
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  
+  // PDF.jsワーカーの初期化
+  const pdfjsWorker = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.js');
+  pdfjs.GlobalWorkerOptions.workerSrc = {
+    get href() { return pdfjsWorker; }
+  };
 }
 
 import * as mammoth from 'mammoth';
