@@ -1,7 +1,11 @@
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+import { createCanvas } from 'canvas';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js';
 if (typeof window === 'undefined') {
   // Node環境での設定
-  const pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.entry');
+  const pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.js');
+  // Node環境用のcanvasポリフィル
+  const canvas = createCanvas(800, 600);
+  global.DOMMatrix = canvas.createDOMMatrix;
   pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 }
 
