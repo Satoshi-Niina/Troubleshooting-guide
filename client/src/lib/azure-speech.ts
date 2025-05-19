@@ -205,7 +205,8 @@ export const startSpeechRecognition = async (
         noiseSuppression: true,
         autoGainControl: true
       }
-    });
+    })
+      .then(() => {
         // ストリームを停止（後でAudioConfigで使用するため）
         stream.getTracks().forEach(track => track.stop());
 
@@ -380,14 +381,6 @@ export const startSpeechRecognition = async (
           }
         );
       })
-      .catch(err => {
-        console.error('マイクのアクセス権限エラー:', err);
-        onError('マイクへのアクセス権限がありません。ブラウザの設定でマイクの使用を許可してください。');
-        if (silenceTimer) {
-          clearTimeout(silenceTimer);
-          silenceTimer = null;
-        }
-      });
   } catch (error) {
     console.error('Azure Speech初期化エラー:', error);
     onError(`Azure Speech初期化エラー: ${error}`);
