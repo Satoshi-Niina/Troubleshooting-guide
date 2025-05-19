@@ -181,23 +181,14 @@ export const startSpeechRecognition = async (
   try {
     await stopSpeechRecognition();
     
-    let stream;
-    try {
-      // マイクのアクセス権限を確認
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-    } catch (err) {
-      throw new Error(`マイクへのアクセスに失敗しました: ${err}`);
-    }
-
-    if (!stream) {
-      throw new Error('マイクストリームの取得に失敗しました');
-    }
+    // マイクのアクセス権限を確認
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
 
     // ストリームを停止
     stream.getTracks().forEach(track => track.stop());
@@ -288,17 +279,19 @@ export const startSpeechRecognition = async (
             recognitionPhrases.push(newText);
           }
 
-          if (!currentSentence.includes(newText) && !newText.includes(currentSentence)) {
-            lastRecognizedText = newText;
-            lastText = newText;
+          const normalizedNewText = newText.trim();
+          const normalizedCurrentSentence = currentSentence.trim();
+          
+          if (normalizedNewText && 
+              !isSimilarText(normalizedNewText, normalizedCurrentSentence) && 
+              !isSimilarText(normalizedNewText, lastRecognizedText)) {
+            lastRecognizedText = normalizedNewText;
+            lastText = normalizedNewText;
 
-            if (currentSentence.length > 0) {
-              if (!currentSentence.endsWith(' ') && !newText.startsWith(' ')) {
-                currentSentence += ' ';
-              }
-              currentSentence += newText;
+            if (normalizedCurrentSentence.length > 0) {
+              currentSentence = `${normalizedCurrentSentence} ${normalizedNewText}`;
             } else {
-              currentSentence = newText;
+              currentSentence = normalizedNewText;
             }
 
             console.log('認識テキスト追加:', newText);
