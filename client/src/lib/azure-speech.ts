@@ -127,7 +127,7 @@ const initAzureSpeechConfig = () => {
     // VAD感度を調整（より長い音声検出を可能に）
     speechConfig.setProperty(
       sdk.PropertyId.Speech_DetectionVoiceActivityTimeoutMs,
-      '800'
+      '1000'
     );
 
     // 音声バッファリングの最適化
