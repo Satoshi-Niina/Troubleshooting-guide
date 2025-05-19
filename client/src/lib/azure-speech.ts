@@ -83,8 +83,17 @@ const initAzureSpeechConfig = () => {
       return null;
     }
 
+    // 新しいインスタンスを作成する前に既存のインスタンスを停止
+    if (recognizer) {
+      stopSpeechRecognition();
+    }
+
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechRecognitionLanguage = 'ja-JP';
+    // 音声認識の品質設定を最高に
+    speechConfig.setServiceProperty("SPEECHCONTEXT", "DICTATION", "1");
+    speechConfig.setServiceProperty("QUALITY", "INTERACTIVE", "1");
+    speechConfig.setProfanity(sdk.ProfanityOption.Raw);
 
     // Single-shotモードの設定
     speechConfig.setProfanity(sdk.ProfanityOption.Masked);
@@ -370,7 +379,7 @@ export const startSpeechRecognition = (
 };
 
 // 音声認識を停止する関数
-export const stopSpeechRecognition = () => {
+export const stopSpeechRecognition = async () => {
   try {
     if (silenceTimer) {
       clearTimeout(silenceTimer);
@@ -378,19 +387,26 @@ export const stopSpeechRecognition = () => {
     }
 
     if (recognizer) {
-      recognizer.stopContinuousRecognitionAsync(
-        () => {
-          console.log('Azure Speech認識を停止しました');
-          recognizer = null;
-        },
-        (error) => {
-          console.error('認識停止エラー:', error);
-          recognizer = null;
-        }
-      );
+      await new Promise<void>((resolve, reject) => {
+        recognizer?.stopContinuousRecognitionAsync(
+          () => {
+            console.log('Azure Speech認識を停止しました');
+            recognizer = null;
+            resolve();
+          },
+          (error) => {
+            console.error('認識停止エラー:', error);
+            recognizer = null;
+            reject(error);
+          }
+        );
+      }).catch(() => {
+        // エラーが発生しても処理を継続
+      });
     }
   } catch (error) {
     console.error('音声認識停止中にエラーが発生しました:', error);
+  } finally {
     recognizer = null;
   }
 };
