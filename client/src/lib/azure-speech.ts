@@ -199,16 +199,17 @@ export const startSpeechRecognition = async (
     blockSending = false;
 
     // マイクのアクセス権限を確認して初期化
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    })
-      .then(() => {
-        // ストリームを停止（後でAudioConfigで使用するため）
-        stream.getTracks().forEach(track => track.stop());
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+
+      // ストリームを停止（後でAudioConfigで使用するため）
+      stream.getTracks().forEach(track => track.stop());
 
         // 状態をリセット
         lastSentText = '';
@@ -380,10 +381,12 @@ export const startSpeechRecognition = async (
             }
           }
         );
-      })
-  } catch (error) {
-    console.error('Azure Speech初期化エラー:', error);
-    onError(`Azure Speech初期化エラー: ${error}`);
+      }
+    } catch (error) {
+      console.error('Azure Speech初期化エラー:', error);
+      onError(`Azure Speech初期化エラー: ${error}`);
+      // エラー時はブラウザのAPIにフォールバック
+      startBrowserSpeechRecognition(onResult, onError);
   }
 };
 
