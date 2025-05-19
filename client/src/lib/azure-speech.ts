@@ -185,19 +185,27 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export const startSpeechRecognition = (
+export const startSpeechRecognition = async (
   onResult: (text: string) => void,
   onError: (error: string) => void
 ) => {
   try {
-    // 既存の認識を停止
-    if (recognizer) {
-      stopSpeechRecognition();
-    }
+    // 既存の認識を停止して初期化
+    await stopSpeechRecognition();
+    recognizer = null;
+    lastSentText = '';
+    recognitionPhrases = [];
+    silenceDetected = false;
+    blockSending = false;
 
-    // マイクのアクセス権限を確認
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
+    // マイクのアクセス権限を確認して初期化
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
         // ストリームを停止（後でAudioConfigで使用するため）
         stream.getTracks().forEach(track => track.stop());
 
