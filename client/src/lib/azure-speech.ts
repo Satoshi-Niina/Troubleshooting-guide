@@ -6,7 +6,7 @@ let recognizer: sdk.SpeechRecognizer | null = null;
 // 無音タイマーのインスタンス
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 // 無音タイムアウトの時間（ミリ秒）
-const SILENCE_TIMEOUT = 2000; // 2秒の無音タイムアウト
+const SILENCE_TIMEOUT = 800; // 0.8秒の無音タイムアウト
 // 最小文字数（これより短い認識結果は単独では送信しない）
 const MIN_TEXT_LENGTH = 2;
 // 認識結果のキャッシュサイズ
@@ -93,18 +93,18 @@ const initAzureSpeechConfig = () => {
     // VADの設定を最適化（スマートフォンライクな応答性）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
-      '50'  // 初期無音タイムアウトを0.05秒に短縮
+      '20'  // 初期無音タイムアウトを0.02秒に短縮
     );
 
     speechConfig.setProperty(
       sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs,
-      '100'  // セグメント間無音タイムアウトを0.1秒に短縮
+      '50'  // セグメント間無音タイムアウトを0.05秒に短縮
     );
 
-    // エンドポイント検出の設定（0.5秒の無音で検出）
+    // エンドポイント検出の設定（0.3秒の無音で検出）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '500'
+      '300'
     );
 
     // VAD感度を最高に設定
