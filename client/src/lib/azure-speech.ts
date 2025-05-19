@@ -112,22 +112,22 @@ const initAzureSpeechConfig = () => {
       '3000'  // セグメント間無音タイムアウトを3秒に設定
     );
 
-    // 認識の感度を調整（0.8に設定して過敏な認識を防ぐ）
+    // 認識の感度を上げて安定性を向上（0.9に設定）
     speechConfig.setProperty(
       sdk.PropertyId.Speech_DetectionSensitivity,
-      "0.8"
+      "0.9"
     );
 
-    // エンドポイント検出の設定（0.5秒の無音で検出）
+    // エンドポイント検出の設定（0.8秒の無音で検出）
     speechConfig.setProperty(
       sdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
-      '500'
+      '800'
     );
 
-    // VAD感度を調整（雑音への反応を抑える）
+    // VAD感度を調整（音声検出の安定性を向上）
     speechConfig.setProperty(
       sdk.PropertyId.Speech_DetectionVoiceActivityTimeoutMs,
-      '200'
+      '500'
     );
 
     // 音声バッファリングの最適化
