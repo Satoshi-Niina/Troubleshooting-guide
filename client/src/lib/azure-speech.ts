@@ -387,9 +387,6 @@ export const startSpeechRecognition = async (
           clearTimeout(silenceTimer);
           silenceTimer = null;
         }
-      })
-      .finally(() => {
-        // クリーンアップ処理があれば実行
       });
   } catch (error) {
     console.error('Azure Speech初期化エラー:', error);
