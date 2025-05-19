@@ -1,4 +1,3 @@
-
 // Azure Cognitive Servicesを使用した音声認識サービス
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 import { toast } from '@/hooks/use-toast';
@@ -8,11 +7,11 @@ let recognizer: sdk.SpeechRecognizer | null = null;
 // 無音タイマーのインスタンス
 let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 // 無音タイムアウトの時間（ミリ秒）
-const SILENCE_TIMEOUT = 1500; // 1.5秒の無音タイムアウト
+const SILENCE_TIMEOUT = 2500; // 2.5秒の無音タイムアウト
 // 音声認識停止タイムアウト時間（ミリ秒）
-const STOP_TIMEOUT = 2000; // 2秒後に停止
+const STOP_TIMEOUT = 3000; // 3秒後に停止
 // 最小文字数（1文字でも送信可能に）
-const MIN_TEXT_LENGTH = 1;
+const MIN_TEXT_LENGTH = 3; // 最小文字数を増やして短い認識を防ぐ
 // 認識結果のキャッシュサイズ
 const MAX_CACHE_SIZE = 5;
 // 最大文字数（これを超えたら自動的に送信）
@@ -180,7 +179,7 @@ export const startSpeechRecognition = async (
 ) => {
   try {
     await stopSpeechRecognition();
-    
+
     // マイクのアクセス権限を確認
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -281,13 +280,13 @@ export const startSpeechRecognition = async (
 
           const normalizedNewText = newText.trim();
           const normalizedCurrentSentence = currentSentence.trim();
-          
-          if (normalizedNewText && 
-              !isSimilarText(normalizedNewText, normalizedCurrentSentence) && 
-              !isSimilarText(normalizedNewText, lastRecognizedText)) {
-            lastRecognizedText = normalizedNewText;
-            lastText = normalizedNewText;
 
+          // 同じような内容の認識結果は無視
+          const similarExists = recognitionPhrases.some(phrase => 
+            isSimilarText(normalizedNewText, phrase)
+          );
+
+          if (!similarExists) {
             if (normalizedCurrentSentence.length > 0) {
               currentSentence = `${normalizedCurrentSentence} ${normalizedNewText}`;
             } else {
@@ -297,20 +296,13 @@ export const startSpeechRecognition = async (
             console.log('認識テキスト追加:', newText);
             console.log('現在の完全な文:', currentSentence);
 
-            onResult(currentSentence);
-
-            if (/[。！？]$/.test(currentSentence) || currentSentence.length >= MAX_TEXT_LENGTH) {
-              if (currentSentence.length >= MAX_TEXT_LENGTH) {
-                console.log('最大文字数に達しました(50文字): 文を送信します');
-              } else {
-                console.log('文末記号を検出: 文を送信します');
-              }
-              sendAndReset();
+            // バッファリングされた文章のみを送信
+            if (currentSentence.length >= MIN_TEXT_LENGTH) {
+              onResult(currentSentence);
             }
           } else {
-            console.log('部分的に重複する認識をスキップ:', newText);
+            console.log('類似テキストをスキップ:', normalizedNewText);
           }
-
           resetSilenceTimer(() => {
             if (!isProcessing) {
               sendAndReset();
