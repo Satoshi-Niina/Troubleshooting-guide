@@ -383,13 +383,11 @@ export const startSpeechRecognition = async (
       .catch(err => {
         console.error('マイクのアクセス権限エラー:', err);
         onError('マイクへのアクセス権限がありません。ブラウザの設定でマイクの使用を許可してください。');
-      })
-      .finally(() => {
         if (silenceTimer) {
           clearTimeout(silenceTimer);
           silenceTimer = null;
         }
-      });
+      });;
   } catch (error) {
     console.error('Azure Speech初期化エラー:', error);
     onError(`Azure Speech初期化エラー: ${error}`);
