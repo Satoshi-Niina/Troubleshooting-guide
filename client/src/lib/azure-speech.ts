@@ -87,7 +87,8 @@ const initAzureSpeechConfig = () => {
     speechConfig.speechRecognitionLanguage = 'ja-JP';
 
     // Single-shotモードの設定
-    speechConfig.recognitionMode = sdk.RecognitionMode.Interactive;
+    speechConfig.setProfanity(sdk.ProfanityOption.Masked);
+    speechConfig.enableDictation();
 
     // VADの設定を最適化（スマートフォンライクな応答性）
     speechConfig.setProperty(
