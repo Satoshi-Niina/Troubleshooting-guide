@@ -1,7 +1,7 @@
 
 // Azure Cognitive Servicesを使用した音声認識サービス
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 // 音声認識のインスタンス
 let recognizer: sdk.SpeechRecognizer | null = null;
@@ -181,14 +181,23 @@ export const startSpeechRecognition = async (
   try {
     await stopSpeechRecognition();
     
-    // マイクのアクセス権限を確認
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    });
+    let stream;
+    try {
+      // マイクのアクセス権限を確認
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+    } catch (err) {
+      throw new Error(`マイクへのアクセスに失敗しました: ${err}`);
+    }
+
+    if (!stream) {
+      throw new Error('マイクストリームの取得に失敗しました');
+    }
 
     // ストリームを停止
     stream.getTracks().forEach(track => track.stop());
