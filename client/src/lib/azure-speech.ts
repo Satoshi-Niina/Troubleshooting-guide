@@ -415,8 +415,9 @@ interface Window {
 }
 
 const browserSupportsSpeechRecognition = () => {
-  // すべてのブラウザでAzure Speech SDKを使用する
-  console.log('Azure Speech SDKを使用します');
+  if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+    return false; // Azure Speechを優先するため、常にfalseを返す
+  }
   return false;
 };
 
