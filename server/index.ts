@@ -162,14 +162,14 @@ function openBrowser(url: string) {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+// ALWAYS serve the app on port 5000
 // this serves both the API and the client.
-const port = 5000;
+const port = process.env.PORT || 5000; 
 const url = `http://0.0.0.0:${port}`;
 console.log(`サーバーを起動します: ${url}`);
 const PORT = 5000;
 
-server.listen(port, '127.0.0.1', () => {
+server.listen(port, '0.0.0.0', () => { 
   console.log(`サーバーが起動しました: ${url}`);
   console.log('ブラウザを開いています...');
   openBrowser(url);
