@@ -7,12 +7,11 @@ async function seed() {
   try {
     // 初期管理者ユーザーの作成
     await db.insert(users).values({
-      username: 'admin',
-      login_id: 'admin',
-      password: 'admin123', // 本番環境ではハッシュ化したパスワードを使用してください
-      display_name: 'システム管理者',
+      username: 'niina',
+      display_name: 'niina',
+      password: '0077', // 本番環境ではハッシュ化したパスワードを使用してください
       role: 'admin',
-      department: 'システム管理部'
+      department: 'takabeni'
     });
 
     console.log('データベースの初期データを作成しました');

@@ -10,11 +10,10 @@ export const userRoleEnum = pgEnum('user_role', ['employee', 'admin']);
 // Users table
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  username: text('username').notNull(),
-  login_id: text('login_id').notNull().unique(),
-  password: text('password').notNull(),
+  username: text('username').notNull().unique(),
   display_name: text('display_name').notNull(),
-  role: text('role'),
+  password: text('password').notNull(),
+  role: userRoleEnum('role').notNull().default('employee'),
   department: text('department'),
   created_at: timestamp('created_at').defaultNow(),
 });
