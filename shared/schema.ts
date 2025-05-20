@@ -174,8 +174,8 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
 }));
 
 export const keywordsRelations = relations(keywords, ({ one }) => ({
-  document: one(documents, { fields: [keywords.documentId], references: [documents.id] }),
-});
+  document: one(documents, { fields: [keywords.documentId], references: [documents.id] })
+}));
 
 export const chatExportsRelations = relations(chatExports, ({ one }) => ({
   chat: one(chats, { fields: [chatExports.chatId], references: [chats.id] }),
