@@ -179,8 +179,8 @@ export const keywordsRelations = relations(keywords, ({ one }) => ({
 
 export const chatExportsRelations = relations(chatExports, ({ one }) => ({
   chat: one(chats, { fields: [chatExports.chatId], references: [chats.id] }),
-  user: one(users, { fields: [chatExports.userId], references: [users.id] }),
-});
+  user: one(users, { fields: [chatExports.userId], references: [users.id] })
+}));
 
 export const loginSchema = z.object({
   username: z.string().min(3),
