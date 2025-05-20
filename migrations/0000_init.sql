@@ -11,3 +11,7 @@ CREATE TABLE users (
   department VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Insert initial admin user
+INSERT INTO users (username, display_name, password, role, department)
+VALUES ('niina', 'niina', '0077', 'admin', 'takabeni');
