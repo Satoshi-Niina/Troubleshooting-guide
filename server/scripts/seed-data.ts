@@ -9,6 +9,7 @@ async function seed() {
     await db.insert(users).values({
       id: sql`gen_random_uuid()`,
       username: 'admin',
+      login_id: 'admin',  // login_idを追加
       password: 'admin123', // 本番環境ではハッシュ化したパスワードを使用してください
       displayName: 'システム管理者',
       role: 'admin',
