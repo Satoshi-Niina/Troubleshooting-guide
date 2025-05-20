@@ -5,7 +5,7 @@ CREATE TABLE users (
   login_id VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(100) NOT NULL,
   display_name VARCHAR(100) NOT NULL,
-  role VARCHAR(50),
+  role VARCHAR(50) NOT NULL DEFAULT 'employee',
   department VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

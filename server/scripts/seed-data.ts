@@ -12,8 +12,7 @@ async function seed() {
       password: 'admin123', // 本番環境ではハッシュ化したパスワードを使用してください
       display_name: 'システム管理者',
       role: 'admin',
-      department: 'システム管理部',
-      created_at: new Date()
+      department: 'システム管理部'
     });
 
     console.log('データベースの初期データを作成しました');
