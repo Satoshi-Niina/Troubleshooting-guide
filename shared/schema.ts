@@ -166,8 +166,8 @@ export const messagesRelations = relations(messages, ({ one, many }) => ({
 }));
 
 export const mediaRelations = relations(media, ({ one }) => ({
-  message: one(messages, { fields: [media.messageId], references: [messages.id] }),
-});
+  message: one(messages, { fields: [media.messageId], references: [messages.id] })
+}));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   user: one(users, { fields: [documents.userId], references: [users.id] }),
