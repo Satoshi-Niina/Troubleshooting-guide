@@ -4,6 +4,7 @@ CREATE TABLE users (
   username VARCHAR(100) NOT NULL,
   login_id VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(100) NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
   role VARCHAR(50),
   department VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
