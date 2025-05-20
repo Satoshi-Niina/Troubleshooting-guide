@@ -13,7 +13,7 @@ async function seed() {
       display_name: 'システム管理者',
       role: 'admin',
       department: 'システム管理部',
-      createdAt: new Date()
+      created_at: new Date()
     });
 
     console.log('データベースの初期データを作成しました');
