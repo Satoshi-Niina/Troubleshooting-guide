@@ -16,7 +16,10 @@ try {
   const sql = postgres(process.env.DATABASE_URL, {
     ssl: {
       mode: 'require'
-    }
+    },
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 10
   });
   db = drizzle(sql, { schema });
 } catch (error) {
