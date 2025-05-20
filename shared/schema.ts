@@ -170,8 +170,7 @@ export const mediaRelations = relations(media, ({ one }) => ({
 }));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
-  user: one(users, { fields: [documents.userId], references: [users.id] }),
-  keywords: many(keywords),
+  user: one(users, { fields: [documents.userId], references: [users.id] })
 }));
 
 export const keywordsRelations = relations(keywords, ({ one }) => ({
