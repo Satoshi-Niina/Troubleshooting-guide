@@ -9,13 +9,14 @@ export const userRoleEnum = pgEnum('user_role', ['employee', 'admin']);
 
 // Users table
 export const users = pgTable('users', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  username: text('username').notNull().unique(),
+  id: serial('id').primaryKey(),
+  username: text('username').notNull(),
+  login_id: text('login_id').notNull().unique(),
   password: text('password').notNull(),
-  displayName: text('display_name').notNull(),
-  role: text('role').notNull(),
-  department: text('department').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  display_name: text('display_name').notNull(),
+  role: text('role'),
+  department: text('department'),
+  created_at: timestamp('created_at').defaultNow(),
 });
 
 // Messages table

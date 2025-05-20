@@ -7,11 +7,10 @@ async function seed() {
   try {
     // 初期管理者ユーザーの作成
     await db.insert(users).values({
-      id: sql`gen_random_uuid()`,
       username: 'admin',
-      login_id: 'admin',  // login_idを追加
+      login_id: 'admin',
       password: 'admin123', // 本番環境ではハッシュ化したパスワードを使用してください
-      displayName: 'システム管理者',
+      display_name: 'システム管理者',
       role: 'admin',
       department: 'システム管理部',
       createdAt: new Date()
