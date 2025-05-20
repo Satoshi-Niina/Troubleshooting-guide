@@ -12,7 +12,7 @@ async function seed() {
       password: '0077', // 本番環境ではハッシュ化したパスワードを使用してください
       role: 'admin',
       department: 'takabeni'
-    });
+    }).onConflictDoNothing();
 
     console.log('データベースの初期データを作成しました');
   } catch (error) {
