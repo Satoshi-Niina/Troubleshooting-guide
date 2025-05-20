@@ -2,18 +2,20 @@ import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { sql } from 'drizzle-orm';
 
 // User role enum
 export const userRoleEnum = pgEnum('user_role', ['employee', 'admin']);
 
 // Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  displayName: text("display_name").notNull(),
-  role: userRoleEnum("role").notNull().default('employee'),
-  department: text("department"),
+export const users = pgTable('users', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  displayName: text('display_name').notNull(),
+  role: text('role').notNull(),
+  department: text('department').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Messages table
@@ -71,9 +73,26 @@ export const chatExports = pgTable("chat_exports", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+export const emergencyFlows = pgTable('emergency_flows', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  title: text('title').notNull(),
+  steps: text('steps').notNull(),
+  keyword: text('keyword').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const images = pgTable('images', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  url: text('url').notNull(),
+  description: text('description').notNull(),
+  embedding: text('embedding').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Schema validation
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
@@ -148,7 +167,7 @@ export const messagesRelations = relations(messages, ({ one, many }) => ({
 
 export const mediaRelations = relations(media, ({ one }) => ({
   message: one(messages, { fields: [media.messageId], references: [messages.id] }),
-}));
+});
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
   user: one(users, { fields: [documents.userId], references: [users.id] }),
@@ -157,12 +176,12 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
 
 export const keywordsRelations = relations(keywords, ({ one }) => ({
   document: one(documents, { fields: [keywords.documentId], references: [documents.id] }),
-}));
+});
 
 export const chatExportsRelations = relations(chatExports, ({ one }) => ({
   chat: one(chats, { fields: [chatExports.chatId], references: [chats.id] }),
   user: one(users, { fields: [chatExports.userId], references: [users.id] }),
-}));
+});
 
 export const loginSchema = z.object({
   username: z.string().min(3),
