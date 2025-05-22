@@ -9,10 +9,12 @@ if (!process.env.DATABASE_URL) {
 
 // Initialize postgres client
 const sql = postgres(process.env.DATABASE_URL!, {
-  ssl: process.env.NODE_ENV === 'production',
   max: 1,
   idle_timeout: 20,
-  connect_timeout: 10
+  connect_timeout: 10,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Create drizzle database instance
