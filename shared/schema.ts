@@ -1,6 +1,13 @@
+
 import { pgTable, text, timestamp, serial, integer } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+
+// Login schema
+export const loginSchema = z.object({
+  username: z.string().min(1, "ユーザー名は必須です"),
+  password: z.string().min(1, "パスワードは必須です"),
+});
 
 // User schemas
 export const users = pgTable('users', {
@@ -22,33 +29,12 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export const chatExports = pgTable('chat_exports', {
-  id: serial('id').primaryKey(),
-  chatId: integer('chat_id').notNull(),
-  userId: integer('user_id').notNull(),
-  timestamp: timestamp('timestamp').defaultNow().notNull()
-});
-
-export const insertChatExportSchema = createInsertSchema(chatExports).omit({
-  id: true
-});
-
-export type ChatExport = typeof chatExports.$inferSelect;
-export type InsertChatExport = z.infer<typeof insertChatExportSchema>;
-
+// Chat schemas
 export const chats = pgTable('chats', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull(),
   title: text('title').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
-});
-
-export const messages = pgTable('messages', {
-  id: serial('id').primaryKey(),
-  chatId: integer('chat_id').notNull(),
-  senderId: integer('sender_id').notNull(),
-  content: text('content').notNull(),
-  timestamp: timestamp('timestamp').defaultNow().notNull()
 });
 
 export const insertChatSchema = createInsertSchema(chats).omit({
@@ -59,6 +45,15 @@ export const insertChatSchema = createInsertSchema(chats).omit({
 export type Chat = typeof chats.$inferSelect;
 export type InsertChat = z.infer<typeof insertChatSchema>;
 
+// Message schemas
+export const messages = pgTable('messages', {
+  id: serial('id').primaryKey(),
+  chatId: integer('chat_id').notNull(),
+  senderId: integer('sender_id').notNull(),
+  content: text('content').notNull(),
+  timestamp: timestamp('timestamp').defaultNow().notNull()
+});
+
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   timestamp: true,
@@ -67,7 +62,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
-// Media table definition
+// Media schemas
 export const media = pgTable('media', {
   id: serial('id').primaryKey(),
   messageId: integer('message_id').notNull(),
@@ -77,29 +72,25 @@ export const media = pgTable('media', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
-// Media schemas
 export const insertMediaSchema = createInsertSchema(media).omit({
   id: true,
+  createdAt: true,
 });
 
 export type Media = typeof media.$inferSelect;
 export type InsertMedia = z.infer<typeof insertMediaSchema>;
 
-// Documents table definition
-export const documents = pgTable('documents', {
+// Chat Export schemas
+export const chatExports = pgTable('chat_exports', {
   id: serial('id').primaryKey(),
+  chatId: integer('chat_id').notNull(),
   userId: integer('user_id').notNull(),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  type: text('type').notNull(),
-  url: text('url').notNull(),
-  processedAt: timestamp('processed_at').defaultNow().notNull()
+  timestamp: timestamp('timestamp').defaultNow().notNull()
 });
 
-export const insertDocumentSchema = createInsertSchema(documents).omit({
+export const insertChatExportSchema = createInsertSchema(chatExports).omit({
   id: true,
-  processedAt: true,
 });
 
-export type Document = typeof documents.$inferSelect;
-export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type ChatExport = typeof chatExports.$inferSelect;
+export type InsertChatExport = z.infer<typeof insertChatExportSchema>;
