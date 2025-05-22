@@ -53,10 +53,8 @@ export async function apiRequest(
     headers['Content-Type'] = 'application/json';
   }
 
-  const token = localStorage.getItem('auth-token');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  // クッキーベースの認証を使用するため、Authorization headerは不要
+  headers['Cache-Control'] = 'no-cache';
 
   // ブラウザキャッシュ対策用のタイムスタンプパラメータを追加
   const urlWithCache = url.includes('?') 
