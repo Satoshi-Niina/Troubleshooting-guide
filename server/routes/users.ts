@@ -55,7 +55,7 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザー作成
-    const newUser = {
+    const userData = {
       username,
       password: hashedPassword,
       display_name: displayName,
@@ -63,7 +63,7 @@ router.post('/', authenticateToken, async (req, res) => {
       department: department || ''
     };
 
-    const result = await db.insert(users).values(newUser).returning();
+    const result = await db.insert(users).values(userData).returning();
 
     const newUser = result[0];
     if (!newUser) {
