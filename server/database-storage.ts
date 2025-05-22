@@ -2,7 +2,6 @@ import {
   users, type User, type InsertUser,
   messages, type Message, type InsertMessage,
   chats, type Chat, type InsertChat,
-  documents, type Document, type InsertDocument,
   chatExports, type ChatExport, type InsertChatExport,
   media, type Media, type InsertMedia
 } from "@shared/schema";
@@ -214,34 +213,7 @@ export class DatabaseStorage implements IStorage {
     return newMedia;
   }
   
-  // Document methods
-  async getDocument(id: number): Promise<Document | undefined> {
-    const [document] = await db.select().from(documents).where(eq(documents.id, id));
-    return document;
-  }
   
-  async getDocumentsForUser(userId: number): Promise<Document[]> {
-    const result = await db.select()
-      .from(documents)
-      .where(eq(documents.userId, userId));
-    
-    // resultをprocessedAtで降順にソート
-    return result.sort((a, b) => b.processedAt.getTime() - a.processedAt.getTime());
-  }
-  
-  async createDocument(document: InsertDocument): Promise<Document> {
-    const [newDocument] = await db.insert(documents).values(document).returning();
-    return newDocument;
-  }
-  
-  async updateDocument(id: number, updates: Partial<Document>): Promise<Document | undefined> {
-    const [updatedDocument] = await db
-      .update(documents)
-      .set(updates)
-      .where(eq(documents.id, id))
-      .returning();
-    return updatedDocument;
-  }
   
   // Keyword methods
   async getKeywordsForDocument(documentId: number): Promise<Keyword[]> {
