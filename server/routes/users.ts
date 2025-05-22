@@ -60,16 +60,24 @@ router.post('/', authenticateToken, async (req, res) => {
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ユーザーの作成
+    // ユーザーの作成（created_atは自動設定）
     const [newUser] = await db.insert(users)
       .values({
         username,
         password: hashedPassword,
         display_name,
         role: role || 'employee',
-        department: department || null
+        department: department || null,
+        description: '', // デフォルトの説明を空文字列に設定
+        created_at: new Date() // 作成日時を現在時刻に設定
       })
-      .returning();
+      .returning({
+        id: users.id,
+        username: users.username,
+        display_name: users.display_name,
+        role: users.role,
+        department: users.department
+      });
 
     res.status(201).json({
       id: newUser.id,

@@ -47,9 +47,10 @@ interface UserData {
 interface NewUserData {
   username: string;
   password: string;
-  display_Name: string;
+  display_name: string;
   role: "employee" | "admin";
   department?: string;
+  description?: string;
 }
 
 export default function UsersPage() {
