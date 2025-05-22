@@ -1,7 +1,15 @@
 
-import { pgTable, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
+export const media = pgTable('media', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  messageId: integer('message_id').notNull(),
+  type: text('type').notNull(),
+  url: text('url').notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
 
 export const users = pgTable('users', {
     id: text('id').primaryKey().default(sql`gen_random_uuid()`),
