@@ -1,10 +1,8 @@
 import { 
   users, type User, type InsertUser,
   messages, type Message, type InsertMessage,
-  media, type Media, type InsertMedia,
   chats, type Chat, type InsertChat,
   documents, type Document, type InsertDocument,
-  keywords, type Keyword, type InsertKeyword,
   chatExports, type ChatExport, type InsertChatExport
 } from "@shared/schema";
 import { db } from "./db";
