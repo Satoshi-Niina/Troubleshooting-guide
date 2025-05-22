@@ -47,7 +47,7 @@ interface UserData {
 interface NewUserData {
   username: string;
   password: string;
-  displayName: string;
+  display_Name: string;
   role: "employee" | "admin";
   department?: string;
 }
@@ -83,7 +83,7 @@ export default function UsersPage() {
   });
   const [editUser, setEditUser] = useState<Partial<UserData>>({
     username: "",
-    displayName: "",
+    display_nameName: "",
     role: "employee",
   });
 
@@ -92,7 +92,7 @@ export default function UsersPage() {
     setNewUser({
       username: "",
       password: "",
-      displayName: "",
+      display_Name: "",
       role: "employee",
       department: "",
     });
@@ -170,7 +170,7 @@ export default function UsersPage() {
     setSelectedUserId(userData.id);
     setEditUser({
       username: userData.username,
-      displayName: userData.displayName,
+      display_nameName: userData.display_nameName,
       role: userData.role,
       department: userData.department
     });
@@ -254,7 +254,7 @@ export default function UsersPage() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // バリデーション
-    if (!editUser.username || !editUser.displayName) {
+    if (!editUser.username || !editUser.display_nameName) {
       toast({
         title: "入力エラー",
         description: "必須項目を入力してください",
@@ -330,7 +330,7 @@ export default function UsersPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="displayName">表示名</Label>
+                    <Label htmlFor="display_Name">表示名</Label>
                     <Input
                       id="display_name"
                       name="display_name"
