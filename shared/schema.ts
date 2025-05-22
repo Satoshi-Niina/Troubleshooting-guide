@@ -52,6 +52,32 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
+// Chat schemas
+export const insertChatSchema = createInsertSchema(chats).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Chat = typeof chats.$inferSelect;
+export type InsertChat = z.infer<typeof insertChatSchema>;
+
+// Message schemas
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+// Media schemas
+export const insertMediaSchema = createInsertSchema(media).omit({
+  id: true,
+});
+
+export type Media = typeof media.$inferSelect;
+export type InsertMedia = z.infer<typeof insertMediaSchema>;
+
 // Documents table definition
 export const documents = pgTable('documents', {
   id: serial('id').primaryKey(),
