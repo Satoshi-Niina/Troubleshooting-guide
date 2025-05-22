@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, insertUserSchema, insertChatSchema, insertMessageSchema, insertMediaSchema, insertDocumentSchema, insertChatExportSchema, users, chatExports } from "@shared/schema";
+import { loginSchema, insertUserSchema, insertChatSchema, insertMessageSchema, insertMediaSchema, users, chatExports, documents, insertDocumentSchema } from "@shared/schema";
 import { z } from "zod";
 import session from "express-session";
 import { WebSocket, WebSocketServer } from "ws";

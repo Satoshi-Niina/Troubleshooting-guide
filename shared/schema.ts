@@ -80,6 +80,23 @@ export const insertMediaSchema = createInsertSchema(media).omit({
 export type Media = typeof media.$inferSelect;
 export type InsertMedia = z.infer<typeof insertMediaSchema>;
 
+// Document schemas
+export const documents = pgTable('documents', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  processedAt: timestamp('processed_at').defaultNow().notNull()
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  processedAt: true,
+});
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
 // Chat Export schemas
 export const chatExports = pgTable('chat_exports', {
   id: serial('id').primaryKey(),
