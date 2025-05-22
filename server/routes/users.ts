@@ -10,7 +10,14 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.query.users.findMany();
+    const allUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      display_name: users.display_name,
+      role: users.role,
+      department: users.department
+    }).from(users);
+    
     res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
