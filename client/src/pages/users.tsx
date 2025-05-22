@@ -38,7 +38,7 @@ import { useLocation, Link } from "wouter";
 interface UserData {
   id: number;
   username: string;
-  displayName: string;
+  display_name: string;
   role: "employee" | "admin";
   department?: string;
 }
@@ -416,7 +416,7 @@ export default function UsersPage() {
                     <TableRow key={user.id}>
                       <TableCell>{user.id}</TableCell>
                       <TableCell>{user.username}</TableCell>
-                      <TableCell>{user.displayName}</TableCell>
+                      <TableCell>{user.display_name}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           user.role === "admin" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
@@ -483,11 +483,11 @@ export default function UsersPage() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="edit-displayName">表示名</Label>
+                <Label htmlFor="edit-display_name">表示名</Label>
                 <Input
-                  id="edit-displayName"
-                  name="displayName"
-                  value={editUser.displayName}
+                  id="edit-display_name"
+                  name="display_name"
+                  value={editUser.display_name}
                   onChange={handleEditInputChange}
                   required
                 />
