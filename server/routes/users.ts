@@ -36,16 +36,24 @@ router.get('/', authenticateToken, async (req, res) => {
 // ユーザー作成
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('ユーザー作成リクエスト受信:', req.body);
     const { username, password, displayName, role, department } = req.body;
 
     if (!username || !password || !displayName) {
+      console.log('バリデーションエラー: 必須項目不足');
       return res.status(400).json({ message: '必須項目が入力されていません' });
     }
 
     // 既存ユーザーチェック
-    const existingUser = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    const existingUser = await db.select()
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+
+    console.log('既存ユーザーチェック結果:', existingUser);
 
     if (existingUser.length > 0) {
+      console.log('重複エラー: すでに存在するユーザー名');
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
@@ -61,10 +69,23 @@ router.post('/', authenticateToken, async (req, res) => {
       department: department || ''
     };
 
-    const result = await db.insert(users).values(userData).returning();
+    console.log('作成するユーザーデータ:', { ...userData, password: '[HIDDEN]' });
+
+    const result = await db.insert(users)
+      .values(userData)
+      .returning({
+        id: users.id,
+        username: users.username,
+        display_name: users.display_name,
+        role: users.role,
+        department: users.department
+      });
+
+    console.log('データベース挿入結果:', result);
 
     const newUser = result[0];
     if (!newUser) {
+      console.error('ユーザー作成失敗: 結果が空');
       throw new Error('ユーザーの作成に失敗しました');
     }
 
