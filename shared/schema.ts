@@ -45,3 +45,12 @@ export const images = pgTable('images', {
   embedding: jsonb('embedding').notNull(), // 画像の特徴ベクトル（AI検索用）
   createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
 });
+
+// チャットエクスポートテーブルの定義
+// チャット履歴のエクスポート記録を管理
+export const chatExports = pgTable('chat_exports', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  chatId: text('chat_id').notNull(), // 関連するチャットのID
+  userId: text('user_id').notNull(), // エクスポートを実行したユーザーのID
+  timestamp: timestamp('timestamp').defaultNow().notNull(), // エクスポート実行日時
+});
