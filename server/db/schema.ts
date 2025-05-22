@@ -1,6 +1,16 @@
-
-import { pgTable, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  display_name: text('display_name').notNull(),
+  role: text('role').notNull().default('employee'),
+  department: text('department'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  description: text('description')
+});
 
 export const media = pgTable('media', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -10,14 +20,6 @@ export const media = pgTable('media', {
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
-
-export const users = pgTable('users', {
-    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-    name: text('name').notNull(),
-    email: text('email').notNull(),
-    description: text('description'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-   });
 
 export const emergencyFlows = pgTable('emergency_flows', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
