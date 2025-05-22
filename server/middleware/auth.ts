@@ -12,7 +12,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     if (!session) {
       return res.status(401).json({
         success: false,
-        error: 'セッションが無効です。再度ログインしてください。'
+        error: 'セッションが無効です。再度ログインしてください。',
+        message: 'Not authenticated'
       });
     }
     next();

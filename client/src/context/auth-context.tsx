@@ -37,14 +37,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const response = await fetch("/api/auth/me", {
           credentials: "include",
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
         
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
+        } else if (response.status === 401) {
+          // 認証エラーの場合は明示的にnullを設定
+          setUser(null);
+          console.log("ユーザーは未認証です");
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
