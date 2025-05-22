@@ -3,17 +3,6 @@
 import { pgTable, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-// メディアテーブルの定義
-// 画像や動画などのメディアファイルを管理
-export const media = pgTable('media', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
-  messageId: integer('message_id').notNull(), // 関連するメッセージのID
-  type: text('type').notNull(), // メディアの種類（画像、動画など）
-  url: text('url').notNull(), // メディアファイルのURL
-  description: text('description'), // メディアの説明（オプション）
-  createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
-});
-
 // ユーザーテーブルの定義
 // システムのユーザー情報を管理
 export const users = pgTable('users', {
@@ -24,6 +13,37 @@ export const users = pgTable('users', {
   role: text('role').notNull(), // ユーザーの役割（管理者、一般ユーザーなど）
   department: text('department'), // 所属部署（オプション）
   createdAt: timestamp('created_at').defaultNow().notNull() // アカウント作成日時
+});
+
+// チャットテーブルの定義
+// チャットセッション情報を管理
+export const chats = pgTable('chats', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  userId: text('user_id').notNull(), // チャットを開始したユーザーのID
+  title: text('title'), // チャットのタイトル（オプション）
+  createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
+});
+
+// メッセージテーブルの定義
+// チャット内のメッセージを管理
+export const messages = pgTable('messages', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  chatId: text('chat_id').notNull(), // 関連するチャットのID
+  senderId: text('sender_id').notNull(), // 送信者のID
+  content: text('content').notNull(), // メッセージの内容
+  isAiResponse: boolean('is_ai_response').notNull().default(false), // AIの応答かどうか
+  createdAt: timestamp('created_at').defaultNow().notNull() // 送信日時
+});
+
+// メディアテーブルの定義
+// 画像や動画などのメディアファイルを管理
+export const media = pgTable('media', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  messageId: integer('message_id').notNull(), // 関連するメッセージのID
+  type: text('type').notNull(), // メディアの種類（画像、動画など）
+  url: text('url').notNull(), // メディアファイルのURL
+  description: text('description'), // メディアの説明（オプション）
+  createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
 });
 
 // 緊急フローテーブルの定義
@@ -46,31 +66,52 @@ export const images = pgTable('images', {
   createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
 });
 
-// チャットテーブルの定義
-// チャットセッション情報を管理
-export const chats = pgTable('chats', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
-  userId: text('user_id').notNull(), // チャットを開始したユーザーのID
-  title: text('title'), // チャットのタイトル（オプション）
-  createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
-});
-
-// メッセージテーブルの定義
-// チャット内のメッセージを管理
-export const messages = pgTable('messages', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
-  chatId: text('chat_id').notNull(), // 関連するチャットのID
-  senderId: text('sender_id').notNull(), // 送信者のID
-  content: text('content').notNull(), // メッセージの内容
-  timestamp: timestamp('timestamp').defaultNow().notNull(), // 送信日時
-  type: text('type').notNull(), // メッセージの種類（ユーザー、システムなど）
-});
-
 // チャットエクスポートテーブルの定義
 // チャット履歴のエクスポート記録を管理
 export const chatExports = pgTable('chat_exports', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
   chatId: text('chat_id').notNull(), // 関連するチャットのID
   userId: text('user_id').notNull(), // エクスポートを実行したユーザーのID
-  timestamp: timestamp('timestamp').defaultNow().notNull(), // エクスポート実行日時
+  timestamp: timestamp('timestamp').defaultNow().notNull() // エクスポート実行日時
+});
+
+// Zodスキーマの定義（バリデーション用）
+import { z } from 'zod';
+
+export const loginSchema = z.object({
+  username: z.string(),
+  password: z.string()
+});
+
+export const insertUserSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  display_name: z.string(),
+  role: z.string(),
+  department: z.string().optional()
+});
+
+export const insertChatSchema = z.object({
+  userId: z.string(),
+  title: z.string().optional()
+});
+
+export const insertMessageSchema = z.object({
+  chatId: z.string(),
+  content: z.string(),
+  senderId: z.string(),
+  isAiResponse: z.boolean().default(false)
+});
+
+export const insertMediaSchema = z.object({
+  messageId: z.number(),
+  type: z.string(),
+  url: z.string(),
+  description: z.string().optional()
+});
+
+export const insertDocumentSchema = z.object({
+  title: z.string(),
+  content: z.string(),
+  userId: z.string()
 });
