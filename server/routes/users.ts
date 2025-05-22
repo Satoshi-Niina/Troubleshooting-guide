@@ -17,7 +17,9 @@ router.get('/', authenticateToken, async (req, res) => {
       display_name: users.display_name,
       role: users.role,
       department: users.department
-    }).from(users);
+    })
+    .from(users)
+    .execute();
 
     res.json(allUsers);
   } catch (error) {
@@ -48,7 +50,8 @@ router.post('/', authenticateToken, async (req, res) => {
       username: users.username
     })
     .from(users)
-    .where(eq(users.username, username));
+    .where(eq(users.username, username))
+    .execute();
 
     if (existingUsers.length > 0) {
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
@@ -58,13 +61,15 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザーの作成
-    const [newUser] = await db.insert(users).values({
-      username,
-      password: hashedPassword,
-      display_name,
-      role: role || 'employee',
-      department: department || null
-    }).returning();
+    const [newUser] = await db.insert(users)
+      .values({
+        username,
+        password: hashedPassword,
+        display_name,
+        role: role || 'employee',
+        department: department || null
+      })
+      .returning();
 
     res.status(201).json({
       id: newUser.id,
