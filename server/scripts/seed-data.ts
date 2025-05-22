@@ -1,15 +1,19 @@
 
 import { db } from '../db';
 import { users } from '../../shared/schema';
-import { sql } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
 async function seed() {
   try {
+    // パスワードのハッシュ化
+    const adminPassword = await bcrypt.hash('0077', 10);
+    const employeePassword = await bcrypt.hash('employee123', 10);
+
     // 初期管理者ユーザーの作成
     await db.insert(users).values({
       username: 'niina',
       display_name: 'Niina Admin',
-      password: '0077', // 本番環境ではハッシュ化したパスワードを使用してください
+      password: adminPassword,
       role: 'admin',
       department: 'takabeni'
     }).onConflictDoNothing();
@@ -18,7 +22,7 @@ async function seed() {
     await db.insert(users).values({
       username: 'employee',
       display_name: '従業員ユーザー',
-      password: 'employee123',
+      password: employeePassword,
       role: 'employee',
       department: 'general'
     }).onConflictDoNothing();
