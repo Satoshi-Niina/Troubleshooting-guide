@@ -53,7 +53,8 @@ export async function apiRequest(
     headers['Content-Type'] = 'application/json';
   }
 
-  // クッキーベースの認証を使用するため、Authorization headerは不要
+  // セッションクッキーを含めるための設定
+  headers['credentials'] = 'include';
   headers['Cache-Control'] = 'no-cache';
 
   // ブラウザキャッシュ対策用のタイムスタンプパラメータを追加
