@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import { db } from '../db';
 import { users } from '@shared/schema';
@@ -10,13 +11,15 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department
-    }).from(users);
+    const allUsers = await db.query.users.findMany({
+      columns: {
+        id: true,
+        username: true,
+        display_name: true,
+        role: true,
+        department: true
+      }
+    });
 
     res.json(allUsers);
   } catch (error) {
@@ -30,30 +33,27 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { username, password, display_name, role, department } = req.body;
 
-    if (!username || !password) {
+    if (!username || !password || !display_name) {
       return res.status(400).json({ message: '必須項目が入力されていません' });
     }
 
-    const existingUser = await db.select()
-      .from(users)
-      .where(eq(users.username, username))
-      .limit(1);
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [newUser] = await db.insert(users)
-      .values({
-        username,
-        password: hashedPassword,
-        display_name: display_name || username,
-        role: role || 'employee',
-        department: department || null
-      })
-      .returning();
+    const [newUser] = await db.insert(users).values({
+      username,
+      password: hashedPassword,
+      display_name,
+      role: role || 'employee',
+      department: department || null
+    }).returning();
 
     res.status(201).json({
       id: newUser.id,
