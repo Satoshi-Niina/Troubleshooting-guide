@@ -11,11 +11,11 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await storage.getAllUsers();
+    const allUsers = await db.select().from(users);
     const sanitizedUsers = allUsers.map(user => ({
       id: user.id,
       username: user.username,
-      displayName: user.displayName,
+      displayName: user.display_name,
       role: user.role,
       department: user.department
     }));
