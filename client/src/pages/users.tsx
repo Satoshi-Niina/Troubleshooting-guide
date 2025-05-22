@@ -57,6 +57,7 @@ export default function UsersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [error, setError] = useState<Error | null>(null);
 
   // 管理者でない場合はホームページにリダイレクト
   useEffect(() => {
