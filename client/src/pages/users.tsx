@@ -135,6 +135,14 @@ export default function UsersPage() {
       return;
     }
 
+    if (!newUser.username || !newUser.password || !newUser.displayName || !newUser.role) {
+      toast({
+        title: "入力エラー",
+        description: "必須項目をすべて入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
     createUserMutation.mutate(newUser as NewUserData);
   };
 

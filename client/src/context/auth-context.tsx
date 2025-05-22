@@ -67,6 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       const response = await apiRequest("POST", "/api/auth/login", { username, password });
       const userData = await response.json();
+      if (!userData.id || !userData.username || !userData.role) {
+        throw new Error("Invalid user data received");
+      }
       setUser(userData);
       toast({
         title: "ログイン成功",
