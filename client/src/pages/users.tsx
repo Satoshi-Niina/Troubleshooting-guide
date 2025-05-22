@@ -78,7 +78,7 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState<Partial<NewUserData>>({
     username: "",
     password: "",
-    displayName: "",
+    display_name: "",
     role: "employee",
   });
   const [editUser, setEditUser] = useState<Partial<UserData>>({
@@ -126,7 +126,7 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // バリデーション
-    if (!newUser.username || !newUser.password || !newUser.displayName || !newUser.role) {
+    if (!newUser.username || !newUser.password || !newUser.display_name || !newUser.role) {
       toast({
         title: "入力エラー",
         description: "ユーザー名、パスワード、表示名、権限は必須項目です",
@@ -137,7 +137,7 @@ export default function UsersPage() {
     createUserMutation.mutate({
       username: newUser.username,
       password: newUser.password,
-      displayName: newUser.displayName,
+      display_name: newUser.display_name,
       role: newUser.role || 'employee',
       department: newUser.department || undefined
     } as NewUserData);
@@ -332,9 +332,9 @@ export default function UsersPage() {
                   <div className="grid gap-2">
                     <Label htmlFor="displayName">表示名</Label>
                     <Input
-                      id="displayName"
-                      name="displayName"
-                      value={newUser.displayName}
+                      id="display_name"
+                      name="display_name"
+                      value={newUser.display_name}
                       onChange={handleInputChange}
                       required
                     />
