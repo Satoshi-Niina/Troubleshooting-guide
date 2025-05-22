@@ -78,7 +78,7 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState<Partial<NewUserData>>({
     username: "",
     password: "",
-    display_name: "",
+    displayName: "",
     role: "employee",
   });
   const [editUser, setEditUser] = useState<Partial<UserData>>({
@@ -334,7 +334,7 @@ export default function UsersPage() {
                     <Input
                       id="displayName"
                       name="displayName"
-                      value={newUser.display_name}
+                      value={newUser.displayName}
                       onChange={handleInputChange}
                       required
                     />
