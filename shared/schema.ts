@@ -6,13 +6,14 @@ import { sql } from 'drizzle-orm';
 // ユーザーテーブルの定義
 // システムのユーザー情報を管理
 export const users = pgTable('users', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
-  username: text('username').notNull(), // ユーザー名
-  password: text('password').notNull(), // パスワード（ハッシュ化されて保存）
-  display_name: text('display_name').notNull(), // 表示名
-  role: text('role').notNull(), // ユーザーの役割（管理者、一般ユーザーなど）
-  department: text('department'), // 所属部署（オプション）
-  createdAt: timestamp('created_at').defaultNow().notNull() // アカウント作成日時
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  display_name: text('display_name').notNull(),
+  role: text('role').notNull().default('employee'),
+  department: text('department'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  description: text('description')
 });
 
 // チャットテーブルの定義
