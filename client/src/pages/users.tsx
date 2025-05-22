@@ -36,7 +36,7 @@ import { useLocation, Link } from "wouter";
 
 // ユーザーインターフェース
 interface UserData {
-  id: number;
+  id: string;
   username: string;
   display_name: string;
   role: "employee" | "admin";

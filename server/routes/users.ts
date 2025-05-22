@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import { db } from '../db';
 import { users } from '@shared/schema';
@@ -10,10 +11,6 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    if (!req.session?.userId) {
-      return res.status(401).json({ message: "認証が必要です" });
-    }
-
     const allUsers = await db.select({
       id: users.id,
       username: users.username,
@@ -47,14 +44,13 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // 既存ユーザーの確認
-    const existingUser = await db.select({
-      id: users.id
+    const existingUsers = await db.select({
+      username: users.username
     })
     .from(users)
-    .where(eq(users.username, username))
-    .limit(1);
+    .where(eq(users.username, username));
 
-    if (existingUser.length > 0) {
+    if (existingUsers.length > 0) {
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
