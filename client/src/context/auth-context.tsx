@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 interface User {
   id: number;
   username: string;
-  displayName: string;
+  display_name: string;
   role: "employee" | "admin";
   department?: string;
 }
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       toast({
         title: "ログイン成功",
-        description: `ようこそ、${userData.displayName}さん`,
+        description: `ようこそ、${userData.display_name}さん`,
       });
     } catch (error) {
       toast({
