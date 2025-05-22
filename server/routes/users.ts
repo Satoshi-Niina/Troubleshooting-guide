@@ -40,12 +40,14 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { username, password, displayName, role, department } = req.body;
 
-    // 既存ユーザーチェック
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.username, username)
-    });
+    if (!username || !password || !displayName) {
+      return res.status(400).json({ message: '必須項目が入力されていません' });
+    }
 
-    if (existingUser) {
+    // 既存ユーザーチェック
+    const existingUser = await db.select().from(users).where(eq(users.username, username)).limit(1);
+
+    if (existingUser.length > 0) {
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
@@ -53,19 +55,15 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザー作成
-    const result = await db.insert(users).values({
+    const newUser = {
       username,
       password: hashedPassword,
       display_name: displayName,
       role: role || 'employee',
-      department
-    }).returning({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department
-    });
+      department: department || ''
+    };
+
+    const result = await db.insert(users).values(newUser).returning();
 
     const newUser = result[0];
     if (!newUser) {
