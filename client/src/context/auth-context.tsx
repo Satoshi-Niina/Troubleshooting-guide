@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       toast({
         title: "ログイン成功",
-        description: `ようこそ、${data.user.display_name}さん`,
+        description: `ようこそ、${userData.display_name || userData.username}さん`,
       });
     } catch (error) {
       toast({
