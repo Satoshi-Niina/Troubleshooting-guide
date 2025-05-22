@@ -48,8 +48,6 @@ export async function apiRequest(
     }
   }
 
-  let headers: Record<string, string> = {};
-
   // Content-TypeとAuthorizationヘッダーを追加
   if (data) {
     headers['Content-Type'] = 'application/json';
