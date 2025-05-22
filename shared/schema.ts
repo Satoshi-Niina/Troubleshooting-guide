@@ -32,7 +32,7 @@ export const messages = pgTable("messages", {
 export const media = pgTable("media", {
   id: serial("id").primaryKey(),
   messageId: integer("message_id").references(() => messages.id),
-  type: text("type").notNull(), // image, video
+  type: text("type").notNull(),
   url: text("url").notNull(),
   thumbnail: text("thumbnail"),
 });
@@ -45,11 +45,11 @@ export const chats = pgTable("chats", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Processed documents table
+// Documents table
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  type: text("type").notNull(), // pdf, pptx, xlsx
+  type: text("type").notNull(),
   url: text("url").notNull(),
   jsonUrl: text("json_url"),
   imagesUrl: text("images_url"),
@@ -57,7 +57,7 @@ export const documents = pgTable("documents", {
   userId: integer("user_id").references(() => users.id),
 });
 
-// Search keywords table for document indexing
+// Keywords table
 export const keywords = pgTable("keywords", {
   id: serial("id").primaryKey(),
   word: text("word").notNull(),
@@ -65,7 +65,7 @@ export const keywords = pgTable("keywords", {
   relevance: integer("relevance").notNull().default(1),
 });
 
-// チャット履歴エクスポートテーブル
+// Chat exports table
 export const chatExports = pgTable("chat_exports", {
   id: serial("id").primaryKey(),
   chatId: integer("chat_id").references(() => chats.id).notNull(),
@@ -94,30 +94,24 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
 });
-
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   timestamp: true,
 });
-
 export const insertMediaSchema = createInsertSchema(media).omit({
   id: true,
 });
-
 export const insertChatSchema = createInsertSchema(chats).omit({
   id: true,
   createdAt: true,
 });
-
 export const insertDocumentSchema = createInsertSchema(documents).omit({
   id: true,
   processedAt: true,
 });
-
 export const insertKeywordSchema = createInsertSchema(keywords).omit({
   id: true,
 });
-
 export const insertChatExportSchema = createInsertSchema(chatExports).omit({
   id: true,
   timestamp: true,
@@ -145,7 +139,6 @@ export type InsertKeyword = z.infer<typeof insertKeywordSchema>;
 export type ChatExport = typeof chatExports.$inferSelect;
 export type InsertChatExport = z.infer<typeof insertChatExportSchema>;
 
-// Auth types
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   chats: many(chats),
@@ -170,7 +163,8 @@ export const mediaRelations = relations(media, ({ one }) => ({
 }));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
-  user: one(users, { fields: [documents.userId], references: [users.id] })
+  user: one(users, { fields: [documents.userId], references: [users.id] }),
+  keywords: many(keywords)
 }));
 
 export const keywordsRelations = relations(keywords, ({ one }) => ({
