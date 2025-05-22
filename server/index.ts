@@ -90,7 +90,7 @@ function openBrowser(url: string) {
   if (validUrl.protocol !== 'http:' && validUrl.protocol !== 'https:') {
     throw new Error('Invalid URL protocol');
   }
-  
+
   // URLをエスケープして実行
   const escapedUrl = validUrl.toString().replace(/[`'"]/g, '\\$&');
   exec(`${start} "${escapedUrl}"`);
@@ -168,7 +168,7 @@ function openBrowser(url: string) {
   const url = `http://0.0.0.0:${port}`;
   console.log(`サーバーを起動します: ${url}`);
   const PORT = 5000;
-  
+
   server.listen(port, '0.0.0.0', () => {
     console.log(`サーバーが起動しました: ${url}`);
     console.log('ブラウザを開いています...');
