@@ -53,13 +53,24 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザー作成
-    const [newUser] = await db.insert(users).values({
+    const result = await db.insert(users).values({
       username,
       password: hashedPassword,
       display_name: displayName,
       role: role || 'employee',
       department
-    }).returning();
+    }).returning({
+      id: users.id,
+      username: users.username,
+      display_name: users.display_name,
+      role: users.role,
+      department: users.department
+    });
+
+    const newUser = result[0];
+    if (!newUser) {
+      throw new Error('ユーザーの作成に失敗しました');
+    }
 
     res.status(201).json({
       id: newUser.id,
