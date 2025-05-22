@@ -75,34 +75,34 @@ function Router() {
   return (
     <div className="h-screen flex flex-col">
       {user && <Header />}
-      
+
       {user && (
         <div className="border-b border-neutral-200">
           <Tabs currentPath={location} />
         </div>
       )}
-      
+
       <main className="flex-1 flex overflow-hidden">
         <Switch>
-          
+
           <Route path="/chat">
             <ProtectedRoute>
               <Chat />
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/processing">
             <ProtectedRoute>
               <Processing />
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/settings">
             <ProtectedRoute>
               <Settings />
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/users">
             <ProtectedRoute>
               <AdminRoute>
@@ -110,7 +110,7 @@ function Router() {
               </AdminRoute>
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/documents">
             <ProtectedRoute>
               <AdminRoute>
@@ -118,7 +118,7 @@ function Router() {
               </AdminRoute>
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/emergency-guide">
             <ProtectedRoute>
               <AdminRoute>
@@ -126,7 +126,7 @@ function Router() {
               </AdminRoute>
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/troubleshooting">
             <ProtectedRoute>
               <AdminRoute>
@@ -134,11 +134,11 @@ function Router() {
               </AdminRoute>
             </ProtectedRoute>
           </Route>
-          
+
           <Route path="/">
             {user ? <Redirect to="/chat" /> : <Redirect to="/login" />}
           </Route>
-          
+
           <Route component={NotFound} />
         </Switch>
       </main>
