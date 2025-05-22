@@ -10,7 +10,8 @@ if (!process.env.DATABASE_URL) {
 // Initialize postgres client
 const sql = postgres(process.env.DATABASE_URL || '', {
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    mode: 'require'
   },
   max: 1,
   idle_timeout: 20,
