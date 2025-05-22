@@ -37,9 +37,9 @@ router.get('/', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
   try {
     console.log('ユーザー作成リクエスト受信:', req.body);
-    const { username, password, displayName, role, department } = req.body;
+    const { username, password, display_name, role, department } = req.body;
 
-    if (!username || !password || !displayName) {
+    if (!username || !password || !display_name) {
       console.log('バリデーションエラー: 必須項目不足');
       return res.status(400).json({ message: '必須項目が入力されていません' });
     }
@@ -61,34 +61,24 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザー作成
-    const userData = {
-      username,
-      password: hashedPassword,
-      display_name: displayName,
-      role: role || 'employee',
-      department: department || ''
-    };
-
-    console.log('作成するユーザーデータ:', { ...userData, password: '[HIDDEN]' });
-
     const result = await db.insert(users)
-      .values(userData)
-      .returning({
-        id: users.id,
-        username: users.username,
-        display_name: users.display_name,
-        role: users.role,
-        department: users.department
-      });
+      .values({
+        username,
+        password: hashedPassword,
+        display_name,
+        role: role || 'employee',
+        department: department || null
+      })
+      .returning();
 
     console.log('データベース挿入結果:', result);
 
-    const newUser = result[0];
-    if (!newUser) {
+    if (!result || result.length === 0) {
       console.error('ユーザー作成失敗: 結果が空');
       throw new Error('ユーザーの作成に失敗しました');
     }
 
+    const newUser = result[0];
     res.status(201).json({
       id: newUser.id,
       username: newUser.username,
@@ -98,7 +88,10 @@ router.post('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ message: 'ユーザーの作成に失敗しました' });
+    res.status(500).json({ 
+      message: 'ユーザーの作成に失敗しました',
+      error: error.message 
+    });
   }
 });
 
