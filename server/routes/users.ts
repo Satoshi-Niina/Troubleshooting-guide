@@ -11,8 +11,8 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.select().from(users);
-    const sanitizedUsers = allUsers.map(user => ({
+    const result = await db.query.users.findMany();
+    const sanitizedUsers = result.map(user => ({
       id: user.id,
       username: user.username,
       displayName: user.display_name,
