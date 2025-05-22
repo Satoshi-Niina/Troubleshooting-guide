@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { users } from '../db/schema';
+import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth';
 
