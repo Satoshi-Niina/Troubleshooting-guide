@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { users } from '../../shared/schema';
+import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { authenticateToken } from '../middleware/auth';
@@ -10,13 +10,15 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department
-    }).from(users);
+    const allUsers = await db.query.users.findMany({
+      columns: {
+        id: true,
+        username: true,
+        display_name: true,
+        role: true,
+        department: true
+      }
+    });
     
     res.json(allUsers);
   } catch (error) {
