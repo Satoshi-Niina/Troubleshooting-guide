@@ -37,3 +37,16 @@ export const images = pgTable('images', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 
   });
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  display_name: text('display_name').notNull(),
+  role: text('role').notNull().default('employee'),
+  department: text('department'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  description: text('description')
+});
