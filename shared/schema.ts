@@ -1,6 +1,6 @@
 
 // データベースに必要なdrizzle-ormの型とヘルパーをインポート
-import { pgTable, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ユーザーテーブルの定義
