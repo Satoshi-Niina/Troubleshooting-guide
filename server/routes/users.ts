@@ -41,9 +41,6 @@ router.post('/', authenticateToken, async (req, res) => {
     console.log('ユーザー作成リクエスト受信:', req.body);
     const { username, password, display_name, role, department } = req.body;
     
-    // Ensure display_name is set, fallback to username if not provided
-    const displayName = display_name || username;
-
     if (!username || !password) {
       console.log('バリデーションエラー: 必須項目不足');
       return res.status(400).json({ message: '必須項目が入力されていません' });
@@ -70,7 +67,7 @@ router.post('/', authenticateToken, async (req, res) => {
       .values({
         username,
         password: hashedPassword,
-        display_name: displayName, // Already defined above
+        display_name: display_name || username,
         role: role || 'employee',
         department: department || null
       })
