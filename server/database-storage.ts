@@ -34,7 +34,7 @@ export class DatabaseStorage implements IStorage {
       await this.createUser({
         username: "niina",
         password: "0077", // In a real app, this would be hashed
-        displayName: "新名 管理者",
+        display_name: "新名 管理者", // Fix: changed displayName to display_name to match schema
         role: "admin"
       });
     }
@@ -45,7 +45,7 @@ export class DatabaseStorage implements IStorage {
       await this.createUser({
         username: "employee",
         password: "employee123", // In a real app, this would be hashed
-        displayName: "山田太郎",
+        display_name: "山田太郎", // Fix: changed displayName to display_name to match schema
         role: "employee"
       });
     }
