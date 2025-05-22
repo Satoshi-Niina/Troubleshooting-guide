@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { db } from '../db';
 import { users } from '@shared/schema';
@@ -11,16 +10,7 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department
-    })
-    .from(users)
-    .execute();
-
+    const allUsers = await db.query.users.findMany();
     res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -46,45 +36,34 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // 既存ユーザーの確認
-    const existingUsers = await db.select({
-      username: users.username
-    })
-    .from(users)
-    .where(eq(users.username, username))
-    .execute();
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ユーザーの作成（created_atは自動設定）
-    const [newUser] = await db.insert(users)
-      .values({
-        username,
-        password: hashedPassword,
-        display_name,
-        role: role || 'employee',
-        department: department || null,
-        description: '', // デフォルトの説明を空文字列に設定
-        created_at: new Date() // 作成日時を現在時刻に設定
-      })
-      .returning({
-        id: users.id,
-        username: users.username,
-        display_name: users.display_name,
-        role: users.role,
-        department: users.department
-      });
+    // ユーザーの作成
+    const newUser = await db.insert(users).values({
+      username,
+      password: hashedPassword,
+      display_name,
+      role: role || 'employee',
+      department: department || null,
+      description: '',
+      created_at: new Date()
+    }).returning();
 
     res.status(201).json({
-      id: newUser.id,
-      username: newUser.username,
-      display_name: newUser.display_name,
-      role: newUser.role,
-      department: newUser.department
+      id: newUser[0].id,
+      username: newUser[0].username,
+      display_name: newUser[0].display_name,
+      role: newUser[0].role,
+      department: newUser[0].department
     });
   } catch (error) {
     console.error('Error creating user:', error);
