@@ -7,12 +7,12 @@ import { sql } from 'drizzle-orm';
 // システムのユーザー情報を管理
 export const users = pgTable('users', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  username: text('username').notNull(),
+  username: text('username').notNull().unique(),
   password: text('password').notNull(),
   display_name: text('display_name').notNull(),
-  role: text('role').notNull(),
-  department: text('department').default(null),
-  description: text('description').default(null),
+  role: text('role').notNull().default('employee'),
+  department: text('department'),
+  description: text('description'),
   created_at: timestamp('created_at').defaultNow().notNull()
 });
 
