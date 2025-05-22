@@ -1,4 +1,11 @@
 
+-- Drop existing tables and types if they exist
+DROP TABLE IF EXISTS media CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;
+
 -- Create user role enum type
 CREATE TYPE user_role AS ENUM ('employee', 'admin');
 
