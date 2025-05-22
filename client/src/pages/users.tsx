@@ -66,19 +66,14 @@ export default function UsersPage() {
   }, [user, navigate]);
 
   // ユーザーデータの取得
-  const { data: users, isLoading, error } = useQuery<UserData[]>({
+  const { data: users, isLoading } = useQuery<UserData[]>({
     queryKey: ["/api/users"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/users");
-      const data = await res.json();
-      if (!Array.isArray(data)) {
-        throw new Error("Invalid response format");
-      }
-      return data;
+      if (!res.ok) throw new Error("ユーザー取得失敗");
+      return await res.json();
     },
     refetchOnWindowFocus: false,
-    retry: 1,
-    refetchOnMount: true
   });
 
   // エラー表示の追加

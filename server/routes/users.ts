@@ -8,18 +8,10 @@ import { authenticateToken } from '../middleware/auth';
 const router = Router();
 
 // ユーザー一覧取得
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const allUsers = await db.query.users.findMany({
-      columns: {
-        id: true,
-        username: true,
-        display_name: true,
-        role: true,
-        department: true
-      }
-    });
-    
+    // schema定義が無い前提で直接テーブル名を文字列指定
+    const allUsers = await db.select().from("users" as any);
     res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
