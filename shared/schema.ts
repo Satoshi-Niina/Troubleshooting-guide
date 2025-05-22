@@ -7,14 +7,15 @@ import { sql } from 'drizzle-orm';
 // システムのユーザー情報を管理
 export const users = pgTable('users', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  username: text('username').notNull().unique(),
+  username: text('username').notNull(),
   password: text('password').notNull(),
   display_name: text('display_name').notNull(),
-  role: text('role').notNull().default('employee'),
-  department: text('department'),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  description: text('description')
+  role: text('role').notNull(),
+  department: text('department').nullable(),
+  description: text('description').nullable(),
+  created_at: timestamp('created_at').defaultNow().notNull()
 });
+
 
 // チャットテーブルの定義
 // チャットセッション情報を管理
