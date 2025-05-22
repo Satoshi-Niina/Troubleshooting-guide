@@ -78,7 +78,7 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState<Partial<NewUserData>>({
     username: "",
     password: "",
-    displayName: "",
+    display_name: "",
     role: "employee",
   });
   const [editUser, setEditUser] = useState<Partial<UserData>>({
@@ -92,7 +92,7 @@ export default function UsersPage() {
     setNewUser({
       username: "",
       password: "",
-      displayName: "",
+      display_name: "",
       role: "employee",
       department: "",
     });
@@ -126,7 +126,7 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // バリデーション
-    if (!newUser.username || !newUser.password || !newUser.displayName || !newUser.role) {
+    if (!newUser.username || !newUser.password || !newUser.display_name || !newUser.role) {
       toast({
         title: "入力エラー",
         description: "ユーザー名、パスワード、表示名、権限は必須項目です",
@@ -137,7 +137,7 @@ export default function UsersPage() {
     createUserMutation.mutate({
       username: newUser.username,
       password: newUser.password,
-      display_name: newUser.displayName, // display_nameに変更
+      display_name: newUser.display_name, // display_nameに変更
       role: newUser.role || 'employee',
       department: newUser.department || undefined
     } as NewUserData);
@@ -153,18 +153,18 @@ export default function UsersPage() {
   const handleSelectChange = (name: string, value: string) => {
     setNewUser((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   // 編集用セレクト更新処理
   const handleEditSelectChange = (name: string, value: string) => {
     setEditUser((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   // 編集用入力フィールド更新処理
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditUser((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   // ユーザー編集準備
   const handleEditUser = (userData: UserData) => {
     setSelectedUserId(userData.id);
@@ -176,13 +176,13 @@ export default function UsersPage() {
     });
     setShowEditUserDialog(true);
   };
-  
+
   // ユーザー削除準備
   const handleDeleteUser = (userId: number) => {
     setSelectedUserId(userId);
     setShowDeleteConfirmDialog(true);
   };
-  
+
   // ユーザー編集のミューテーション
   const updateUserMutation = useMutation({
     mutationFn: async (userData: Partial<UserData>) => {
@@ -206,7 +206,7 @@ export default function UsersPage() {
       });
     },
   });
-  
+
   // ユーザー削除のミューテーション
   const deleteUserMutation = useMutation({
     mutationFn: async () => {
@@ -215,21 +215,21 @@ export default function UsersPage() {
       if (user && selectedUserId === user.id) {
         throw new Error("自分自身のアカウントは削除できません");
       }
-      
+
       const res = await apiRequest("DELETE", `/api/users/${selectedUserId}`);
-      
+
       // エラーレスポンスをハンドリング
       if (!res.ok) {
         const errorData = await res.json();
-        
+
         // サーバーエラーのチェック
         if (res.status === 500) {
           throw new Error("ユーザーに関連するデータが存在するため削除できません。関連データをすべて削除してから再度お試しください。");
         }
-        
+
         throw new Error(errorData.message || "ユーザー削除中にエラーが発生しました");
       }
-      
+
       return await res.json();
     },
     onSuccess: () => {
@@ -249,7 +249,7 @@ export default function UsersPage() {
       setShowDeleteConfirmDialog(false);
     },
   });
-  
+
   // 編集フォーム送信処理
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +262,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     updateUserMutation.mutate(editUser);
   };
 
@@ -334,7 +334,7 @@ export default function UsersPage() {
                     <Input
                       id="displayName"
                       name="displayName"
-                      value={newUser.displayName}
+                      value={newUser.display_name}
                       onChange={handleInputChange}
                       required
                     />
@@ -458,7 +458,7 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
-      
+
       {/* ユーザー編集ダイアログ */}
       <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
         <DialogContent>
@@ -538,7 +538,7 @@ export default function UsersPage() {
           </form>
         </DialogContent>
       </Dialog>
-      
+
       {/* ユーザー削除確認ダイアログ */}
       <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
         <DialogContent>
@@ -551,7 +551,7 @@ export default function UsersPage() {
               このユーザーを削除すると、関連するすべてのデータが削除されます。この操作は元に戻せません。
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4 space-y-2">
             <p className="text-center font-medium">本当にこのユーザーを削除しますか？</p>
             <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
