@@ -33,20 +33,37 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { username, password, display_name, role, department } = req.body;
 
+    // 入力値の検証
     if (!username || !password || !display_name) {
-      return res.status(400).json({ message: '必須項目が入力されていません' });
+      return res.status(400).json({ 
+        message: '必須項目が入力されていません',
+        details: {
+          username: !username ? 'ユーザー名は必須です' : null,
+          password: !password ? 'パスワードは必須です' : null,
+          display_name: !display_name ? '表示名は必須です' : null,
+        }
+      });
     }
 
+    // 既存ユーザーの確認
     const existingUser = await db.query.users.findFirst({
-      where: eq(users.username, username)
+      where: eq(users.username, username),
+      columns: {
+        username: true
+      }
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
+      return res.status(400).json({ 
+        message: 'このユーザー名は既に使用されています',
+        field: 'username'
+      });
     }
 
+    // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ユーザーの作成
     const [newUser] = await db.insert(users).values({
       username,
       password: hashedPassword,
