@@ -3,7 +3,8 @@ import {
   messages, type Message, type InsertMessage,
   chats, type Chat, type InsertChat,
   documents, type Document, type InsertDocument,
-  chatExports, type ChatExport, type InsertChatExport
+  chatExports, type ChatExport, type InsertChatExport,
+  media, type Media, type InsertMedia
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, sql } from "drizzle-orm";
