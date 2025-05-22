@@ -3,6 +3,12 @@ import { sql } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
+// Login schema
+export const loginSchema = z.object({
+  username: z.string().min(1, "ユーザー名は必須です"),
+  password: z.string().min(1, "パスワードは必須です"),
+});
+
 export const chatExports = pgTable('chat_exports', {
   id: serial('id').primaryKey(),
   chatId: integer('chat_id').notNull(),
