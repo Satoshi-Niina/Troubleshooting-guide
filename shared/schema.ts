@@ -89,9 +89,13 @@ export const documents = pgTable('documents', {
   processedAt: timestamp('processed_at').defaultNow().notNull()
 });
 
-export const insertDocumentSchema = createInsertSchema(documents).omit({
+export const insertDocumentSchema = createInsertSchema(documents, {
+  userId: z.number(),
+  title: z.string(),
+  content: z.string()
+}).omit({
   id: true,
-  processedAt: true,
+  processedAt: true
 });
 
 export type Document = typeof documents.$inferSelect;
