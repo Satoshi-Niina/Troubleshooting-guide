@@ -92,7 +92,7 @@ export default function UsersPage() {
     setNewUser({
       username: "",
       password: "",
-      display_name: "",
+      displayName: "",
       role: "employee",
       department: "",
     });
@@ -126,7 +126,7 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // バリデーション
-    if (!newUser.username || !newUser.password || !newUser.display_name || !newUser.role) {
+    if (!newUser.username || !newUser.password || !newUser.displayName || !newUser.role) {
       toast({
         title: "入力エラー",
         description: "ユーザー名、パスワード、表示名、権限は必須項目です",
@@ -137,7 +137,7 @@ export default function UsersPage() {
     createUserMutation.mutate({
       username: newUser.username,
       password: newUser.password,
-      display_name: newUser.display_name, // display_nameに変更
+      displayName: newUser.displayName,
       role: newUser.role || 'employee',
       department: newUser.department || undefined
     } as NewUserData);
@@ -437,7 +437,8 @@ export default function UsersPage() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
+                            onClick={() => handleDeleteUser```
+(user.id)}
                             className="text-red-500 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
