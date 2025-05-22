@@ -48,12 +48,16 @@ export async function apiRequest(
     }
   }
 
-  // Content-Typeヘッダーを追加
+  let headers: Record<string, string> = {};
+
+  // Content-TypeとAuthorizationヘッダーを追加
   if (data) {
-    headers = {
-      'Content-Type': 'application/json',
-      ...headers
-    };
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const token = localStorage.getItem('auth-token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   // ブラウザキャッシュ対策用のタイムスタンプパラメータを追加

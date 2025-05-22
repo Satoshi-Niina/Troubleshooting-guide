@@ -66,14 +66,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       const response = await apiRequest("POST", "/api/auth/login", { username, password });
-      const userData = await response.json();
-      if (!userData.id || !userData.username || !userData.role) {
-        throw new Error("Invalid user data received");
+      const data = await response.json();
+      if (!data.user || !data.token) {
+        throw new Error("Invalid response data");
       }
-      setUser(userData);
+      
+      // Save token to localStorage
+      localStorage.setItem('auth-token', data.token);
+      
+      setUser(data.user);
       toast({
         title: "ログイン成功",
-        description: `ようこそ、${userData.display_name}さん`,
+        description: `ようこそ、${data.user.display_name}さん`,
       });
     } catch (error) {
       toast({

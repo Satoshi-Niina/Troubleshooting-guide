@@ -66,10 +66,31 @@ export default function UsersPage() {
   }, [user, navigate]);
 
   // ユーザーデータの取得
-  const { data: users, isLoading } = useQuery<UserData[]>({
+  const { data: users, isLoading, error } = useQuery<UserData[]>({
     queryKey: ["/api/users"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users");
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid response format");
+      }
+      return data;
+    },
     refetchOnWindowFocus: false,
+    retry: 1,
+    refetchOnMount: true
   });
+
+  // エラー表示の追加
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "エラー",
+        description: "ユーザー一覧の取得に失敗しました",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
 
   // 新規ユーザーフォーム
   const [showNewUserDialog, setShowNewUserDialog] = useState(false);
