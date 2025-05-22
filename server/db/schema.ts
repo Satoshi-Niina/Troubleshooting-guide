@@ -15,6 +15,7 @@ export const users = pgTable('users', {
     id: text('id').primaryKey().default(sql`gen_random_uuid()`),
     name: text('name').notNull(),
     email: text('email').notNull(),
+    description: text('description'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
    });
 
