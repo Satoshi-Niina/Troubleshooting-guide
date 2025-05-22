@@ -92,16 +92,6 @@
       <p>Click the button to test the OpenAI API.</p>
     </div>
   </div>
-
-  <div class="card">
-    <h2>WebSocket Test</h2>
-    <p>Test the WebSocket connection for real-time updates.</p>
-    <button id="ws-connect" class="button">Connect WebSocket</button>
-    <button id="ws-send" class="button secondary" disabled>Send Test Message</button>
-    <div id="ws-result" class="result">
-      <p>Click the Connect button to establish WebSocket connection.</p>
-    </div>
-  </div>
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -109,11 +99,6 @@
       const healthResult = document.getElementById('health-result');
       const openaiButton = document.getElementById('openai-test');
       const openaiResult = document.getElementById('openai-result');
-      const wsConnectButton = document.getElementById('ws-connect');
-      const wsSendButton = document.getElementById('ws-send');
-      const wsResult = document.getElementById('ws-result');
-      
-      let socket = null;
       
       // Test Health API
       healthButton.addEventListener('click', async function() {
@@ -172,100 +157,6 @@
           `;
         } finally {
           openaiButton.disabled = false;
-        }
-      });
-      
-      // WebSocket Test
-      wsConnectButton.addEventListener('click', function() {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          // Close existing connection
-          socket.close();
-          wsConnectButton.textContent = 'Connect WebSocket';
-          wsSendButton.disabled = true;
-          wsResult.innerHTML = '<p>WebSocket disconnected.</p>';
-          socket = null;
-          return;
-        }
-        
-        // Use the correct WebSocket path
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        
-        wsResult.innerHTML = `<p class="loading">Connecting to ${wsUrl}...</p>`;
-        
-        try {
-          socket = new WebSocket(wsUrl);
-          
-          socket.onopen = function() {
-            wsConnectButton.textContent = 'Disconnect WebSocket';
-            wsSendButton.disabled = false;
-            wsResult.innerHTML = '<p class="success">WebSocket connection established!</p>';
-          };
-          
-          socket.onmessage = function(event) {
-            let messageContent;
-            try {
-              const parsed = JSON.parse(event.data);
-              messageContent = `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
-            } catch (e) {
-              messageContent = `<pre>${event.data}</pre>`;
-            }
-            
-            wsResult.innerHTML += `
-              <p><strong>Received message:</strong></p>
-              ${messageContent}
-            `;
-          };
-          
-          socket.onclose = function(event) {
-            wsConnectButton.textContent = 'Connect WebSocket';
-            wsSendButton.disabled = true;
-            wsResult.innerHTML += `
-              <p class="${event.wasClean ? '' : 'error'}">
-                WebSocket connection closed ${event.wasClean ? 'cleanly' : 'unexpectedly'}. 
-                Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}
-              </p>
-            `;
-          };
-          
-          socket.onerror = function(error) {
-            wsResult.innerHTML += `
-              <p class="error">WebSocket error occurred.</p>
-            `;
-            console.error('WebSocket error:', error);
-          };
-        } catch (error) {
-          wsResult.innerHTML = `
-            <p class="error">Error creating WebSocket connection:</p>
-            <pre>${error.message}</pre>
-          `;
-          wsConnectButton.textContent = 'Connect WebSocket';
-        }
-      });
-      
-      wsSendButton.addEventListener('click', function() {
-        if (!socket || socket.readyState !== WebSocket.OPEN) {
-          wsResult.innerHTML += '<p class="error">WebSocket is not connected.</p>';
-          return;
-        }
-        
-        const testMessage = {
-          type: 'test',
-          content: 'This is a test message',
-          timestamp: new Date().toISOString()
-        };
-        
-        try {
-          socket.send(JSON.stringify(testMessage));
-          wsResult.innerHTML += `
-            <p><strong>Sent message:</strong></p>
-            <pre>${JSON.stringify(testMessage, null, 2)}</pre>
-          `;
-        } catch (error) {
-          wsResult.innerHTML += `
-            <p class="error">Error sending message:</p>
-            <pre>${error.message}</pre>
-          `;
         }
       });
     });

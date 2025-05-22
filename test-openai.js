@@ -12,7 +12,7 @@ async function testOpenAIConnection() {
     
     // Try a simple completion to test the connection
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4.1",
       messages: [
         {
           role: "system",

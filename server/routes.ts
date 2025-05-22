@@ -20,7 +20,7 @@ import { formatChatHistoryForExternalSystem } from './lib/chat-export-formatter'
 import techSupportRouter from './routes/tech-support';
 import { registerTroubleshootingRoutes } from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
-import emergencyGuideRouter from './routes/emergency-guide';
+import emergencyGuideRouter from './routes/emergency-guide-router';
 import { emergencyFlowRouter } from './routes/emergency-flow-router';
 import { registerSyncRoutes } from './routes/sync-routes';
 import { flowGeneratorRouter } from './routes/flow-generator';
@@ -954,17 +954,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Make sure to properly import WebSocket type
-  wss.on('connection', (ws: WebSocket) => {
-    console.log("WebSocket client connected");
+  wss.on('connection', (ws: WebSocket, req) => {
+    const token = new URL(req.url || '', `http://${req.headers.host}`).searchParams.get('token');
+    console.log(`WebSocket client connected with token: ${token}`);
     
     ws.on('message', (message: string) => {
-      console.log("Received message:", message);
-      // Broadcast message to all clients
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(message);
-        }
-      });
+      try {
+        const data = JSON.parse(message.toString());
+        console.log("Received message:", data);
+        
+        // Broadcast message to all clients
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
+          }
+        });
+      } catch (error) {
+        console.error("Error processing WebSocket message:", error);
+      }
     });
     
     ws.on('close', () => {

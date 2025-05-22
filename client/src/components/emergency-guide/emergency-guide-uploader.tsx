@@ -33,58 +33,50 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
   const generateFlowFromKeywords = async () => {
     if (!keywordsInput.trim()) {
       toast({
-        title: "入力エラー",
+        title: "キーワードが入力されていません",
         description: "キーワードを入力してください",
         variant: "destructive",
       });
       return;
     }
-    
+
+    setIsGeneratingFlow(true);
     try {
-      setIsGeneratingFlow(true);
-      
-      toast({
-        title: "フロー生成中",
-        description: `キーワード「${keywordsInput}」からフローを生成しています...`,
-      });
-      
-      const response = await fetch('/api/flow-generator/generate-from-keywords', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/emergency-guide/generate-from-keywords`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ keywords: keywordsInput }),
+        body: JSON.stringify({ 
+          keywords: keywordsInput.split(',').map(k => k.trim()).filter(k => k.length > 0)
+        })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '生成に失敗しました');
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      console.log("APIからの応答データ:", data);
       
-      if (data.success && data.flowData) {
+      if (data.success && data.guide) {
         toast({
-          title: "フロー生成完了",
-          description: `「${data.flowData.title || 'タイトルなし'}」が生成されました。`,
+          title: "生成完了",
+          description: `応急処置フロー「${data.guide.title}」を生成しました`,
         });
         
-        // 生成されたフローの詳細ページに移動するためのイベントを発火
         if (onUploadSuccess) {
-          onUploadSuccess(data.flowData.id);
+          onUploadSuccess(data.guide.id);
         }
-        
-        // キーワード入力をクリア
-        setKeywordsInput('');
       } else {
-        throw new Error('フローデータの形式が無効です');
+        throw new Error(data.error || 'フロー生成に失敗しました');
       }
     } catch (error) {
       console.error('フロー生成エラー:', error);
       toast({
-        title: "生成エラー",
-        description: error instanceof Error ? error.message : "フローの生成に失敗しました",
+        title: "エラー",
+        description: error instanceof Error ? error.message : "フロー生成に失敗しました",
         variant: "destructive",
       });
     } finally {
@@ -150,7 +142,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
         });
       }, 500);
       
-      const response = await fetch('/api/emergency-guide/process', {
+      const response = await fetch('/api/emergency-guide/generate-from-file', {
         method: 'POST',
         body: formData,
       });
@@ -173,7 +165,7 @@ const EmergencyGuideUploader: React.FC<EmergencyGuideUploaderProps> = ({ onUploa
         });
         
         if (onUploadSuccess) {
-          onUploadSuccess(data.guideId);
+          onUploadSuccess(data.guide.id);
         }
         
         // 数秒後にリセット

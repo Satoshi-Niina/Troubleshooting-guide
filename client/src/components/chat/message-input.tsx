@@ -80,9 +80,10 @@ export default function MessageInput() {
     if (!textToSend || isLoading) return;
     
     console.log('送信するテキスト:', textToSend);
+    console.log('送信するメディア:', draftMessage?.media);
     
-    // メッセージを送信
-    await sendMessage(textToSend);
+    // メッセージを送信（draftMessageのメディアを含める）
+    await sendMessage(textToSend, draftMessage?.media);
     
     // メッセージと同じテキストで画像検索を自動実行
     try {

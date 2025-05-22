@@ -1,7 +1,11 @@
+import { Router } from 'express';
 import { Chat, ChatExport, Message } from '@shared/schema';
 import OpenAI from "openai";
 import fs from 'fs';
 import path from 'path';
+
+// ルーターの定義
+const router = Router();
 
 // OpenAIクライアントの初期化
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -394,3 +398,6 @@ ${messages.slice(0, 10).map(m => m.content).join('\n')}
     }
   };
 }
+
+// エクスポート
+export default router;

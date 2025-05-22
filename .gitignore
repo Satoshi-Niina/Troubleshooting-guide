@@ -1,30 +1,51 @@
+# ====================
 # Node modules
+# ====================
 node_modules/
 **/node_modules/
 
-# Env files
+# ====================
+# Environment files
+# ====================
 .env
+.env.local
+client/.env
 server/.env
 
-# Vite build output
+# ====================
+# Build outputs
+# ====================
 dist/
+client/dist/
+server/build/
 
-# Log files
+# ====================
+# Logs and reports
+# ====================
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# VSCode settings
-.vscode/
-
-# OS metadata
-.DS_Store
-Thumbs.db
-
-# TypeScript cache
+# ====================
+# TypeScript
+# ====================
 *.tsbuildinfo
 
-# Coverage
+# ====================
+# Testing and coverage
+# ====================
 coverage/
 
-# Uploads (optional: keep if needed)
+# ====================
+# OS and editor files
+# ====================
+.DS_Store
+Thumbs.db
+.vscode/
+
+# ====================
+# Upload directories (optional)
+# ====================
 public/uploads/
 uploads/

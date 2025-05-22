@@ -89,7 +89,7 @@ export class SearchService {
 
     // GPTでテキスト検索と回答生成
     const gptResponse = await this.openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4.1",
       messages: [
         {
           role: "system",

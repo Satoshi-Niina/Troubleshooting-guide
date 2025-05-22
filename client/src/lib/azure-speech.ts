@@ -37,12 +37,12 @@ const isSimilarText = (a: string, b: string): boolean => {
   // 短いテキスト同士の場合、編集距離2以内なら類似とみなす
   if (maxLength < 10) {
     const distance = levenshteinDistance(a, b);
-    return distance <= 2;
+    return distance <= 1;
   }
 
   // 長いテキストの場合、編集距離がテキスト長の30%未満なら類似とみなす
   const distance = levenshteinDistance(a, b);
-  return distance / maxLength < 0.3;
+  return distance / maxLength < 0.2;
 };
 
 // Levenshtein距離を計算する関数
@@ -73,6 +73,30 @@ const levenshteinDistance = (a: string, b: string): number => {
 
   return matrix[a.length][b.length];
 };
+
+// 音声認識の状態を管理する型
+type RecognitionState = {
+  isSpeaking: boolean;
+  silenceStartTime: number | null;
+  lastAudioLevel: number;
+  consecutiveSilenceFrames: number;
+  isProcessing: boolean;
+};
+
+// 音声認識の状態
+let recognitionState: RecognitionState = {
+  isSpeaking: false,
+  silenceStartTime: null,
+  lastAudioLevel: 0,
+  consecutiveSilenceFrames: 0,
+  isProcessing: false
+};
+
+// 音声レベルの閾値
+const AUDIO_LEVEL_THRESHOLD = 0.1;
+const SILENCE_FRAME_THRESHOLD = 3;  // 5から3に短縮
+const SHORT_SILENCE_THRESHOLD = 200;  // 0.3秒から0.2秒に短縮
+const LONG_SILENCE_THRESHOLD = 500;  // 1秒から0.5秒に短縮
 
 // Azure Speech設定を初期化する関数
 const initAzureSpeechConfig = () => {
