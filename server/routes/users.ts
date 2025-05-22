@@ -3,51 +3,26 @@ import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
-
-// 初期管理者ユーザーの作成を確認
-const initializeAdminUser = async () => {
-  try {
-    const adminUser = await db.query.users.findFirst({
-      where: eq(users.username, 'admin'),
-    });
-
-    if (!adminUser) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      await db.insert(users).values({
-        username: 'admin',
-        password: hashedPassword,
-        display_name: 'Administrator',
-        role: 'admin',
-        department: 'System'
-      });
-      console.log('Initial admin user created');
-    }
-  } catch (error) {
-    console.error('Error creating initial admin user:', error);
-  }
-};
-
-initializeAdminUser();
-import { eq } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth';
-import bcrypt from 'bcrypt';
 
 const router = Router();
 
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allUsers = await db.query.users.findMany({
-      columns: {
-        id: true,
-        username: true,
-        display_name: true,
-        role: true,
-        department: true
-      }
-    });
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
 
-    res.json(allUsers || []);
+    const allUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      display_name: users.display_name,
+      role: users.role,
+      department: users.department
+    }).from(users);
+
+    res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'ユーザー一覧の取得に失敗しました' });
@@ -72,24 +47,22 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // 既存ユーザーの確認
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.username, username),
-      columns: {
-        username: true
-      }
-    });
+    const existingUser = await db.select({
+      id: users.id
+    })
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
 
-    if (existingUser) {
-      return res.status(400).json({ 
-        message: 'このユーザー名は既に使用されています',
-        field: 'username'
-      });
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: 'このユーザー名は既に使用されています' });
     }
 
     // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await db.insert(users).values({
+    // ユーザーの作成
+    const [newUser] = await db.insert(users).values({
       username,
       password: hashedPassword,
       display_name,
