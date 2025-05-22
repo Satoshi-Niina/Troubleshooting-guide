@@ -76,6 +76,16 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
+// Media table definition
+export const media = pgTable('media', {
+  id: serial('id').primaryKey(),
+  messageId: integer('message_id').notNull(),
+  type: text('type').notNull(),
+  url: text('url').notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
 // Media schemas
 export const insertMediaSchema = createInsertSchema(media).omit({
   id: true,
