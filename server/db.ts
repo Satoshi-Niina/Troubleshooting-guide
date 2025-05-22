@@ -2,13 +2,11 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "@shared/schema";
 
-// Check for DATABASE_URL
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required");
-}
+// Set DATABASE_URL
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:takabeni@0.0.0.0:5432/maintenance";
 
 // Initialize postgres client with Replit-optimized config
-const sql = postgres(process.env.DATABASE_URL!, {
+const sql = postgres(DATABASE_URL, {
   max: 3, // Replitの無料枠に合わせて調整
   idle_timeout: 30,
   connect_timeout: 15,
