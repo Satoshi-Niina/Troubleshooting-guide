@@ -1,22 +1,17 @@
 import { pgTable, text, timestamp, serial, integer } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-// Login schema
-export const loginSchema = z.object({
-  username: z.string().min(1, "ユーザー名は必須です"),
-  password: z.string().min(1, "パスワードは必須です"),
-});
-
+// User schemas
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: text('username').notNull().unique(),
-  password: text('password').notNull(),
   display_name: text('display_name').notNull(),
+  password: text('password').notNull(),
   role: text('role').default('employee').notNull(),
   department: text('department'),
-  created_at: timestamp('created_at').defaultNow().notNull()
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  description: text('description')
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
