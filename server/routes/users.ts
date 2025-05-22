@@ -3,6 +3,33 @@ import { Router } from 'express';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
+
+// 初期管理者ユーザーの作成を確認
+const initializeAdminUser = async () => {
+  try {
+    const adminUser = await db.query.users.findFirst({
+      where: eq(users.username, 'admin'),
+    });
+
+    if (!adminUser) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await db.insert(users).values({
+        username: 'admin',
+        password: hashedPassword,
+        display_name: 'Administrator',
+        role: 'admin',
+        department: 'System'
+      });
+      console.log('Initial admin user created');
+    }
+  } catch (error) {
+    console.error('Error creating initial admin user:', error);
+  }
+};
+
+initializeAdminUser();
+import { eq } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 
@@ -11,6 +38,22 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "認証が必要です" });
+    }
+
+    // 管理者権限チェック
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.id, req.session.userId),
+      columns: {
+        role: true
+      }
+    });
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({ message: "管理者権限が必要です" });
+    }
+
     const allUsers = await db.query.users.findMany({
       columns: {
         id: true,
@@ -20,6 +63,10 @@ router.get('/', authenticateToken, async (req, res) => {
         department: true
       }
     });
+
+    if (!allUsers) {
+      return res.json([]);
+    }
 
     res.json(allUsers);
   } catch (error) {
