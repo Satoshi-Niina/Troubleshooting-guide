@@ -28,13 +28,13 @@ CREATE TABLE messages (
   sender_id INTEGER REFERENCES users(id),
   is_ai_response BOOLEAN NOT NULL DEFAULT false,
   timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  chat_id INTEGER REFERENCES chats(id)
+  chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE
 );
 
 -- Create media table
 CREATE TABLE media (
   id SERIAL PRIMARY KEY,
-  message_id INTEGER REFERENCES messages(id),
+  message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
   type TEXT NOT NULL,
   url TEXT NOT NULL,
   thumbnail TEXT
@@ -42,4 +42,5 @@ CREATE TABLE media (
 
 -- Insert initial admin user
 INSERT INTO users (username, display_name, password, role, department)
-VALUES ('niina', 'niina', '0077', 'admin', 'takabeni');
+VALUES ('niina', 'niina', '0077', 'admin', 'takabeni')
+ON CONFLICT (username) DO NOTHING;
