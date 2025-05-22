@@ -46,6 +46,26 @@ export const images = pgTable('images', {
   createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
 });
 
+// チャットテーブルの定義
+// チャットセッション情報を管理
+export const chats = pgTable('chats', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  userId: text('user_id').notNull(), // チャットを開始したユーザーのID
+  title: text('title'), // チャットのタイトル（オプション）
+  createdAt: timestamp('created_at').defaultNow().notNull() // 作成日時
+});
+
+// メッセージテーブルの定義
+// チャット内のメッセージを管理
+export const messages = pgTable('messages', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`), // UUIDを自動生成
+  chatId: text('chat_id').notNull(), // 関連するチャットのID
+  senderId: text('sender_id').notNull(), // 送信者のID
+  content: text('content').notNull(), // メッセージの内容
+  timestamp: timestamp('timestamp').defaultNow().notNull(), // 送信日時
+  type: text('type').notNull(), // メッセージの種類（ユーザー、システムなど）
+});
+
 // チャットエクスポートテーブルの定義
 // チャット履歴のエクスポート記録を管理
 export const chatExports = pgTable('chat_exports', {
