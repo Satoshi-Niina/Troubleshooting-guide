@@ -9,6 +9,24 @@ export const loginSchema = z.object({
   password: z.string().min(1, "パスワードは必須です"),
 });
 
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  display_name: text('display_name').notNull(),
+  role: text('role').default('employee').notNull(),
+  department: text('department'),
+  created_at: timestamp('created_at').defaultNow().notNull()
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  created_at: true,
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export const chatExports = pgTable('chat_exports', {
   id: serial('id').primaryKey(),
   chatId: integer('chat_id').notNull(),
@@ -38,27 +56,6 @@ export const messages = pgTable('messages', {
   timestamp: timestamp('timestamp').defaultNow().notNull()
 });
 
-export const users = pgTable('users', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  username: text('username').notNull().unique(),
-  password: text('password').notNull(),
-  display_name: text('display_name').notNull(),
-  role: text('role').default('employee').notNull(),
-  department: text('department'),
-  createdAt: timestamp('created_at').defaultNow().notNull()
-});
-
-// Schema validation
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
-// Chat schemas
 export const insertChatSchema = createInsertSchema(chats).omit({
   id: true,
   createdAt: true,
@@ -67,7 +64,6 @@ export const insertChatSchema = createInsertSchema(chats).omit({
 export type Chat = typeof chats.$inferSelect;
 export type InsertChat = z.infer<typeof insertChatSchema>;
 
-// Message schemas
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   timestamp: true,
