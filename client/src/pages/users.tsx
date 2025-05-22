@@ -137,8 +137,8 @@ export default function UsersPage() {
     createUserMutation.mutate({
       username: newUser.username,
       password: newUser.password,
-      displayName: newUser.displayName,
-      role: newUser.role,
+      display_name: newUser.displayName, // display_nameに変更
+      role: newUser.role || 'employee',
       department: newUser.department || undefined
     } as NewUserData);
   };
