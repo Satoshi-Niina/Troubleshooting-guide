@@ -1,0 +1,144 @@
+{
+  "id": "engine_shutdown_issue",
+  "title": "エンジン停止不良時の応急処置",
+  "description": "帰着後にエンジンを停止しようとしたが、止まらない場合の応急処置手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+  "triggerKeywords": [
+    "エンジン停止",
+    "止まらない",
+    "帰着後"
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "title": "開始",
+      "description": "この応急処置ガイドでは、エンジンが停止しない問題に対処する手順を説明します。安全を確保しながら、原因を特定し解決するための手順に従ってください。",
+      "imageUrl": "",
+      "type": "start",
+      "options": [
+        {
+          "text": "状況を確認する",
+          "nextStepId": "step1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step1",
+      "title": "安全確保",
+      "description": "1. 二次災害を防ぐため、車両が安全な場所に停止していることを確認します。\n2. 接近する列車や障害物がないか周囲を確認します。\n3. 必要に応じて停止表示器や防護無線を使用します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "安全確認完了",
+          "nextStepId": "decision1",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision1",
+      "title": "エンジン停止の原因確認",
+      "description": "エンジンが停止しない原因を確認します。制御装置や電気系統に問題があるか確認してください。",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "制御装置の問題",
+          "nextStepId": "step2a",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "電気系統の問題",
+          "nextStepId": "step2b",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step2a",
+      "title": "制御装置の確認",
+      "description": "1. エンジン制御装置のスイッチを確認し、正しく設定されているか確認します。\n2. 制御装置のリセットを試みます。\n3. リセット後も停止しない場合は、制御装置の故障の可能性があります。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "制御装置をリセット",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step2b",
+      "title": "電気系統の確認",
+      "description": "1. バッテリーの接続を確認し、緩みや腐食がないか確認します。\n2. 電気系統のヒューズを確認し、切れている場合は交換します。\n3. 電気系統の異常がないか確認します。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "電気系統を確認",
+          "nextStepId": "decision2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "decision2",
+      "title": "エンジン停止確認",
+      "description": "対処後、エンジンは正常に停止しましたか？",
+      "imageUrl": "",
+      "type": "decision",
+      "options": [
+        {
+          "text": "はい、正常に停止した",
+          "nextStepId": "step_success",
+          "isTerminal": false,
+          "conditionType": "yes"
+        },
+        {
+          "text": "いいえ、停止しない",
+          "nextStepId": "step_failure",
+          "isTerminal": false,
+          "conditionType": "no"
+        }
+      ]
+    },
+    {
+      "id": "step_success",
+      "title": "運転再開手順",
+      "description": "1. エンジンを数分間アイドリング状態で運転し、安定性を確認します。\n2. 各計器の値が正常範囲内にあることを確認します。\n3. 異常な音、振動、臭いがないか確認します。\n4. 全て正常であれば、運転を再開します。\n5. しばらくの間、エンジンの状態に注意を払いながら走行してください。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    },
+    {
+      "id": "step_failure",
+      "title": "専門的な支援要請",
+      "description": "1. 指令所または保守担当に連絡し、現在の状況と位置を報告します。\n2. これまでに実施した確認事項と対処内容を伝えます。\n3. 軌道モータカーの牽引または修理のための支援を要請します。\n4. 安全な場所で支援の到着を待ちます。",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "完了",
+          "nextStepId": "end",
+          "isTerminal": true,
+          "conditionType": "other"
+        }
+      ]
+    }
+  ]
+}
