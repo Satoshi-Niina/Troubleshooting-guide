@@ -10,8 +10,15 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', async (req, res) => {
   try {
-    // schema定義が無い前提で直接テーブル名を文字列指定
-    const allUsers = await db.select().from("users" as any);
+    const allUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      display_name: users.display_name,
+      role: users.role,
+      department: users.department,
+      created_at: users.created_at
+    }).from(users);
+    
     res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
