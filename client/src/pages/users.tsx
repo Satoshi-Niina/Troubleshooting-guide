@@ -126,24 +126,21 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // バリデーション
-    if (!newUser.username || !newUser.password || !newUser.displayName) {
-      toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!newUser.username || !newUser.password || !newUser.displayName || !newUser.role) {
       toast({
         title: "入力エラー",
-        description: "必須項目をすべて入力してください",
+        description: "ユーザー名、パスワード、表示名、権限は必須項目です",
         variant: "destructive",
       });
       return;
     }
-    createUserMutation.mutate(newUser as NewUserData);
+    createUserMutation.mutate({
+      username: newUser.username,
+      password: newUser.password,
+      displayName: newUser.displayName,
+      role: newUser.role,
+      department: newUser.department || undefined
+    } as NewUserData);
   };
 
   // 入力フィールド更新処理
