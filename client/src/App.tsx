@@ -16,6 +16,7 @@ import { ChatProvider } from "./context/chat-context";
 import Header from "./components/navigation/header";
 import { Tabs } from "./components/navigation/tabs";
 import { useEffect } from "react";
+import { setupWebSocket, closeWebSocket } from "./lib/websocket";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -147,6 +148,16 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // WebSocketの初期化
+    setupWebSocket();
+
+    // クリーンアップ関数
+    return () => {
+      closeWebSocket();
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

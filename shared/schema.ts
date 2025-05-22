@@ -4,7 +4,7 @@ import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // User role enum
-export const userRoleEnum = pgEnum('user_role', ['employee', 'admin']);
+export const userRoleEnum = pgEnum('user_role', ['一般ユーザー', '管理者', 'システム管理者']);
 
 // Users table
 export const users = pgTable("users", {
@@ -12,34 +12,36 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   displayName: text("display_name").notNull(),
-  role: userRoleEnum("role").notNull().default('employee'),
+  role: userRoleEnum("role").notNull().default('一般ユーザー'),
   department: text("department"),
-});
-
-// Messages table
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  content: text("content").notNull(),
-  senderId: integer("sender_id").references(() => users.id),
-  isAiResponse: boolean("is_ai_response").notNull().default(false),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-  chatId: integer("chat_id").references(() => chats.id),
-});
-
-// Media attachments table
-export const media = pgTable("media", {
-  id: serial("id").primaryKey(),
-  messageId: integer("message_id").references(() => messages.id),
-  type: text("type").notNull(), // image, video
-  url: text("url").notNull(),
-  thumbnail: text("thumbnail"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Chats table
 export const chats = pgTable("chats", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Messages table
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  isAiResponse: boolean("is_ai_response").notNull().default(false),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+});
+
+// Media attachments table
+export const media = pgTable("media", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id),
+  type: text("type").notNull(),
+  url: text("url").notNull(),
+  thumbnail: text("thumbnail"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -47,33 +49,40 @@ export const chats = pgTable("chats", {
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  type: text("type").notNull(), // pdf, pptx, xlsx
+  type: text("type").notNull(),
   url: text("url").notNull(),
   jsonUrl: text("json_url"),
   imagesUrl: text("images_url"),
   processedAt: timestamp("processed_at").notNull().defaultNow(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
 });
 
-// Search keywords table for document indexing
+// Search keywords table
 export const keywords = pgTable("keywords", {
   id: serial("id").primaryKey(),
   word: text("word").notNull(),
-  documentId: integer("document_id").references(() => documents.id),
+  documentId: integer("document_id").notNull().references(() => documents.id),
   relevance: integer("relevance").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// チャット履歴エクスポートテーブル
+// Chat exports table
 export const chatExports = pgTable("chat_exports", {
   id: serial("id").primaryKey(),
-  chatId: integer("chat_id").references(() => chats.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
 // Schema validation
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
+});
+
+export const insertChatSchema = createInsertSchema(chats).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
@@ -82,10 +91,6 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 });
 
 export const insertMediaSchema = createInsertSchema(media).omit({
-  id: true,
-});
-
-export const insertChatSchema = createInsertSchema(chats).omit({
   id: true,
   createdAt: true,
 });
@@ -97,6 +102,7 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
 
 export const insertKeywordSchema = createInsertSchema(keywords).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertChatExportSchema = createInsertSchema(chatExports).omit({
@@ -108,14 +114,14 @@ export const insertChatExportSchema = createInsertSchema(chatExports).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
+export type Chat = typeof chats.$inferSelect;
+export type InsertChat = z.infer<typeof insertChatSchema>;
+
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type Media = typeof media.$inferSelect;
 export type InsertMedia = z.infer<typeof insertMediaSchema>;
-
-export type Chat = typeof chats.$inferSelect;
-export type InsertChat = z.infer<typeof insertChatSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
@@ -127,6 +133,13 @@ export type ChatExport = typeof chatExports.$inferSelect;
 export type InsertChatExport = z.infer<typeof insertChatExportSchema>;
 
 // Auth types
+export const loginSchema = z.object({
+  username: z.string().min(3),
+  password: z.string().min(4),
+});
+
+export type LoginCredentials = z.infer<typeof loginSchema>;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   chats: many(chats),

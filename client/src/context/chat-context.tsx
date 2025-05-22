@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { startSpeechRecognition, stopSpeechRecognition, startBrowserSpeechRecognition, stopBrowserSpeechRecognition } from '../lib/azure-speech';
+import { startSpeechRecognition, stopSpeechRecognition } from '@/lib/azure-speech';
 import { Message } from '@shared/schema';
 
 // 十分な文とみなす最小文字数
@@ -24,13 +24,13 @@ interface ChatContextValue {
   recordedText: string;
   searchBySelectedText: (text: string) => Promise<void>;
   clearSearchResults: () => void;
-  captureImage: () => Promise<void>;
+  captureImage: (imageData: string, type?: 'image' | 'video') => Promise<void>;
   exportChatHistory: () => Promise<void>;
   exportFormattedData: () => Promise<any>;
   lastExportTimestamp: Date | null;
   isExporting: boolean;
   hasUnexportedMessages: boolean;
-  sendEmergencyGuide: (guideData: any) => Promise<any>; // 戻り値の型を変更
+  sendEmergencyGuide: (guideData: any) => Promise<any>;
   draftMessage: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null;
   setDraftMessage: (message: { content: string, media?: { type: string, url: string, thumbnail?: string }[] } | null) => void;
   clearChatHistory: () => Promise<void>;
@@ -298,7 +298,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // 音声認識を停止
       stopSpeechRecognition();
-      stopBrowserSpeechRecognition();
     };
 
     // イベントリスナーを追加
@@ -380,7 +379,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // カメラで画像を撮影する関数
-  const captureImage = useCallback(async () => {
+  const captureImage = useCallback(async (imageData: string, type: 'image' | 'video' = 'image') => {
     try {
       // カスタムイベントでカメラモーダルを開く
       const cameraEvent = new Event('open-camera');
@@ -391,10 +390,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('カメラエラー:', error);
       toast({
         title: 'カメラエラー',
-        description: 'カメラを開けませんでした。',
+        description: '画像の処理に失敗しました。',
         variant: 'destructive',
       });
-      return Promise.resolve();
+      return Promise.reject(error);
     }
   }, [toast]);
 
@@ -417,7 +416,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await apiRequest('POST', `/api/chats/${currentChatId}/messages`, { 
         content,
         useOnlyKnowledgeBase,
-        usePerplexity: false
+        usePerplexity: false,
+        media: mediaToSend
       });
 
       if (!response.ok) {
@@ -436,11 +436,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         { 
           ...data.userMessage, 
           timestamp: new Date(data.userMessage.timestamp),
-          media: allMedia.length > 0 ? allMedia.map((media, idx) => ({
-            id: Date.now() + idx,
-            messageId: data.userMessage.id,
-            ...media
-          })) : []
+          media: mediaToSend // 送信したメディアデータを使用
         },
         {
           ...data.aiMessage,
@@ -449,9 +445,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ]);
 
       setTempMedia([]);
+      setDraftMessage(null);
       setRecordedText('');
+      
+      // 関連する検索を実行
       searchBySelectedText(content);
     } catch (error) {
+      console.error('メッセージ送信エラー:', error);
       toast({
         title: 'メッセージ送信エラー',
         description: 'メッセージを送信できませんでした。',
@@ -784,7 +784,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // 音声認識を停止
       stopSpeechRecognition();
-      stopBrowserSpeechRecognition();
 
       // カスタムイベントを発行
       if (typeof window !== 'undefined') {
@@ -799,10 +798,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const clearTimestamp = Date.now().toString();
       localStorage.setItem('chat_cleared_timestamp', clearTimestamp);
 
+      // ローカルストレージのクリア
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('rq-') || key.startsWith('chat_')) {
+          localStorage.removeItem(key);
+        }
+      }
+
       // React Queryのキャッシュをクリア
       try {
         // @ts-ignore
         if (window.queryClient) {
+          window.queryClient.clear(); // すべてのクエリキャッシュをクリア
           window.queryClient.removeQueries({ queryKey: ['/api/chats/1/messages'] });
           window.queryClient.setQueryData(['/api/chats/1/messages'], []);
         }
@@ -820,11 +827,24 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         } catch (error) {
           console.error('APIリクエストエラー:', error);
-          // エラーは無視（ローカルの状態は既にクリア済み）
         } finally {
           setIsClearing(false);
         }
       }
+
+      // クリア後の状態を維持するための監視を開始
+      const intervalId = setInterval(() => {
+        // @ts-ignore
+        if (window.queryClient) {
+          window.queryClient.setQueryData(['/api/chats/1/messages'], []);
+        }
+      }, 500);
+
+      // 10秒後に監視を終了
+      setTimeout(() => {
+        clearInterval(intervalId);
+        localStorage.removeItem('chat_cleared_timestamp');
+      }, 10000);
 
       toast({
         title: 'チャット履歴を削除しました',

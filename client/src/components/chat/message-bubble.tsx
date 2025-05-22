@@ -3,7 +3,7 @@ import { useAuth } from "@/context/auth-context";
 import { useChat } from "@/context/chat-context";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Copy, Volume2 } from "lucide-react";
+import { Copy, Volume2, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { speakText, stopSpeaking } from "@/lib/text-to-speech";
 
@@ -22,6 +22,31 @@ interface MessageBubbleProps {
     }[];
   };
   isDraft?: boolean;
+}
+
+// 画像パスを解決するヘルパー関数
+function resolveImagePath(path: string): string {
+  if (!path) return '';
+  
+  // すでに絶対URLの場合はそのまま返す
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // データURLの場合はそのまま返す
+  if (path.startsWith('data:')) {
+    return path;
+  }
+  
+  // 相対パスの場合、先頭の/を削除してoriginを追加
+  let resolvedPath = path;
+  if (resolvedPath.startsWith('/')) {
+    resolvedPath = resolvedPath.substring(1);
+  }
+  
+  // 現在のオリジンと結合
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/${resolvedPath}`;
 }
 
 export default function MessageBubble({ message, isDraft = false }: MessageBubbleProps) {
@@ -224,11 +249,11 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
 
           {/* Display media attachments if any */}
           {message.media && message.media.length > 0 && (
-            <div className="mt-3">
+            <div className="mt-3 space-y-2">
               {message.media.map((media, index) => (
-                <div key={index} className="mt-2">
+                <div key={index} className="relative">
                   {media.type === 'image' && (
-                    <div className="relative">
+                    <div className="relative group">
                       <img 
                         src={media.url.startsWith('data:') ? media.url : `/knowledge-base/images/${media.url}`} 
                         alt="添付画像" 
@@ -243,7 +268,7 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                         }}
                       />
                       <div 
-                        className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded-lg"
                         onClick={() => handleImagePreview(media.url)}
                       >
                         <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
@@ -255,28 +280,12 @@ export default function MessageBubble({ message, isDraft = false }: MessageBubbl
                     </div>
                   )}
                   {media.type === 'video' && (
-                    <div className="relative">
-                      <video 
-                        src={media.url} 
-                        controls 
-                        className="rounded-lg w-full max-w-xs border border-blue-200 shadow-md"
-                        onClick={(e) => {
-                          // Stop propagation to prevent both video control and preview
-                          e.stopPropagation();
-                        }}
-                      />
-                      <div 
-                        className="absolute top-2 right-2 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
-                        onClick={() => handleImagePreview(media.url)}
-                      >
-                        <div className="bg-blue-600 bg-opacity-70 p-2 rounded-full">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
+                    <video 
+                      src={resolveImagePath(media.url)} 
+                      controls 
+                      className="rounded-lg w-full max-w-xs border border-blue-200 shadow-md"
+                      poster={media.thumbnail ? resolveImagePath(media.thumbnail) : undefined}
+                    />
                   )}
                 </div>
               ))}

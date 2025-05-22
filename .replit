@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 modules = ["nodejs-20", "web", "bash", "postgresql-16"]
 run = "npm run dev"
+=======
+modules = ["nodejs-20", "web", "postgresql-16"]
+run = "npm run start"
+>>>>>>> f34035c (pstgsqlによるログインユーザーデータベース作成、パスワードのセキュリティー管理を追加)
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -38,5 +43,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run start"
 waitForPort = 5000

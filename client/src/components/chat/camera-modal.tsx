@@ -215,6 +215,10 @@ export default function CameraModal() {
           </div>
         </DialogHeader>
         
+        <div id="camera-description" className="sr-only">
+          カメラモーダル。写真撮影またはビデオ録画ができます。
+        </div>
+
         <div className="relative bg-black">
           {!capturedImage ? (
             <video 

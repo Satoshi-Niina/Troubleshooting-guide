@@ -1,10 +1,11 @@
+// ✅ 完全統合・安定版 index.ts
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import path from "path";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 import { initializeKnowledgeBase } from "./lib/knowledge-base";
 import fs from "fs";
-import axios from "axios";
 import { storage } from "./storage";
 import dotenv from 'dotenv';
 import { exec } from 'child_process';
@@ -20,50 +21,112 @@ console.log("[DEBUG] Environment variables loaded:", {
 });
 
 const app = express();
+const PORT = process.env.PORT || 5001;
+
+// ミドルウェアの設定を先に行う
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+  origin: ['http://localhost:3000', `http://localhost:${PORT}`],
+  credentials: true
+}));
 
-// Serve static files from public directory
+// ✅ ルート設定
+import guidesRouter from './routes/guides';
+import userRouter from './routes/user';
+app.use('/api/guides', guidesRouter);
+app.use('/api/user', userRouter);
+// ✅ ユーザー登録API（明示追加）
+app.post('/api/users', async (req, res) => {
+  console.log('受信したリクエストボディ:', req.body);  // デバッグ用ログ追加
+  
+  const { username, displayName, password, role, department } = req.body;
+  
+  // バリデーション
+  if (!username || !displayName || !password || !role) {
+    console.error('必須項目が不足しています:', { username, displayName, password, role });
+    return res.status(400).json({ 
+      error: '登録失敗', 
+      details: '必須項目が不足しています',
+      received: { username, displayName, password, role }
+    });
+  }
+
+  const client = new Client(dbConfig);
+  
+  try {
+    await client.connect();
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    
+    // ユーザー名の重複チェック
+    const existingUser = await client.query(
+      'SELECT username FROM users WHERE username = $1',
+      [username]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ 
+        error: '登録失敗', 
+        details: 'このユーザー名は既に使用されています' 
+      });
+    }
+
+    const result = await client.query(
+      `INSERT INTO users (username, display_name, password, role, department)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, username, display_name, role, department`,
+      [username, displayName, hashedPassword, role, department]
+    );
+    
+    console.log('登録成功:', result.rows[0]);  // デバッグ用ログ追加
+    res.status(201).json({ 
+      message: '登録完了',
+      user: result.rows[0]
+    });
+  } catch (err: any) {
+    console.error('❌ DBエラー:', err);
+    console.error('エラーの詳細:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      constraint: err.constraint
+    });
+    res.status(500).json({ 
+      error: '登録失敗',
+      details: err.message,
+      code: err.code
+    });
+  } finally {
+    await client.end();
+  }
+});
+
 app.use('/static', express.static(path.join(process.cwd(), 'public')));
+['images', 'json', 'data', 'media'].forEach(dir => {
+  app.use(`/knowledge-base/${dir}`, express.static(path.join(process.cwd(), 'knowledge-base', dir)));
+});
 
-// 知識ベースディレクトリへのアクセスを一元化
-app.use('/knowledge-base/images', express.static(path.join(process.cwd(), 'knowledge-base', 'images')));
-app.use('/knowledge-base/data', express.static(path.join(process.cwd(), 'knowledge-base', 'data')));
-app.use('/knowledge-base/json', express.static(path.join(process.cwd(), 'knowledge-base', 'json')));
-app.use('/knowledge-base/media', express.static(path.join(process.cwd(), 'knowledge-base', 'media')));
-
-// 完全に/knowledge-baseに一元化、/uploadsへのリクエストを全て/knowledge-baseに転送
 app.use('/uploads/:dir', (req, res) => {
   const dir = req.params.dir;
-  // 許可されたディレクトリのみリダイレクト
   if (['images', 'data', 'json', 'media', 'ppt'].includes(dir)) {
     const redirectPath = `/knowledge-base/${dir}${req.path}`;
-    console.log(`リダイレクト: ${req.path} -> ${redirectPath}`);
     res.redirect(redirectPath);
   } else {
     res.status(404).send('Not found');
   }
 });
 
-// Add a test route to serve our HTML test page
-app.get('/test', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'api-test.html'));
-});
-
-// Log all requests for debugging
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   console.log(`[DEBUG] Request received: ${req.method} ${path}`);
 
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
     let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
@@ -71,18 +134,14 @@ app.use((req, res, next) => {
     if (capturedJsonResponse) {
       logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
     }
-
     if (logLine.length > 80) {
       logLine = logLine.slice(0, 79) + "…";
     }
-
     log(logLine);
   });
-
   next();
 });
 
-// ブラウザを開く関数
 function openBrowser(url: string) {
   const start = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
   // URLのバリデーション
@@ -96,9 +155,15 @@ function openBrowser(url: string) {
   exec(`${start} "${escapedUrl}"`);
 }
 
+// データベース接続をテストしてからサーバーを起動
 (async () => {
   try {
-    // ストレージをアプリケーションのローカル変数として保存
+    console.log('アプリケーション初期化を開始...');
+    console.log('環境変数 DATABASE_URL:', process.env.DATABASE_URL);
+    
+    await testDatabaseConnection();
+    console.log('データベース接続テスト完了');
+    
     app.locals.storage = storage;
     console.log('ストレージをアプリケーション変数として設定しました');
 
@@ -145,17 +210,17 @@ function openBrowser(url: string) {
 
   const server = await registerRoutes(app);
 
+  app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, error: 'API endpoint not found' });
+  });
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
     res.status(status).json({ message });
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {

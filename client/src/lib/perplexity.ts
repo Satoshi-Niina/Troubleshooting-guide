@@ -1,4 +1,4 @@
-import axios from 'axios';
+// import axios from 'axios';
 
 // Perplexity API の型定義
 export interface PerplexityMessage {
@@ -66,11 +66,11 @@ export async function getPerplexityAnswer(
 ): Promise<{ content: string, citations: PerplexityCitation[] }> {
   try {
     // サーバーサイドで実行するAPIリクエスト
-    const response = await axios.post('/api/perplexity', {
-      query,
-      systemPrompt,
-      useKnowledgeBaseOnly
-    });
+    // const response = await axios.post('/api/perplexity', {
+    //   query,
+    //   systemPrompt,
+    //   useKnowledgeBaseOnly
+    // });
 
     return {
       content: response.data.content,

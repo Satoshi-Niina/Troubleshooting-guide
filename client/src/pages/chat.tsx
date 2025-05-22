@@ -61,11 +61,10 @@ export default function Chat() {
     };
   }, [setSelectedText]);
 
-  // Show messages from the context or from the query
-  // クリア処理中は空配列を表示し、それ以外の場合はmessagesまたはデータを表示
-  const displayMessages = isClearing 
-    ? [] 
-    : (messages?.length > 0 ? messages : (data as any[] || []));
+  // メッセージリストの生成
+  const displayMessages = messages.filter(
+    m => (m.content && m.content.trim().length > 0) || (m.media && m.media.length > 0)
+  );
   
   // メッセージクリア時にデータも更新
   useEffect(() => {

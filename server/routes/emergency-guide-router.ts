@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AdmZip from 'adm-zip';
 import fetch from 'node-fetch';
 import { log } from '../vite';
+import { openai } from '../lib/openai';
 
 // PowerPointファイルからテキスト抽出ライブラリ
 import * as mammoth from 'mammoth';
@@ -275,7 +276,7 @@ async function processPowerPointFile(filePath: string): Promise<any> {
       
       // JSONファイルを知識ベースディレクトリに保存
       const kbJsonFilePath = path.join(kbJsonDir, `${fileId}_metadata.json`);
-      fs.writeFileSync(kbJsonFilePath, JSON.stringify(result, null, 2));
+      await fs.promises.writeFile(kbJsonFilePath, JSON.stringify(result, null, 2));
       
       return {
         id: fileId,
@@ -1052,4 +1053,137 @@ router.post('/send-to-chat/:guideId/:chatId', async (req, res) => {
   }
 });
 
-export const emergencyGuideRouter = router;
+// キーワードからのガイド生成エンドポイント
+router.post('/generate-from-keywords', async (req: Request, res: Response) => {
+  try {
+    const { keywords } = req.body;
+    
+    if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'キーワードが指定されていません'
+      });
+    }
+
+    // キーワードを文字列に結合
+    const keywordString = keywords.join(', ');
+    
+    // GPTに渡すプロンプト
+    const prompt = `以下のキーワードに関連する応急処置フローを生成してください。
+必ず完全なJSONオブジェクトのみを返してください。追加の説明やテキストは一切含めないでください。
+レスポンスは純粋なJSONデータだけであるべきで、コードブロックのマークダウン記法は使用しないでください。
+
+JSONの形式は次のようにしてください：
+{
+  "id": "unique_id",
+  "title": "フローのタイトル",
+  "description": "フローの説明",
+  "steps": [
+    {
+      "id": "step1",
+      "title": "ステップ1のタイトル",
+      "description": "ステップ1の詳細説明",
+      "imageUrl": "",
+      "type": "step",
+      "options": [
+        {
+          "text": "次のステップへ",
+          "nextStepId": "step2",
+          "isTerminal": false,
+          "conditionType": "other"
+        }
+      ]
+    }
+  ]
+}
+
+【キーワード】: ${keywordString}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { role: "system", content: "あなたは応急処置フローの専門家です。与えられたキーワードから、正確で分かりやすい応急処置フローを生成してください。" },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const flowData = JSON.parse(completion.choices[0].message.content);
+
+    // ガイドIDを生成
+    const guideId = `guide_${Date.now()}`;
+    const jsonFilePath = path.join(kbJsonDir, `${guideId}_metadata.json`);
+
+    // メタデータを保存
+    await fs.promises.writeFile(jsonFilePath, JSON.stringify(flowData, null, 2));
+
+    res.json({
+      success: true,
+      guide: {
+        id: guideId,
+        ...flowData
+      }
+    });
+  } catch (error) {
+    console.error('フロー生成エラー:', error);
+    res.status(500).json({
+      success: false,
+      error: 'フローの生成に失敗しました'
+    });
+  }
+});
+
+// ファイルからのガイド生成関数
+async function generateFromFile(req: Request, res: Response) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'ファイルがアップロードされていません'
+      });
+    }
+
+    const filePath = req.file.path;
+    const fileExtension = path.extname(filePath).toLowerCase();
+    let guideData;
+
+    // ファイル形式に応じて処理
+    if (fileExtension === '.pptx' || fileExtension === '.ppt') {
+      guideData = await processPowerPointFile(filePath);
+    } else if (fileExtension === '.json') {
+      guideData = await processJsonFile(filePath);
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'サポートされていないファイル形式です'
+      });
+    }
+
+    // ガイドIDを生成
+    const guideId = `guide_${Date.now()}`;
+    const jsonFilePath = path.join(kbJsonDir, `${guideId}_metadata.json`);
+
+    // メタデータを保存
+    await fs.promises.writeFile(jsonFilePath, JSON.stringify(guideData, null, 2));
+
+    res.json({
+      success: true,
+      guide: {
+        id: guideId,
+        ...guideData
+      }
+    });
+  } catch (error) {
+    console.error('ファイル処理エラー:', error);
+    res.status(500).json({
+      success: false,
+      error: 'ファイルの処理に失敗しました'
+    });
+  }
+}
+
+// ファイルからのガイド生成エンドポイント
+router.post('/generate-from-file', upload.single('file'), generateFromFile);
+
+// エクスポート
+export default router;

@@ -19,6 +19,7 @@ try {
     }
   });
   db = drizzle(sql, { schema });
+  console.log("データベース接続が確立されました");
 } catch (error) {
   console.error("データベース接続エラー:", error);
   // エラーが発生した場合は空のオブジェクトを返す

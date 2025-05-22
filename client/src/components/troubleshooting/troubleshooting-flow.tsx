@@ -194,18 +194,41 @@ export default function TroubleshootingFlow({ id, onComplete, onExit }: Troubles
     
     // ステップの内容から関連キーワードを抽出して画像検索する
     const extractKeywordsFromText = (text: string) => {
-      // 日本語の重要なキーワードを抽出（名詞を中心に）
-      // 簡易的な実装として、2文字以上の単語を抽出
-      const words = text.match(/[一-龠]+|[ぁ-ん]+|[ァ-ヴー]+|[a-zA-Z0-9]+/g) || [];
+      // 日本語の重要なキーワードを抽出
+      // 1. 漢字を含む単語を抽出
+      const kanjiWords = text.match(/[一-龠]{2,}/g) || [];
+      
+      // 2. カタカナの単語を抽出
+      const katakanaWords = text.match(/[ァ-ヴー]{2,}/g) || [];
+      
+      // 3. 英数字の単語を抽出
+      const alphanumericWords = text.match(/[a-zA-Z0-9]{2,}/g) || [];
+      
+      // 4. ひらがなの単語を抽出（ただし、一般的な助詞や助動詞は除外）
+      const hiraganaWords = text.match(/[ぁ-ん]{2,}/g) || [];
       
       // 助詞や助動詞などの一般的な語を除外
-      const stopWords = ['した', 'します', 'ます', 'です', 'ない', 'する', 'なる', 'いる', 'ある', 'れる', 'られる', 
-        'ので', 'から', 'より', 'また', 'および', 'または', 'など', 'して', 'として', 'について', 'により'];
+      const stopWords = [
+        'した', 'します', 'ます', 'です', 'ない', 'する', 'なる', 'いる', 'ある', 'れる', 'られる',
+        'ので', 'から', 'より', 'また', 'および', 'または', 'など', 'して', 'として', 'について', 'により',
+        'こと', 'もの', 'とき', 'ため', 'よう', 'ところ', 'わけ', 'はず', 'つもり', 'はず', 'つもり',
+        'はず', 'つもり', 'はず', 'つもり', 'はず', 'つもり', 'はず', 'つもり', 'はず', 'つもり'
+      ];
       
-      return words
+      // すべての単語を結合し、重複を除去
+      const allWords = [...kanjiWords, ...katakanaWords, ...alphanumericWords, ...hiraganaWords]
         .filter(word => word.length >= 2) // 2文字以上の単語のみ
         .filter(word => !stopWords.includes(word)) // ストップワードを除外
-        .slice(0, 5); // 最大5単語まで
+        .filter((word, index, self) => self.indexOf(word) === index); // 重複を除去
+      
+      // 重要度の高い単語を優先（漢字を含む単語やカタカナの単語を優先）
+      const sortedWords = allWords.sort((a, b) => {
+        const aScore = (a.match(/[一-龠]/) ? 2 : 0) + (a.match(/[ァ-ヴー]/) ? 1 : 0);
+        const bScore = (b.match(/[一-龠]/) ? 2 : 0) + (b.match(/[ァ-ヴー]/) ? 1 : 0);
+        return bScore - aScore;
+      });
+      
+      return sortedWords.slice(0, 5); // 最大5単語まで
     };
     
     // 画像検索を実行
