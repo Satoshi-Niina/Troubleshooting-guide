@@ -65,7 +65,7 @@ router.post('/', authenticateToken, async (req, res) => {
     // ユーザー作成
     // display_nameが未設定の場合はusernameを使用
     const displayName = display_name || username;
-    
+
     const result = await db.insert(users)
       .values({
         username,
