@@ -66,14 +66,11 @@ router.post('/', authenticateToken, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ユーザー作成
-    // display_nameが未設定の場合はusernameを使用
-    const displayName = display_name || username;
-
     const result = await db.insert(users)
       .values({
         username,
         password: hashedPassword,
-        display_name: displayName,
+        display_name: displayName, // Already defined above
         role: role || 'employee',
         department: department || null
       })
