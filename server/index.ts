@@ -169,7 +169,7 @@ function openBrowser(url: string) {
   console.log(`サーバーを起動します: ${url}`);
   const PORT = 5000;
   
-  server.listen(port, '127.0.0.1', () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`サーバーが起動しました: ${url}`);
     console.log('ブラウザを開いています...');
     openBrowser(url);
