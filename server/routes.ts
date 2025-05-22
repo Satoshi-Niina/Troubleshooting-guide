@@ -18,7 +18,7 @@ import {
 } from './lib/knowledge-base';
 import { formatChatHistoryForExternalSystem } from './lib/chat-export-formatter';
 import techSupportRouter from './routes/tech-support';
-import { registerTroubleshootingRoutes } from './routes/troubleshooting';
+import troubleshootingRouter from './routes/troubleshooting';
 import { registerDataProcessorRoutes } from './routes/data-processor';
 import emergencyGuideRouter from './routes/emergency-guide';
 import { emergencyFlowRouter } from './routes/emergency-flow-router';
@@ -41,8 +41,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register tech support router
   app.use('/api/tech-support', techSupportRouter);
 
-  // Register troubleshooting routes
-  registerTroubleshootingRoutes(app);
+  // Use troubleshooting router
+  app.use('/api/troubleshooting', troubleshootingRouter);
 
   // Register data processor routes
   registerDataProcessorRoutes(app);
