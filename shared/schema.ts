@@ -51,3 +51,22 @@ export const insertUserSchema = createInsertSchema(users).omit({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Documents table definition
+export const documents = pgTable('documents', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  type: text('type').notNull(),
+  url: text('url').notNull(),
+  processedAt: timestamp('processed_at').defaultNow().notNull()
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  processedAt: true,
+});
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
