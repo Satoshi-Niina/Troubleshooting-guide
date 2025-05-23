@@ -9,9 +9,15 @@ import { storage } from "./storage";
 import dotenv from 'dotenv';
 import { exec } from 'child_process';
 import { runCleanup } from '../scripts/scheduled-cleanup.js';
+import { fileURLToPath } from 'url';
+import open from 'open';
+
+// __dirnameの代替
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // .envファイルの読み込み
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // 環境変数の確認
 console.log("[DEBUG] Environment variables loaded:", {
@@ -83,17 +89,12 @@ app.use((req, res, next) => {
 });
 
 // ブラウザを開く関数
-function openBrowser(url: string) {
-  const start = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
-  // URLのバリデーション
-  const validUrl = new URL(url);
-  if (validUrl.protocol !== 'http:' && validUrl.protocol !== 'https:') {
-    throw new Error('Invalid URL protocol');
+async function openBrowser(url: string) {
+  try {
+    await open(url);
+  } catch (e) {
+    console.log('ブラウザを自動で開けませんでした:', e);
   }
-
-  // URLをエスケープして実行
-  const escapedUrl = validUrl.toString().replace(/[`'"]/g, '\\$&');
-  exec(`${start} "${escapedUrl}"`);
 }
 
 (async () => {
@@ -165,18 +166,17 @@ function openBrowser(url: string) {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   const port = 5000;
-  const url = `http://0.0.0.0:${port}`;
+  const url = `http://localhost:${port}`;
   console.log(`サーバーを起動します: ${url}`);
-  const PORT = 5000;
 
   // 現在のポートが使用中かどうかをチェックして、使用可能なポートで起動する
   const startServer = (portToUse: number) => {
-    server.listen(portToUse, '0.0.0.0', () => {
-      const serverUrl = `http://0.0.0.0:${portToUse}`;
+    server.listen(portToUse, 'localhost', async () => {
+      const serverUrl = `http://localhost:${portToUse}`;
       console.log(`サーバーが起動しました: ${serverUrl}`);
       console.log('ブラウザを開いています...');
       try {
-        openBrowser(serverUrl);
+        await openBrowser(serverUrl);
       } catch (e) {
         console.log('ブラウザを自動で開けませんでした');
       }

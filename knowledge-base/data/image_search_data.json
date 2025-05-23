@@ -53,78 +53,9 @@
     "description": "保守用車の運転キャビン内部配置図。操作機器と計器類の位置を表示。"
   },
   {
-    "id": "mc_1747961263575_001",
-    "file": "/knowledge-base/images/mc_1747961263575_001.png",
-    "title": "mc 1747961263575 001",
-    "category": "アップロード済み画像",
-    "keywords": [
-      "mc_1747961263575_001",
-      "PNG",
-      "図面"
-    ],
-    "description": "ファイル mc_1747961263575_001.png"
-  },
-  {
-    "id": "mc_1747961263575_002",
-    "file": "/knowledge-base/images/mc_1747961263575_002.png",
-    "title": "mc 1747961263575 002",
-    "category": "アップロード済み画像",
-    "keywords": [
-      "mc_1747961263575_002",
-      "PNG",
-      "図面"
-    ],
-    "description": "ファイル mc_1747961263575_002.png"
-  },
-  {
-    "id": "mc_1747961263575_003",
-    "file": "/knowledge-base/images/mc_1747961263575_003.png",
-    "title": "mc 1747961263575 003",
-    "category": "アップロード済み画像",
-    "keywords": [
-      "mc_1747961263575_003",
-      "PNG",
-      "図面"
-    ],
-    "description": "ファイル mc_1747961263575_003.png"
-  },
-  {
-    "id": "mc_1747961263575_004",
-    "file": "/knowledge-base/images/mc_1747961263575_004.png",
-    "title": "mc 1747961263575 004",
-    "category": "アップロード済み画像",
-    "keywords": [
-      "mc_1747961263575_004",
-      "PNG",
-      "図面"
-    ],
-    "description": "ファイル mc_1747961263575_004.png"
-  },
-  {
     "id": "mc_1747961263575_img_001",
     "file": "/knowledge-base/images/mc_1747961263575_img_001.png",
     "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 1",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_002",
-    "file": "/knowledge-base/images/mc_1747961263575_img_002.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 2",
     "category": "保守用車マニュアル画像",
     "keywords": [
       "保守用車",
@@ -227,111 +158,6 @@
     }
   },
   {
-    "id": "mc_1747961263575_img_007",
-    "file": "/knowledge-base/images/mc_1747961263575_img_007.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 7",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_008",
-    "file": "/knowledge-base/images/mc_1747961263575_img_008.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 8",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_009",
-    "file": "/knowledge-base/images/mc_1747961263575_img_009.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 9",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_010",
-    "file": "/knowledge-base/images/mc_1747961263575_img_010.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 10",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_011",
-    "file": "/knowledge-base/images/mc_1747961263575_img_011.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 11",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
     "id": "mc_1747961263575_img_012",
     "file": "/knowledge-base/images/mc_1747961263575_img_012.png",
     "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 12",
@@ -356,48 +182,6 @@
     "id": "mc_1747961263575_img_013",
     "file": "/knowledge-base/images/mc_1747961263575_img_013.png",
     "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 13",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_014",
-    "file": "/knowledge-base/images/mc_1747961263575_img_014.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 14",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_015",
-    "file": "/knowledge-base/images/mc_1747961263575_img_015.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 15",
     "category": "保守用車マニュアル画像",
     "keywords": [
       "保守用車",
@@ -563,6 +347,264 @@
     }
   },
   {
+    "id": "mc_1747961263575_img_026",
+    "file": "/knowledge-base/images/mc_1747961263575_img_026.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 26",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_027",
+    "file": "/knowledge-base/images/mc_1747961263575_img_027.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 27",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_001",
+    "file": "/knowledge-base/images/mc_1747961263575_001.png",
+    "title": "mc 1747961263575 001",
+    "category": "アップロード済み画像",
+    "keywords": [
+      "mc_1747961263575_001",
+      "PNG",
+      "図面"
+    ],
+    "description": "ファイル mc_1747961263575_001.png"
+  },
+  {
+    "id": "mc_1747961263575_002",
+    "file": "/knowledge-base/images/mc_1747961263575_002.png",
+    "title": "mc 1747961263575 002",
+    "category": "アップロード済み画像",
+    "keywords": [
+      "mc_1747961263575_002",
+      "PNG",
+      "図面"
+    ],
+    "description": "ファイル mc_1747961263575_002.png"
+  },
+  {
+    "id": "mc_1747961263575_003",
+    "file": "/knowledge-base/images/mc_1747961263575_003.png",
+    "title": "mc 1747961263575 003",
+    "category": "アップロード済み画像",
+    "keywords": [
+      "mc_1747961263575_003",
+      "PNG",
+      "図面"
+    ],
+    "description": "ファイル mc_1747961263575_003.png"
+  },
+  {
+    "id": "mc_1747961263575_004",
+    "file": "/knowledge-base/images/mc_1747961263575_004.png",
+    "title": "mc 1747961263575 004",
+    "category": "アップロード済み画像",
+    "keywords": [
+      "mc_1747961263575_004",
+      "PNG",
+      "図面"
+    ],
+    "description": "ファイル mc_1747961263575_004.png"
+  },
+  {
+    "id": "mc_1747961263575_img_002",
+    "file": "/knowledge-base/images/mc_1747961263575_img_002.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 2",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_007",
+    "file": "/knowledge-base/images/mc_1747961263575_img_007.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 7",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_008",
+    "file": "/knowledge-base/images/mc_1747961263575_img_008.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 8",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_009",
+    "file": "/knowledge-base/images/mc_1747961263575_img_009.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 9",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_010",
+    "file": "/knowledge-base/images/mc_1747961263575_img_010.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 10",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_011",
+    "file": "/knowledge-base/images/mc_1747961263575_img_011.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 11",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_014",
+    "file": "/knowledge-base/images/mc_1747961263575_img_014.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 14",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
+    "id": "mc_1747961263575_img_015",
+    "file": "/knowledge-base/images/mc_1747961263575_img_015.png",
+    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 15",
+    "category": "保守用車マニュアル画像",
+    "keywords": [
+      "保守用車",
+      "マニュアル",
+      "図面",
+      "画像"
+    ],
+    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
+    "metadata": {
+      "uploadDate": "2025-05-23T00:47:43.691Z",
+      "fileSize": -1,
+      "fileType": "PNG",
+      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "extractedFrom": "PowerPoint",
+      "hasPngVersion": true
+    }
+  },
+  {
     "id": "mc_1747961263575_img_023",
     "file": "/knowledge-base/images/mc_1747961263575_img_023.png",
     "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 23",
@@ -608,48 +650,6 @@
     "id": "mc_1747961263575_img_025",
     "file": "/knowledge-base/images/mc_1747961263575_img_025.png",
     "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 25",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_026",
-    "file": "/knowledge-base/images/mc_1747961263575_img_026.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 26",
-    "category": "保守用車マニュアル画像",
-    "keywords": [
-      "保守用車",
-      "マニュアル",
-      "図面",
-      "画像"
-    ],
-    "description": "PowerPointファイル「MC応急処置（画像検索用サンプル）_1747961248296.pptx」から抽出された画像です。",
-    "metadata": {
-      "uploadDate": "2025-05-23T00:47:43.691Z",
-      "fileSize": -1,
-      "fileType": "PNG",
-      "sourceFile": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
-      "extractedFrom": "PowerPoint",
-      "hasPngVersion": true
-    }
-  },
-  {
-    "id": "mc_1747961263575_img_027",
-    "file": "/knowledge-base/images/mc_1747961263575_img_027.png",
-    "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx内の画像 27",
     "category": "保守用車マニュアル画像",
     "keywords": [
       "保守用車",

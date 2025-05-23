@@ -1,10 +1,9 @@
-
-import { pgTable, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, integer, boolean, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // Define all tables first
 const users = pgTable('users', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: serial('id').primaryKey(),
   username: text('username').notNull().unique(),
   password: text('password').notNull(),
   display_name: text('display_name').notNull(),

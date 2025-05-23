@@ -206,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db.select({
         id: users.id,
         username: users.username,
-        displayName: users.displayName,
+        display_name: users.display_name,
         role: users.role,
         department: users.department
       }).from(users);
