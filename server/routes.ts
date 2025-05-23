@@ -25,7 +25,7 @@ import { emergencyFlowRouter } from './routes/emergency-flow-router';
 import { registerSyncRoutes } from './routes/sync-routes';
 import { flowGeneratorRouter } from './routes/flow-generator';
 import troubleshootingRouter from './routes/troubleshooting.js';
-import usersRouter from './routes/users.js';
+import { usersRouter } from './routes/users';
 
 // Extend the express-session types
 declare module 'express-session' {

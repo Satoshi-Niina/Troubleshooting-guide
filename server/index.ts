@@ -169,15 +169,28 @@ function openBrowser(url: string) {
   console.log(`サーバーを起動します: ${url}`);
   const PORT = 5000;
 
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`サーバーが起動しました: ${url}`);
-    console.log('ブラウザを開いています...');
-    openBrowser(url);
-    console.log('定期クリーンアップがスケジュールされました (毎月1日 午前3時実行)');
-  }).on('error', (err: NodeJS.ErrnoException) => {
-    console.error('サーバー起動エラー:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.error(`ポート ${port} は既に使用されています。別のポートを試してください。`);
-    }
-  });
+  // 現在のポートが使用中かどうかをチェックして、使用可能なポートで起動する
+  const startServer = (portToUse: number) => {
+    server.listen(portToUse, '0.0.0.0', () => {
+      const serverUrl = `http://0.0.0.0:${portToUse}`;
+      console.log(`サーバーが起動しました: ${serverUrl}`);
+      console.log('ブラウザを開いています...');
+      try {
+        openBrowser(serverUrl);
+      } catch (e) {
+        console.log('ブラウザを自動で開けませんでした');
+      }
+      console.log('定期クリーンアップがスケジュールされました (毎月1日 午前3時実行)');
+    }).on('error', (err: NodeJS.ErrnoException) => {
+      console.error('サーバー起動エラー:', err);
+      if (err.code === 'EADDRINUSE') {
+        console.error(`ポート ${portToUse} は既に使用されています。別のポートを試します。`);
+        // 次のポートを試す
+        startServer(portToUse + 1);
+      }
+    });
+  };
+
+  // 5000番ポートから試行開始
+  startServer(port);
 })();
