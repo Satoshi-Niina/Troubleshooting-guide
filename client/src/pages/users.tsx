@@ -54,17 +54,21 @@ interface NewUserData {
 }
 
 export default function UsersPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [error, setError] = useState<Error | null>(null);
 
-  // 管理者でない場合はホームページにリダイレクト
-  useEffect(() => {
-    if (user && user.role !== "admin") {
-      navigate("/");
-    }
-  }, [user, navigate]);
+  // ローディング中は早期リターン
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // ユーザーが未認証またはadmin以外の場合はリダイレクト
+  if (!user || user.role !== "admin") {
+    navigate("/");
+    return null;
+  }
 
   // ユーザーデータの取得
   const { data: users, isLoading } = useQuery<UserData[]>({
