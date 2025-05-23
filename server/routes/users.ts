@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db';
-import { users } from '../db/schema';
+import { schema } from '../db/schema';
+const { users } = schema;
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { authenticateToken } from '../middleware/auth';
@@ -12,14 +13,7 @@ router.get('/', async (req, res) => {
   try {
     // スキーマから明示的にカラムを指定
     const allUsers = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        display_name: users.display_name,
-        role: users.role,
-        department: users.department,
-        created_at: users.created_at
-      })
+      .select()
       .from(users)
       .execute();
     
