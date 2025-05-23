@@ -1,3 +1,7 @@
+export function cn(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
 export function orderSelectedFields(fields: Record<string, any> | undefined | null): Record<string, any> {
   if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
     console.warn("Invalid fields argument:", fields);
