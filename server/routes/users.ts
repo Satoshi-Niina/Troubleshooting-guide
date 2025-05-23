@@ -8,15 +8,11 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
-// ユーザー一覧取得
+// ✅ ユーザー一覧取得
 router.get('/', async (req, res) => {
   try {
-    // スキーマから明示的にカラムを指定
-    const allUsers = await db
-      .select()
-      .from(users)
-      .execute();
-    
+    const allUsers = await db.select().from(users); // ← execute() 不要！
+
     res.json(allUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -24,14 +20,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ユーザー作成
+// ✅ ユーザー作成
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { username, password, display_name, role, department } = req.body;
 
-    // 入力値の検証
+    // 必須項目のバリデーション
     if (!username || !password || !display_name) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: '必須項目が入力されていません',
         details: {
           username: !username ? 'ユーザー名は必須です' : null,
@@ -41,7 +37,7 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
-    // 既存ユーザーの確認
+    // 既存ユーザーのチェック
     const existingUser = await db.query.users.findFirst({
       where: eq(users.username, username)
     });

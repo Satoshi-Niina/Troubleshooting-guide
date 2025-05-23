@@ -117,3 +117,13 @@ export const insertDocumentSchema = z.object({
   content: z.string(),
   userId: z.string()
 });
+
+export const schema = {
+  users,
+  chats,
+  messages,
+  media,
+  emergencyFlows,
+  images,
+  chatExports,
+};
