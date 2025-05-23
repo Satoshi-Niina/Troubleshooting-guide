@@ -1,5 +1,12 @@
 {
-  "lastUpdated": "2025-05-09T05:16:43.965Z",
-  "guides": [],
-  "fileCount": 0
+  "lastUpdated": "2025-05-23T00:47:52.251Z",
+  "guides": [
+    {
+      "id": "mc_1747961263575",
+      "title": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+      "filePath": "/home/runner/workspace/knowledge-base/json/mc_1747961263575_metadata.json",
+      "fileName": "mc_1747961263575_metadata.json"
+    }
+  ],
+  "fileCount": 1
 }

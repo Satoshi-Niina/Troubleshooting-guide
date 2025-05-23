@@ -1,0 +1,259 @@
+{
+  "metadata": {
+    "タイトル": "MC応急処置（画像検索用サンプル）_1747961248296.pptx",
+    "作成者": "保守用車システム",
+    "作成日": "2025-05-23T00:47:43.602Z",
+    "修正日": "2025-05-23T00:47:43.602Z",
+    "説明": "保守用車マニュアル情報"
+  },
+  "slides": [
+    {
+      "スライド番号": 1,
+      "タイトル": "保守用車緊急対応マニュアル",
+      "本文": [
+        "保守用車のトラブルシューティングと緊急時対応手順"
+      ],
+      "ノート": "スライド 1のノート: 保守用車緊急対応マニュアル\n保守用車のトラブルシューティングと緊急時対応手順",
+      "画像テキスト": [
+        {
+          "画像パス": "/knowledge-base/images/mc_1747961263575_001.png",
+          "テキスト": "保守用車のトラブルシューティングと緊急時対応手順"
+        }
+      ]
+    },
+    {
+      "スライド番号": 2,
+      "タイトル": "エンジン関連の緊急対応",
+      "本文": [
+        "エンジン停止時の診断と応急処置の手順"
+      ],
+      "ノート": "スライド 2のノート: エンジン関連の緊急対応\nエンジン停止時の診断と応急処置の手順",
+      "画像テキスト": [
+        {
+          "画像パス": "/knowledge-base/images/mc_1747961263575_002.png",
+          "テキスト": "エンジン停止時の診断と応急処置の手順"
+        }
+      ]
+    },
+    {
+      "スライド番号": 3,
+      "タイトル": "運転キャビンの緊急措置",
+      "本文": [
+        "運転キャビンの問題発生時の対応フロー"
+      ],
+      "ノート": "スライド 3のノート: 運転キャビンの緊急措置\n運転キャビンの問題発生時の対応フロー",
+      "画像テキスト": [
+        {
+          "画像パス": "/knowledge-base/images/mc_1747961263575_003.png",
+          "テキスト": "運転キャビンの問題発生時の対応フロー"
+        }
+      ]
+    },
+    {
+      "スライド番号": 4,
+      "タイトル": "フレーム構造と安全確認",
+      "本文": [
+        "フレーム損傷時の安全確認と応急対応"
+      ],
+      "ノート": "スライド 4のノート: フレーム構造と安全確認\nフレーム損傷時の安全確認と応急対応",
+      "画像テキスト": [
+        {
+          "画像パス": "/knowledge-base/images/mc_1747961263575_004.png",
+          "テキスト": "フレーム損傷時の安全確認と応急対応"
+        }
+      ]
+    }
+  ],
+  "embeddedImages": [
+    {
+      "元のファイル名": "ppt/media/image2.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_001.png",
+      "保存日時": "2025-05-23T00:47:43.586Z",
+      "サイズ": 115194,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image20.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_002.png",
+      "保存日時": "2025-05-23T00:47:43.587Z",
+      "サイズ": 2001,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image23.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_003.png",
+      "保存日時": "2025-05-23T00:47:43.587Z",
+      "サイズ": 162518,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image1.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_004.png",
+      "保存日時": "2025-05-23T00:47:43.588Z",
+      "サイズ": 123085,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image24.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_005.png",
+      "保存日時": "2025-05-23T00:47:43.589Z",
+      "サイズ": 284214,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image25.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_006.png",
+      "保存日時": "2025-05-23T00:47:43.590Z",
+      "サイズ": 25920,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image26.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_007.png",
+      "保存日時": "2025-05-23T00:47:43.590Z",
+      "サイズ": 19272,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image27.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_008.png",
+      "保存日時": "2025-05-23T00:47:43.590Z",
+      "サイズ": 4303,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image19.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_009.png",
+      "保存日時": "2025-05-23T00:47:43.590Z",
+      "サイズ": 3992,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image16.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_010.png",
+      "保存日時": "2025-05-23T00:47:43.591Z",
+      "サイズ": 4040,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image17.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_011.png",
+      "保存日時": "2025-05-23T00:47:43.591Z",
+      "サイズ": 4970,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image21.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_012.png",
+      "保存日時": "2025-05-23T00:47:43.592Z",
+      "サイズ": 119365,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image13.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_013.png",
+      "保存日時": "2025-05-23T00:47:43.592Z",
+      "サイズ": 34148,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image18.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_014.png",
+      "保存日時": "2025-05-23T00:47:43.592Z",
+      "サイズ": 3164,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image15.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_015.png",
+      "保存日時": "2025-05-23T00:47:43.592Z",
+      "サイズ": 26216,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image14.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_016.png",
+      "保存日時": "2025-05-23T00:47:43.593Z",
+      "サイズ": 23721,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image12.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_017.png",
+      "保存日時": "2025-05-23T00:47:43.594Z",
+      "サイズ": 287199,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image11.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_018.png",
+      "保存日時": "2025-05-23T00:47:43.595Z",
+      "サイズ": 313142,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image10.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_019.png",
+      "保存日時": "2025-05-23T00:47:43.596Z",
+      "サイズ": 288185,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image9.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_020.png",
+      "保存日時": "2025-05-23T00:47:43.597Z",
+      "サイズ": 47393,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image8.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_021.png",
+      "保存日時": "2025-05-23T00:47:43.598Z",
+      "サイズ": 356260,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image7.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_022.png",
+      "保存日時": "2025-05-23T00:47:43.600Z",
+      "サイズ": 396488,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image6.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_023.png",
+      "保存日時": "2025-05-23T00:47:43.600Z",
+      "サイズ": 2897,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image5.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_024.png",
+      "保存日時": "2025-05-23T00:47:43.600Z",
+      "サイズ": 84031,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image4.png",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_025.png",
+      "保存日時": "2025-05-23T00:47:43.601Z",
+      "サイズ": 25651,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image3.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_026.png",
+      "保存日時": "2025-05-23T00:47:43.601Z",
+      "サイズ": 96309,
+      "形式": "PNG"
+    },
+    {
+      "元のファイル名": "ppt/media/image22.jpeg",
+      "抽出パス": "/knowledge-base/images/mc_1747961263575_img_027.png",
+      "保存日時": "2025-05-23T00:47:43.602Z",
+      "サイズ": 213854,
+      "形式": "PNG"
+    }
+  ],
+  "textContent": "\nスライド 1: 保守用車緊急対応マニュアル\n保守用車のトラブルシューティングと緊急時対応手順\n\n\nスライド 2: エンジン関連の緊急対応\nエンジン停止時の診断と応急処置の手順\n\n\nスライド 3: 運転キャビンの緊急措置\n運転キャビンの問題発生時の対応フロー\n\n\nスライド 4: フレーム構造と安全確認\nフレーム損傷時の安全確認と応急対応\n\n\n抽出された埋め込み画像 (27個):\n画像 1: /knowledge-base/images/mc_1747961263575_img_001.png\n画像 2: /knowledge-base/images/mc_1747961263575_img_002.png\n画像 3: /knowledge-base/images/mc_1747961263575_img_003.png\n画像 4: /knowledge-base/images/mc_1747961263575_img_004.png\n画像 5: /knowledge-base/images/mc_1747961263575_img_005.png\n画像 6: /knowledge-base/images/mc_1747961263575_img_006.png\n画像 7: /knowledge-base/images/mc_1747961263575_img_007.png\n画像 8: /knowledge-base/images/mc_1747961263575_img_008.png\n画像 9: /knowledge-base/images/mc_1747961263575_img_009.png\n画像 10: /knowledge-base/images/mc_1747961263575_img_010.png\n画像 11: /knowledge-base/images/mc_1747961263575_img_011.png\n画像 12: /knowledge-base/images/mc_1747961263575_img_012.png\n画像 13: /knowledge-base/images/mc_1747961263575_img_013.png\n画像 14: /knowledge-base/images/mc_1747961263575_img_014.png\n画像 15: /knowledge-base/images/mc_1747961263575_img_015.png\n画像 16: /knowledge-base/images/mc_1747961263575_img_016.png\n画像 17: /knowledge-base/images/mc_1747961263575_img_017.png\n画像 18: /knowledge-base/images/mc_1747961263575_img_018.png\n画像 19: /knowledge-base/images/mc_1747961263575_img_019.png\n画像 20: /knowledge-base/images/mc_1747961263575_img_020.png\n画像 21: /knowledge-base/images/mc_1747961263575_img_021.png\n画像 22: /knowledge-base/images/mc_1747961263575_img_022.png\n画像 23: /knowledge-base/images/mc_1747961263575_img_023.png\n画像 24: /knowledge-base/images/mc_1747961263575_img_024.png\n画像 25: /knowledge-base/images/mc_1747961263575_img_025.png\n画像 26: /knowledge-base/images/mc_1747961263575_img_026.png\n画像 27: /knowledge-base/images/mc_1747961263575_img_027.png\n"
+}
