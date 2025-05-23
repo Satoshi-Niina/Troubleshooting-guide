@@ -19,7 +19,7 @@ localPort = 5001
 externalPort = 3000
 
 [workflows]
-runButton = "Start Dev Server"
+runButton = "Start on Custom Port"
 
 [[workflows.workflow]]
 name = "Project"
@@ -53,3 +53,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Start on Custom Port"
+author = 39467490
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=5001 tsx server/index.ts"
