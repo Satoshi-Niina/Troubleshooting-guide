@@ -71,7 +71,7 @@ export default function UsersPage() {
   }
 
   // ユーザーデータの取得
-  const { data: users, isLoading: usersLoading } = useQuery<UserData[]>({
+  const { data: users, isLoading } = useQuery<UserData[]>({
     queryKey: ["/api/users"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/users");
