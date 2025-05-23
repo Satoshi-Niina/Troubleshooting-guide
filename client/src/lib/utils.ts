@@ -1,3 +1,11 @@
+
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 /**
  * オブジェクトのキーを指定された順に並べ替えるユーティリティ関数
  * 渡された fields が undefined/null の場合にも安全に処理
