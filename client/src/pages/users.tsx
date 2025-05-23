@@ -54,13 +54,13 @@ interface NewUserData {
 }
 
 export default function UsersPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [error, setError] = useState<Error | null>(null);
 
   // ローディング中は早期リターン
-  if (isLoading) {
+  if (authLoading) {
     return <div>Loading...</div>;
   }
 
@@ -71,7 +71,7 @@ export default function UsersPage() {
   }
 
   // ユーザーデータの取得
-  const { data: users, isLoading } = useQuery<UserData[]>({
+  const { data: users, isLoading: usersLoading } = useQuery<UserData[]>({
     queryKey: ["/api/users"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/users");
