@@ -1,6 +1,8 @@
+
 import { pgTable, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
+// Define all tables first
 const users = pgTable('users', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   username: text('username').notNull().unique(),
@@ -12,18 +14,7 @@ const users = pgTable('users', {
   description: text('description')
 });
 
-// すべてのテーブルスキーマをまとめてエクスポート
-export const schema = {
-  users,
-  media,
-  emergencyFlows,
-  images
-};
-
-// 個別のテーブルもエクスポート
-export { users };
-
-export const media = pgTable('media', {
+const media = pgTable('media', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   messageId: integer('message_id').notNull(),
   type: text('type').notNull(),
@@ -32,18 +23,29 @@ export const media = pgTable('media', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
-export const emergencyFlows = pgTable('emergency_flows', {
+const emergencyFlows = pgTable('emergency_flows', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   title: text('title').notNull(),
   steps: jsonb('steps').notNull(),
   keyword: text('keyword').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
-export const images = pgTable('images', {
+const images = pgTable('images', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   url: text('url').notNull(),
   description: text('description').notNull(),
   embedding: jsonb('embedding').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
+
+// Export schema object after all tables are defined
+export const schema = {
+  users,
+  media,
+  emergencyFlows,
+  images
+};
+
+// Export individual tables
+export { users, media, emergencyFlows, images };
