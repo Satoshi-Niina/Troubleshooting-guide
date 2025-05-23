@@ -11,15 +11,14 @@ const router = Router();
 // ✅ ユーザー一覧取得
 router.get('/', async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department
-    }).from(users);
-
-    res.json(allUsers || []);
+    const allUsers = await db.select().from(users);
+    res.json(allUsers.map(user => ({
+      id: user.id,
+      username: user.username,
+      display_name: user.display_name,
+      role: user.role,
+      department: user.department
+    })));
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'ユーザー一覧の取得に失敗しました' });
