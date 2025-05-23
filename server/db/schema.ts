@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const users = pgTable('users', {
+const users = pgTable('users', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   username: text('username').notNull().unique(),
   password: text('password').notNull(),
@@ -11,6 +11,17 @@ export const users = pgTable('users', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   description: text('description')
 });
+
+// すべてのテーブルスキーマをまとめてエクスポート
+export const schema = {
+  users,
+  media,
+  emergencyFlows,
+  images
+};
+
+// 個別のテーブルもエクスポート
+export { users };
 
 export const media = pgTable('media', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

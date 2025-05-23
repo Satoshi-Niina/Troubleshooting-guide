@@ -10,14 +10,18 @@ const router = Router();
 // ユーザー一覧取得
 router.get('/', async (req, res) => {
   try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      display_name: users.display_name,
-      role: users.role,
-      department: users.department,
-      created_at: users.created_at
-    }).from(users);
+    // スキーマから明示的にカラムを指定
+    const allUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        display_name: users.display_name,
+        role: users.role,
+        department: users.department,
+        created_at: users.created_at
+      })
+      .from(users)
+      .execute();
     
     res.json(allUsers);
   } catch (error) {
